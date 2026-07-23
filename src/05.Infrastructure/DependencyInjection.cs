@@ -25,6 +25,7 @@ namespace SupportTicketSystem.Infrastructure
             services.AddScoped<ITicketRepository, TicketRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IDashboardRepository, DashboardRepository>();
 
 
             // JWT Authentication

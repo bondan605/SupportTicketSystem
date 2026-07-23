@@ -3,6 +3,7 @@ using FluentValidation;
 using SupportTicketSystem.Application.Abstractions.Services;
 using SupportTicketSystem.Application.Services;
 using System.Reflection;
+using SupportTicketSystem.Application.Interfaces;
 
 namespace SupportTicketSystem.Application
 {
@@ -14,6 +15,7 @@ namespace SupportTicketSystem.Application
             services.AddScoped<ITicketService, TicketService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IDashboardService, DashboardService>();
 
             // Register AutoMapper
             services.AddAutoMapper(Assembly.GetExecutingAssembly());

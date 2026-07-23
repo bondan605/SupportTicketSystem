@@ -1,12 +1,17 @@
 ﻿@page "/dashboard"
-@attribute [Authorize(Roles = "Manager")]
+@* @attribute [Authorize(Roles = "Manager")] *@
+
+@using SupportTicketSystem.Shared.DTOs.Dashboard
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 
 @inject IDashboardClient DashboardClient
 @inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
-    @* Top-level Loading Indicator *@
+    @* Indikator Loading di bagian atas *@
     <div style="height: 4px;" class="mb-4">
         @if (_isLoading)
         {
@@ -14,11 +19,11 @@
         }
     </div>
 
-    @* Header Section *@
+    @* Bagian Header *@
     <div class="d-flex justify-space-between align-center mb-6">
         <div>
             <MudText Typo="Typo.h4" Color="Color.Primary"><b>Dashboard</b></MudText>
-            <MudText Typo="Typo.body1" Color="Color.Secondary">Welcome back, @_managerName! Here's your workload overview.</MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary">Selamat datang kembali, @_managerName! Berikut adalah ringkasan sistem saat ini.</MudText>
         </div>
         <MudButton Variant="Variant.Outlined"
                    StartIcon="@Icons.Material.Filled.Refresh"
@@ -29,57 +34,82 @@
         </MudButton>
     </div>
 
-    @* Metrics Grid *@
+    @* Grid Metrik Utama *@
     @if (_summary != null)
     {
         <MudGrid>
-            @* We use the local RenderFragment defined below to keep the code clean and consistent *@
-            @MetricCard("Total Tickets", _summary.TotalTickets, Icons.Material.Filled.ConfirmationNumber, Color.Primary)
+            @MetricCard("Total Tiket", _summary.TotalTickets, Icons.Material.Filled.ConfirmationNumber, Color.Primary)
+            @MetricCard("Tiket Open", _summary.OpenTickets, Icons.Material.Filled.Warning, Color.Warning)
+            @MetricCard("Tiket In Progress", _summary.InProgressTickets, Icons.Material.Filled.Autorenew, Color.Info)
+            @MetricCard("Tiket Resolved", _summary.ResolvedTickets, Icons.Material.Filled.CheckCircle, Color.Success)
+            @MetricCard("Tiket Closed", _summary.ClosedTickets, Icons.Material.Filled.TaskAlt, Color.Dark)
+            @MetricCard("Belum Ditugaskan", _summary.UnassignedTickets, Icons.Material.Filled.PersonOff, Color.Error)
+        </MudGrid>
 
-            @* Highlighting Unassigned in Error color to draw the Manager's attention *@
-            @MetricCard("Unassigned", _summary.UnassignedTickets, Icons.Material.Filled.AssignmentLate, Color.Error)
-
-            @MetricCard("Open", _summary.OpenTickets, Icons.Material.Filled.FiberNew, Color.Info)
-            @MetricCard("In Progress", _summary.InProgressTickets, Icons.Material.Filled.PendingActions, Color.Warning)
-            @MetricCard("Resolved", _summary.ResolvedTickets, Icons.Material.Filled.TaskAlt, Color.Success)
-            @MetricCard("Closed", _summary.ClosedTickets, Icons.Material.Filled.Archive, Color.Default)
-
-            @* Weekly Trends Chart (Optional Bonus based on the provided DTO) *@
-            @if (_summary.WeeklyTrends != null && _summary.WeeklyTrends.Any())
-            {
-                <MudItem xs="12" Class="mt-4">
-                    <MudCard Variant="Variant.Outlined">
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.h6">Ticket Creation Trends (This Week)</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            <MudChart ChartType="ChartType.Bar"
-                                      T="double"
+        @* Bagian Grafik Trend Mingguan *@
+        <MudGrid Class="mt-4">
+            <MudItem xs="12">
+                <MudCard Elevation="3">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h6">Tren Pembuatan Tiket (7 Hari Terakhir)</MudText>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <style>
+                            .ticket-trend-chart .mud-charts-xaxis text,
+                            .ticket-trend-chart .mud-charts-yaxis text,
+                            .ticket-trend-chart text {
+                                fill: var(--mud-palette-text-primary) !important;
+                                font-size: 0.85rem;
+                            }
+                        </style>
+                        <div class="ticket-trend-chart">
+                        @if (_chartSeries.Any() && _xAxisLabels.Any())
+                        {
+                            <MudChart T="double"
+                                      ChartType="ChartType.Bar"
                                       ChartSeries="@_chartSeries"
-                                      XAxisLabels="@_xAxisLabels"
+                                      ChartLabels="@_xAxisLabels"
+                                      ChartOptions="@_chartOptions"
                                       Width="100%"
                                       Height="350px" />
-                        </MudCardContent>
-                    </MudCard>
-                </MudItem>
-            }
+                        }
+                        else
+                        {
+                            <MudAlert Severity="MudBlazor.Severity.Info">Tidak ada data tren untuk ditampilkan.</MudAlert>
+                        }
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
         </MudGrid>
     }
+    else if (!_isLoading)
+    {
+        <MudAlert Severity="MudBlazor.Severity.Error" Class="mt-4">Gagal memuat ringkasan dashboard. Silakan coba refresh kembali.</MudAlert>
+    }
+
 </MudContainer>
 
 @code {
     private bool _isLoading = true;
     private DashboardSummaryDto? _summary;
-
-    // In a real application, you would inject AuthenticationStateProvider here
-    // to dynamically extract the user's name from their ClaimsPrincipal.
     private string _managerName = "Manager";
 
-    // Chart Data properties (Updated to use generic type <double>)
-    private List<ChartSeries<double>> _chartSeries = new();
     private string[] _xAxisLabels = Array.Empty<string>();
+    private List<ChartSeries<double>> _chartSeries = new();
+
+    private BarChartOptions _chartOptions = new()
+    {
+        YAxisTicks = 1,
+        YAxisFormat = "0",
+        ShowLegend = false,
+        ShowToolTips = true,
+        XAxisTitle = "Hari (7 hari terakhir)",
+        YAxisTitle = "Jumlah Tiket Dibuat",
+        ChartPalette = new[] { "#594AE2" } // warna utama sesuai tema Primary
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -89,57 +119,60 @@
     private async Task LoadDataAsync()
     {
         _isLoading = true;
-        StateHasChanged(); // Force the progress bar to render immediately
+        StateHasChanged();
 
         try
         {
-            var response = await DashboardClient.GetSummaryAsync();
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
 
-            // Based on your DashboardClient.cs implementation (Success and Data properties)
-            if (response != null && response.Success && response.Data != null)
+            if (user.Identity?.IsAuthenticated == true)
             {
-                _summary = response.Data;
-                PrepareChartData();
+                _managerName = user.Identity.Name ?? user.FindFirst(ClaimTypes.GivenName)?.Value ?? "Manager";
             }
-            else
-            {
-                Snackbar.Add("Failed to load dashboard data from the server.", MudBlazor.Severity.Warning);
-            }
+
+            _summary = await DashboardClient.GetSummaryAsync();
+
+            PrepareChartData();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"An error occurred while fetching dashboard data: {ex.Message}", MudBlazor.Severity.Error);
+            Snackbar.Add($"Gagal mengambil data Dashboard: {ex.Message}", MudBlazor.Severity.Error);
         }
         finally
         {
             _isLoading = false;
+            StateHasChanged();
         }
     }
 
     private void PrepareChartData()
     {
-        if (_summary?.WeeklyTrends != null)
+        if (_summary?.WeeklyTrends != null && _summary.WeeklyTrends.Any())
         {
             _xAxisLabels = _summary.WeeklyTrends.Select(t => t.DayName).ToArray();
+
             _chartSeries = new List<ChartSeries<double>>
             {
                 new ChartSeries<double>
                 {
-                    Name = "Tickets Created",
+                    Name = "Tiket Dibuat",
                     Data = _summary.WeeklyTrends.Select(t => (double)t.Count).ToArray()
                 }
             };
         }
+        else
+        {
+            _xAxisLabels = Array.Empty<string>();
+            _chartSeries = new List<ChartSeries<double>>();
+        }
     }
 
-    // --- LOCAL RENDER FRAGMENT ---
-    // This allows us to reuse the exact same Card HTML/MudBlazor layout for every metric,
-    // reducing UI bugs and maintaining strict visual uniformity.
     private RenderFragment MetricCard(string title, int value, string icon, Color iconColor) => __builder =>
     {
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard Variant="Variant.Outlined" Class="pa-2">
-                <MudCardContent Class="d-flex align-center">
+        <MudItem xs="12" sm="4" md="4">
+            <MudCard Elevation="3" Class="pa-2 h-100">
+                <MudCardContent Class="d-flex align-center h-100">
                     <MudAvatar Color="@iconColor" Variant="Variant.Filled" Size="Size.Large" Class="mr-4">
                         <MudIcon Icon="@icon" />
                     </MudAvatar>
