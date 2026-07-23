@@ -1,15 +1,5 @@
 ﻿@page "/manager-report"
-@using Microsoft.AspNetCore.Authorization
-@using SupportTicketSystem.Shared.DTOs.Tickets
-@using SupportTicketSystem.Shared.DTOs.Users
-@using SupportTicketSystem.Shared.Models
-@using SupportTicketSystem.Domain.Enums
-@* Sesuaikan namespace Client Interface di bawah ini dengan struktur asli Anda *@
-@using SupportTicketSystem.Client.Features.Interfaces
-@using MudBlazor
-
-@* Protect this route at the framework level (Bypass sementara jika API Auth belum siap) *@
-@* @attribute [Authorize(Roles = "Manager")] *@
+@attribute [Authorize(Roles = "Manager")]
 
 @inject ITicketClient TicketClient
 @inject IUserClient UserClient

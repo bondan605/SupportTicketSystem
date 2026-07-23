@@ -1,10 +1,4 @@
 ﻿@page "/dashboard"
-@using Microsoft.AspNetCore.Authorization
-@using SupportTicketSystem.Shared.DTOs.Dashboard
-@* Adjust the namespace below to match your exact project structure *@
-@using SupportTicketSystem.Client.Features.Interfaces
-
-@* 1. Protect this route at the framework level *@
 @attribute [Authorize(Roles = "Manager")]
 
 @inject IDashboardClient DashboardClient
