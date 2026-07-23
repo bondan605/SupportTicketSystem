@@ -2,16 +2,19 @@
 using SupportTicketSystem.Shared.DTOs.Auth;
 using SupportTicketSystem.Application.Interfaces.Repositories;
 using SupportTicketSystem.Shared.Exceptions;
+using AutoMapper;
 
 namespace SupportTicketSystem.Application.Services
 {
     public class AuthService : IAuthService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public AuthService(IUnitOfWork unitOfWork)
+        public AuthService(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto dto)
@@ -25,18 +28,10 @@ namespace SupportTicketSystem.Application.Services
                 throw new BusinessException("Invalid email or password.");
             }
 
-            // [Note] In a 1-day assessment, we usually check a simple password 
-            // or assume successful login if the user exists for demo purposes.
-            // For production, we would use password hashing (e.g., BCrypt).
+            var response = _mapper.Map<LoginResponseDto>(user);
+            response.Token = "fake-jwt-token-for-assessment";
 
-            return new LoginResponseDto
-            {
-                UserId = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role,
-                Token = "fake-jwt-token-for-assessment"
-            };
+            return response;
         }
     }
 }

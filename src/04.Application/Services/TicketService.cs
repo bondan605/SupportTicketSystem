@@ -4,49 +4,47 @@ using SupportTicketSystem.Application.Interfaces.Repositories;
 using SupportTicketSystem.Domain.Entities;
 using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Shared.Exceptions;
+using AutoMapper;
 
 namespace SupportTicketSystem.Application.Services
 {
     public class TicketService : ITicketService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
 
-        public TicketService(IUnitOfWork unitOfWork)
+        public TicketService(IUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            _mapper = mapper;
         }
 
         public async Task<TicketDto> GetTicketByIdAsync(Guid id)
         {
             var ticket = await GetAndValidateTicket(id);
-            return MapToDto(ticket);
+            return _mapper.Map<TicketDto>(ticket);
         }
 
         public async Task<IEnumerable<TicketDto>> GetAllTicketsAsync()
         {
             var tickets = await _unitOfWork.Tickets.GetAllAsync();
-            return tickets.Select(MapToDto);
+            return _mapper.Map<IEnumerable<TicketDto>>(tickets);
         }
 
         public async Task<IEnumerable<TicketDto>> GetFilteredTicketsAsync(string? status, Guid? assignedTo)
         {
             // Special Requirement for Azwar: Manager Report filtering
             var tickets = await _unitOfWork.Tickets.GetFilteredTicketsAsync(status, assignedTo);
-            return tickets.Select(MapToDto);
+            return _mapper.Map<IEnumerable<TicketDto>>(tickets);
         }
 
         public async Task<TicketDto> CreateTicketAsync(CreateTicketDto dto)
         {
-            var ticket = new Ticket
-            {
-                Id = Guid.NewGuid(),
-                CustomerName = dto.CustomerName,
-                CustomerEmail = dto.CustomerEmail,
-                Title = dto.Title,
-                Description = dto.Description,
-                Status = TicketStatus.Open,
-                CreatedAt = DateTime.UtcNow
-            };
+            var ticket = _mapper.Map<Ticket>(dto);
+            ticket.Id = Guid.NewGuid();
+            ticket.Status = TicketStatus.Open;
+            ticket.CreatedAt = DateTime.UtcNow;
+            ticket.CreatedBy = Guid.NewGuid(); // Assuming the system generates a new GUID for the creator; replace with actual user ID if available
 
             // Business Rule: TKT-00001 format
             int sequence = await _unitOfWork.Tickets.GetNextTicketSequenceAsync();
@@ -55,7 +53,7 @@ namespace SupportTicketSystem.Application.Services
             await _unitOfWork.Tickets.AddAsync(ticket);
             await _unitOfWork.SaveChangesAsync();
 
-            return MapToDto(ticket);
+            return _mapper.Map<TicketDto>(ticket);
         }
 
         public async Task UpdateTicketAsync(Guid id, UpdateTicketDto dto)
@@ -113,19 +111,5 @@ namespace SupportTicketSystem.Application.Services
             if (ticket.Status == TicketStatus.Closed)
                 throw new BusinessException("Closed tickets cannot be modified or deleted.");
         }
-
-        private TicketDto MapToDto(Ticket ticket) => new TicketDto
-        {
-            Id = ticket.Id,
-            TicketNumber = ticket.TicketNumber,
-            CustomerName = ticket.CustomerName,
-            CustomerEmail = ticket.CustomerEmail,
-            Title = ticket.Title,
-            Description = ticket.Description,
-            Status = ticket.Status,
-            AssignedTo = ticket.AssignedTo,
-            CreatedAt = ticket.CreatedAt,
-            UpdatedAt = ticket.UpdatedAt
-        };
     }
 }
