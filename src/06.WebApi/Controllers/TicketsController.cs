@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SupportTicketSystem.Application.Abstractions.Services;
@@ -10,6 +11,7 @@ using System.Linq;
 
 namespace SupportTicketSystem.WebApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route(ApiRoutes.Tickets.Base)]
     [Produces("application/json")]
