@@ -1,4 +1,6 @@
-﻿namespace SupportTicketSystem.Shared.DTOs.Tickets
+﻿using SupportTicketSystem.Domain.Enums;
+
+namespace SupportTicketSystem.Shared.DTOs.Tickets
 {
     public class CreateTicketDto
     {
@@ -6,5 +8,6 @@
         public string CustomerEmail { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public TicketStatus Status { get; set; }
     }
 }

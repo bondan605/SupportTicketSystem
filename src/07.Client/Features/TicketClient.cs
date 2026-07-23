@@ -4,6 +4,7 @@ using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Tickets;
 using SupportTicketSystem.Shared.Models;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace SupportTicketSystem.Client.Features;
 
@@ -42,7 +43,11 @@ public class TicketClient : ITicketClient
     public async Task<ApiResponse<object>> CreateTicketAsync(CreateTicketDto dto)
     {
         var response = await _httpClient.PostAsJsonAsync(ApiRoutes.Tickets.Base, dto);
-        return await response.Content.ReadFromJsonAsync<ApiResponse<object>>() ?? new ApiResponse<object> { Success = false };
+        var content = await response.Content.ReadAsStringAsync();
+        return JsonSerializer.Deserialize<ApiResponse<object>>(content, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        }) ?? new ApiResponse<object> { Success = false, Message = "Gagal membaca respon server." };
     }
 
     public async Task<ApiResponse<object>> UpdateTicketAsync(Guid id, UpdateTicketDto dto)
@@ -59,7 +64,8 @@ public class TicketClient : ITicketClient
 
     public async Task<ApiResponse<object>> AssignTicketAsync(Guid ticketId, Guid userId)
     {
-        var response = await _httpClient.PutAsJsonAsync(ApiRoutes.Tickets.Assign.Replace("{id}", ticketId.ToString()), new { userId });
+        //var response = await _httpClient.PutAsJsonAsync(ApiRoutes.Tickets.Assign.Replace("{id}", ticketId.ToString()), new { userId });
+        var response = await _httpClient.PutAsJsonAsync(ApiRoutes.Tickets.Assign.Replace("{id}", ticketId.ToString()), userId);
         return await response.Content.ReadFromJsonAsync<ApiResponse<object>>() ?? new ApiResponse<object> { Success = false };
     }
 }

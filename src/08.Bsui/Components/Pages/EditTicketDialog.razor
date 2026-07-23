@@ -1,0 +1,67 @@
+﻿@using SupportTicketSystem.Domain.Enums
+@using MudBlazor
+
+<MudDialog>
+
+    <DialogContent>
+
+        <MudSelect T="TicketStatus"
+                   Label="Status"
+                   Variant="Variant.Outlined"
+                   Margin="Margin.Dense"
+                   @bind-Value="_selectedStatus">
+
+            @foreach (var status in Enum.GetValues<TicketStatus>())
+            {
+                <MudSelectItem T="TicketStatus" Value="@status">
+                    @status
+                </MudSelectItem>
+            }
+
+        </MudSelect>
+
+    </DialogContent>
+
+    <DialogActions>
+
+        <MudButton Variant="Variant.Text"
+                   OnClick="Cancel">
+            Cancel
+        </MudButton>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="Save">
+            Save
+        </MudButton>
+
+    </DialogActions>
+
+</MudDialog>
+
+@code
+{
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+
+    [Parameter]
+    public TicketStatus CurrentStatus { get; set; }
+
+    private TicketStatus _selectedStatus;
+
+    protected override void OnInitialized()
+    {
+        _selectedStatus = CurrentStatus;
+    }
+
+    private void Save()
+    {
+        MudDialog.Close(DialogResult.Ok(_selectedStatus));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}
