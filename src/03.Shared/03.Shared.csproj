@@ -8,4 +8,8 @@
 	<AssemblyName>SupportTicketSystem.Shared</AssemblyName>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\02.Domain\02.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
