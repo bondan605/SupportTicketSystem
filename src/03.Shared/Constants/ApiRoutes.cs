@@ -6,7 +6,12 @@
 
         public static class Auth
         {
+            // Full routes for client usage
             public const string Login = $"{BaseApi}/auth/login";
+
+            // Route segments for controller usage
+            public const string Base = $"{BaseApi}/auth";
+            public const string LoginSegment = "login";
         }
 
         public static class Tickets
