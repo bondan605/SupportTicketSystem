@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SupportTicketSystem.Domain.Entities;
 using SupportTicketSystem.Base.Entities;
+using SupportTicketSystem.Domain.Entities;
+using TicketManagement.Domain.Entities;
 
 namespace SupportTicketSystem.Infrastructure.Persistence
 {
@@ -10,6 +11,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         public DbSet<User> Users => Set<User>();
         public DbSet<Ticket> Tickets => Set<Ticket>();
+        public DbSet<TicketHistory> TicketHistories => Set<TicketHistory>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

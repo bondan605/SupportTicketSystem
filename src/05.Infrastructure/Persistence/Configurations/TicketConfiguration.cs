@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SupportTicketSystem.Domain.Entities;
+using TicketManagement.Domain.Entities;
 
 namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
 {
@@ -44,6 +45,12 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                   .WithMany(u => u.AssignedTickets)
                   .HasForeignKey(t => t.AssignedTo)
                   .OnDelete(DeleteBehavior.Restrict); // Prevent accidental user deletion
+
+
+            entity.HasMany<TicketHistory>()
+                .WithOne(th => th.Ticket)
+                .HasForeignKey(th => th.TicketId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
