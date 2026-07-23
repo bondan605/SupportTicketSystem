@@ -86,6 +86,7 @@
             <MudTh>Customer</MudTh>
             <MudTh>Title</MudTh>
             <MudTh>Status</MudTh>
+            <MudTh>Assign To</MudTh>
             <MudTh>Created At</MudTh>
             <MudTh Style="text-align: right;">Actions</MudTh>
         </HeaderContent>
@@ -101,6 +102,27 @@
                 <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">
                     @context.Status.ToString()
                 </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Assign To">
+                @if (context.AssignedTo.HasValue)
+                {
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Color="Color.Primary"
+                             Variant="Variant.Outlined"
+                             StartIcon="@Icons.Material.Filled.Person">
+                        @context.AssignedTo.Value
+                    </MudChip>
+                }
+                else
+                {
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Color="Color.Default"
+                             Variant="Variant.Outlined">
+                        Unassigned
+                    </MudChip>
+                }
             </MudTd>
             <MudTd DataLabel="Created At">@context.CreatedAt.ToString("MMM dd, yyyy HH:mm")</MudTd>
             <MudTd DataLabel="Actions" Style="text-align: right;">
@@ -242,26 +264,62 @@
 
     private async Task OpenAssignDialogAsync(TicketDto ticket)
     {
-        var parameters = new DialogParameters { ["TicketId"] = ticket.Id, ["CurrentAssignee"] = ticket.AssignedTo };
+        var parameters = new DialogParameters { ["TicketId"] = ticket.Id, ["Agents"] = _agentList };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
 
-        await DialogService.ShowMessageBoxAsync("Assign Action", $"Modal to assign {ticket.TicketNumber} would open here.");
+        var dialog = await DialogService.ShowAsync<AssignAgentDialog>("Assign Agent", parameters, options);
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Guid agentId)
+        {
+            Snackbar.Add($"Selected Agent: {agentId}", MudBlazor.Severity.Success);
+
+            Snackbar.Add("Agent assigned successfully.", MudBlazor.Severity.Success);
+            await TicketClient.AssignTicketAsync(ticket.Id, agentId);
+        }
+
     }
 
     private async Task OpenEditDialogAsync(TicketDto ticket)
     {
-        var parameters = new DialogParameters { ["TicketId"] = ticket.Id };
+        var parameters = new DialogParameters { ["TicketId"] = ticket.Id, ["CurrentStatus"] = ticket.Status };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        await DialogService.ShowMessageBoxAsync("Edit Action", $"Modal to edit {ticket.TicketNumber} would open here.");
+        var dialog = await DialogService.ShowAsync<EditTicketDialog>("Update Status", parameters, options);
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is TicketStatus status)
+        {
+            var response = await TicketClient.UpdateTicketAsync(ticket.Id, new UpdateTicketDto
+            {
+                Title = ticket.Title,
+                Description = ticket.Description,
+                Status = status
+            });
+            if (response.Success)
+            {
+                Snackbar.Add(response.Message, MudBlazor.Severity.Success);
+
+                await _table.ReloadServerData();
+            }
+            else
+            {
+                Snackbar.Add(response.Message, MudBlazor.Severity.Error);
+            }
+
+        }
     }
 
     private async Task OpenDetailsDialogAsync(TicketDto ticket)
     {
-        var parameters = new DialogParameters { ["Ticket"] = ticket };
+        var parameters = new DialogParameters { ["Ticket"] = ticket, ["Description"] = ticket.Description };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-        await DialogService.ShowMessageBoxAsync("Details Action", $"Modal to view {ticket.TicketNumber} details would open here.");
+
+        await DialogService.ShowAsync<DescriptionDialog>("Ticket Detail", parameters, options);
+
     }
 
     // --- UI Helpers ---

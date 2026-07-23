@@ -1,0 +1,59 @@
+﻿@using MudBlazor
+@using SupportTicketSystem.Shared.DTOs.Tickets
+
+<MudDialog>
+
+    <DialogContent>
+
+        <MudText Typo="Typo.h6" Class="mb-3">
+            Description
+        </MudText>
+
+        <MudPaper Class="pa-4"
+                  Outlined="true"
+                  Style="min-height:200px; white-space:pre-wrap;">
+
+            @if (string.IsNullOrWhiteSpace(Description))
+            {
+                <MudText Color="Color.Secondary">
+                    No description available.
+                </MudText>
+            }
+            else
+            {
+                @Description
+            }
+
+        </MudPaper>
+
+    </DialogContent>
+
+    <DialogActions>
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="Close">
+            Close
+        </MudButton>
+
+    </DialogActions>
+
+</MudDialog>
+
+@code {
+
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public TicketDto? Ticket { get; set; }
+
+    [Parameter]
+    public string? Description { get; set; }
+
+    private void Close()
+    {
+        MudDialog.Close();
+    }
+
+}
