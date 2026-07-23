@@ -20,8 +20,8 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
             entity.Property(e => e.TicketNumber)
                 .IsRequired()
                 .HasMaxLength(10);
-            //entity.HasIndex(e => e.TicketNumber)
-            //    .IsUnique(); // Business Rule: Unique TKT-XXXXX
+            entity.HasIndex(e => e.TicketNumber)
+                .IsUnique(); // Business Rule: Unique TKT-XXXXX
 
             entity.Property(e => e.CustomerName)
                 .IsRequired()
@@ -42,7 +42,8 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
             entity.Property(e => e.Status)
                 .HasConversion<string>()
                 .HasMaxLength(20)
-                .HasDefaultValue(Domain.Enums.TicketStatus.Open)
+                .HasDefaultValue(TicketStatus.Open)
+                .HasSentinel(TicketStatus.Open)
                 .IsRequired();
 
             // One-to-Many Relationship: User (Manager/Agent) to Tickets

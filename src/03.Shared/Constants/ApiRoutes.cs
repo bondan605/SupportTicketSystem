@@ -14,6 +14,11 @@
             public const string LoginSegment = "login";
         }
 
+        public static class Users
+        {
+            public const string Base = $"{BaseApi}/users";
+        }
+
         public static class Tickets
         {
             // Route segments for client usage

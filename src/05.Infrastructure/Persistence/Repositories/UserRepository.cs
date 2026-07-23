@@ -14,6 +14,11 @@ namespace SupportTicketSystem.Infrastructure.Repositories
             _context = context;
         }
 
+        public async Task<IEnumerable<User>> GetAllAsync()
+        {
+            return await _context.Users.AsNoTracking().ToListAsync();
+        }
+
         public async Task<User?> GetByIdAsync(Guid id)
         {
             return await _context.Users.FindAsync(id);

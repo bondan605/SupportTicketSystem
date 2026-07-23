@@ -13,6 +13,7 @@ namespace SupportTicketSystem.Application
             // Register Services
             services.AddScoped<ITicketService, TicketService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IUserService, UserService>();
 
             // Register AutoMapper
             services.AddAutoMapper(Assembly.GetExecutingAssembly());

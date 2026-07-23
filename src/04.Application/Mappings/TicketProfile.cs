@@ -3,6 +3,7 @@ using SupportTicketSystem.Domain.Entities;
 using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Auth;
 using SupportTicketSystem.Shared.DTOs.Tickets;
+using SupportTicketSystem.Shared.DTOs.Users;
 
 namespace SupportTicketSystem.Application.Mappings
 {
@@ -15,6 +16,8 @@ namespace SupportTicketSystem.Application.Mappings
             CreateMap<User, LoginResponseDto>();
 
             CreateMap<CreateTicketDto, Ticket>();
+
+            CreateMap<User, UserDto>();
         }
     }
 }
