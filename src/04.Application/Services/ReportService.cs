@@ -77,7 +77,13 @@ public class ReportService : IReportService
 
     public async Task<DashboardSummaryDto> GetDashboardSummaryAsync()
     {
-        var tickets = (await _ticketRepository.GetAllAsync()).ToList();
+        var pagedResult = await _ticketRepository.GetAllAsync(new PagedRequest
+        {
+            PageNumber = 1,
+            PageSize = int.MaxValue
+        });
+
+        var tickets = pagedResult.Items.ToList();
 
         var workload = tickets
             .Where(t => t.AssignedTo.HasValue && t.Assignee != null)

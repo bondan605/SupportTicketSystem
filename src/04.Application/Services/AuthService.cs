@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using BCrypt.Net;
+using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using SupportTicketSystem.Application.Abstractions.Services;
@@ -7,12 +7,9 @@ using SupportTicketSystem.Application.Interfaces.Repositories;
 using SupportTicketSystem.Domain.Entities;
 using SupportTicketSystem.Shared.DTOs.Auth;
 using SupportTicketSystem.Shared.Exceptions;
-using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using AutoMapper;
-using FluentValidation;
 
 namespace SupportTicketSystem.Application.Services
 {
@@ -24,8 +21,7 @@ namespace SupportTicketSystem.Application.Services
         private readonly IConfiguration _configuration;
         private readonly IValidator<LoginRequestDto> _loginValidator;
 
-        public AuthService(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration configuration, IUserRepository userRepository)
-        public AuthService(IUnitOfWork unitOfWork, IMapper mapper, IValidator<LoginRequestDto> loginValidator)
+        public AuthService(IUnitOfWork unitOfWork, IMapper mapper, IConfiguration configuration, IValidator<LoginRequestDto> loginValidator, IUserRepository userRepository)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
@@ -48,19 +44,14 @@ namespace SupportTicketSystem.Application.Services
             var isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
             if (!isPasswordValid)
             {
-                throw new ValidationException("Email atau password salah.");
+                throw new FluentValidation.ValidationException("Email atau password salah.");
             }
 
             var (token, expiresAt) = GenerateJwtToken(user);
 
-            return new LoginResponseDto
-            {
-                UserId = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role,
-                Token = token
-            };
+            var response = _mapper.Map<LoginResponseDto>(user);
+            response.Token = token;
+            return response;
         }
 
 
