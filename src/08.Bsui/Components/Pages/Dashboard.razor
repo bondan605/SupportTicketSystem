@@ -131,7 +131,21 @@
                 _managerName = user.Identity.Name ?? user.FindFirst(ClaimTypes.GivenName)?.Value ?? "Manager";
             }
 
-            _summary = await DashboardClient.GetSummaryAsync();
+            var apiResponse = await DashboardClient.GetSummaryAsync();
+
+            if (apiResponse.Success)
+            {
+                _summary = apiResponse.Data;
+
+                if (_summary == null)
+                {
+                    Snackbar.Add("Data ringkasan dashboard kosong.", MudBlazor.Severity.Warning);
+                }
+            }
+            else
+            {
+                Snackbar.Add($"Gagal mengambil data Dashboard: {apiResponse.Message}", MudBlazor.Severity.Error);
+            }
 
             PrepareChartData();
         }

@@ -6,6 +6,9 @@ using SupportTicketSystem.Shared.DTOs.Auth;
 
 namespace SupportTicketSystem.WebApi.Controllers
 {
+    /// <summary>
+    /// Controller for managing authentication operations.
+    /// </summary>
     [ApiController]
     [Route(ApiRoutes.Auth.Base)]
     [Produces("application/json")]

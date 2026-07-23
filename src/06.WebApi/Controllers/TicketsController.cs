@@ -11,6 +11,9 @@ using System.Linq;
 
 namespace SupportTicketSystem.WebApi.Controllers
 {
+    /// <summary>
+    /// Controller for managing ticket operations.
+    /// </summary>
     //[Authorize]
     [ApiController]
     [Route(ApiRoutes.Tickets.Base)]

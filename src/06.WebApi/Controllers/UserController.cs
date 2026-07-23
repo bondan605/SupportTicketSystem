@@ -11,6 +11,7 @@ namespace SupportTicketSystem.WebApi.Controllers
     /// </summary>
     [ApiController]
     [Route(ApiRoutes.Users.Base)]
+    [Produces("application/json")]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;

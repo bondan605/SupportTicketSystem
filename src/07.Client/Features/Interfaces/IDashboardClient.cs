@@ -5,5 +5,5 @@ namespace SupportTicketSystem.Client.Features.Interfaces;
 
 public interface IDashboardClient
 {
-    Task<DashboardSummaryDto?> GetSummaryAsync();
+    Task<ApiResponse<DashboardSummaryDto>> GetSummaryAsync();
 }
