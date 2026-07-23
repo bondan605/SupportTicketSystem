@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SupportTicketSystem.Shared.DTOs.Tickets;
 
-namespace SupportTicketSystem.Application.Interfaces.Services
+namespace SupportTicketSystem.Application.Abstractions.Services
 {
-    internal interface ITicketService
+    public interface ITicketService
     {
+        Task<TicketDto> GetTicketByIdAsync(Guid id);
+        Task<IEnumerable<TicketDto>> GetAllTicketsAsync();
+        Task<IEnumerable<TicketDto>> GetFilteredTicketsAsync(string? status, Guid? assignedTo);
+        Task<TicketDto> CreateTicketAsync(CreateTicketDto dto);
+        Task UpdateTicketAsync(Guid id, UpdateTicketDto dto);
+        Task DeleteTicketAsync(Guid id);
+        Task AssignTicketAsync(Guid ticketId, Guid userId);
     }
 }
