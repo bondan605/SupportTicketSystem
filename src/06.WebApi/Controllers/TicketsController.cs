@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SupportTicketSystem.Application.Abstractions.Services;
+using SupportTicketSystem.Shared.Constants;
 using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Tickets;
 using SupportTicketSystem.Shared.Models;
@@ -10,7 +11,7 @@ using System.Linq;
 namespace SupportTicketSystem.WebApi.Controllers
 {
     [ApiController]
-    [Route("api/v{version:apiVersion}/[controller]")]
+    [Route(ApiRoutes.Tickets.Base)]
     [Produces("application/json")]
     public class TicketsController : ControllerBase
     {
@@ -63,7 +64,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <returns>A list of filtered tickets.</returns>
         /// <response code="200">Returns the filtered tickets successfully.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
-        [HttpGet("report")]
+        [HttpGet(ApiRoutes.Tickets.ReportSegment)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetReport([FromQuery] string? status, [FromQuery] Guid? assignedTo, [FromQuery] PagedRequest request)
@@ -138,7 +139,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="400">If the request data is invalid.</response>
         /// <response code="404">If the ticket or user is not found.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
-        [HttpPut("{id}/assign")]
+        [HttpPut(ApiRoutes.Tickets.AssignSegment)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
