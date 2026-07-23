@@ -1,0 +1,22 @@
+﻿<MudNavMenu>
+    @* Home link - Match.All ensures it only highlights on exact root URL *@
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+        Dashboard
+    </MudNavLink>
+
+    @* Match.Prefix highlights if URL starts with /categories *@
+    @* Categories link *@
+    <MudNavLink Href="categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Category">
+        Category
+    </MudNavLink>
+
+    @* Categories link *@
+    <MudNavLink Href="accounts" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountBalanceWallet">
+        Account
+    </MudNavLink>
+
+    @* Transactions link *@
+    <MudNavLink Href="transactions" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ReceiptLong">
+        Transaction
+    </MudNavLink>
+</MudNavMenu>
