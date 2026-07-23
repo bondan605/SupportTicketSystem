@@ -1,7 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SupportTicketSystem.Application.Interfaces.Repositories;
 using SupportTicketSystem.Infrastructure.Persistence;
+using SupportTicketSystem.Infrastructure.Persistence.Repositories;
+using SupportTicketSystem.Infrastructure.Repositories;
 
 namespace SupportTicketSystem.Infrastructure
 {
@@ -15,8 +18,10 @@ namespace SupportTicketSystem.Infrastructure
                 options.UseSqlServer(connectionString,
                     b => b.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
-            // This is also the perfect place to register our Repositories later
-            // services.AddScoped<ITicketRepository, TicketRepository>();
+            // Repositories
+            services.AddScoped<ITicketRepository, TicketRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             return services;
         }

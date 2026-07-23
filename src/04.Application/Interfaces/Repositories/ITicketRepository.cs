@@ -8,7 +8,7 @@ namespace SupportTicketSystem.Application.Interfaces.Repositories
         Task<IEnumerable<Ticket>> GetAllAsync();
         Task AddAsync(Ticket ticket);
         void Update(Ticket ticket);
-        void Delete(Guid id);
+        void Delete(Ticket ticket);
 
         Task<int> GetNextTicketSequenceAsync();
 
