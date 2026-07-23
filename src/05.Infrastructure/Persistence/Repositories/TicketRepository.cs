@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SupportTicketSystem.Application.Interfaces.Repositories;
 using SupportTicketSystem.Domain.Entities;
+using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Infrastructure.Persistence;
 using SupportTicketSystem.Shared.Models;
 using System.Net.NetworkInformation;
@@ -22,10 +23,17 @@ namespace SupportTicketSystem.Infrastructure.Repositories
 
             // Filtering Logic
             if (!string.IsNullOrEmpty(status))
-                query = query.Where(t => t.Status.ToString() == status);
+            {
+                if (Enum.TryParse<TicketStatus>(status, out var statusEnum))
+                {
+                    query = query.Where(t => t.Status == statusEnum);
+                }
+            }
 
             if (assignedTo.HasValue)
+            {
                 query = query.Where(t => t.AssignedTo == assignedTo);
+            }
 
             var totalCount = await query.CountAsync();
             var items = await query
