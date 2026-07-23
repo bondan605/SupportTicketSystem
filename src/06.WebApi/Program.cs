@@ -12,14 +12,18 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 
+builder.Services.AddControllers();
+
 builder.Services.AddApiVersioningConfiguration();
 builder.Services.AddSwaggerDocumentation();
 
 var app = builder.Build();
 
-app.UseSwaggerDocumentation();
-app.UseApplicationMiddleware();
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseApplicationMiddleware();
+app.UseSwaggerDocumentation();
 
 app.MapControllers();
 
