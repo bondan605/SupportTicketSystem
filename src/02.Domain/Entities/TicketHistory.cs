@@ -1,12 +1,11 @@
 ﻿using SupportTicketSystem.Base.Entities;
-using SupportTicketSystem.Domain.Entities;
 using SupportTicketSystem.Domain.Enums;
 
-namespace TicketManagement.Domain.Entities;
+namespace SupportTicketSystem.Domain.Entities;
 
 public class TicketHistory : BaseEntity
 {
-    public int TicketId { get; set; }
+    public Guid TicketId { get; set; }
 
     public required string Action { get; set; } // "Created", "Assigned", "StatusChanged"
 
@@ -14,7 +13,7 @@ public class TicketHistory : BaseEntity
 
     public TicketStatus? NewStatus { get; set; }
 
-    public int ChangedBy { get; set; }
+    public Guid ChangedBy { get; set; }
 
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
