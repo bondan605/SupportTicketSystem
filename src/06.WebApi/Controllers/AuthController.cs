@@ -7,6 +7,7 @@ namespace SupportTicketSystem.WebApi.Controllers
 {
     [ApiController]
     [Route("api/v{version:apiVersion}/[controller]")]
+    [Produces("application/json")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -23,8 +24,11 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <returns>Standardized response containing user details and token.</returns>
         /// <response code="200">Login successful.</response>
         /// <response code="400">Invalid request data.</response>
+        /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpPost("login")]
         [ProducesResponseType(typeof(ApiResponse<LoginResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
         {
             var result = await _authService.LoginAsync(dto);

@@ -5,6 +5,7 @@ using SupportTicketSystem.Domain.Entities;
 using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Shared.Exceptions;
 using AutoMapper;
+using SupportTicketSystem.Shared.Models;
 
 namespace SupportTicketSystem.Application.Services
 {
@@ -25,17 +26,29 @@ namespace SupportTicketSystem.Application.Services
             return _mapper.Map<TicketDto>(ticket);
         }
 
-        public async Task<IEnumerable<TicketDto>> GetAllTicketsAsync()
+        public async Task<PagedResult<TicketDto>> GetAllTicketsAsync(PagedRequest request)
         {
-            var tickets = await _unitOfWork.Tickets.GetAllAsync();
-            return _mapper.Map<IEnumerable<TicketDto>>(tickets);
+            var pagedTickets = await _unitOfWork.Tickets.GetAllAsync(request);
+
+            return new PagedResult<TicketDto>
+            {
+                Items = _mapper.Map<IEnumerable<TicketDto>>(pagedTickets.Items),
+                PageNumber = pagedTickets.PageNumber,
+                PageSize = pagedTickets.PageSize,
+                TotalCount = pagedTickets.TotalCount
+            };
         }
 
-        public async Task<IEnumerable<TicketDto>> GetFilteredTicketsAsync(string? status, Guid? assignedTo)
+        public async Task<PagedResult<TicketDto>> GetFilteredTicketsAsync(string? status, Guid? assignedTo, PagedRequest request)
         {
-            // Special Requirement for Azwar: Manager Report filtering
-            var tickets = await _unitOfWork.Tickets.GetFilteredTicketsAsync(status, assignedTo);
-            return _mapper.Map<IEnumerable<TicketDto>>(tickets);
+            var pagedTickets = await _unitOfWork.Tickets.GetFilteredTicketsAsync(status, assignedTo, request);
+            return new PagedResult<TicketDto>
+            {
+                Items = _mapper.Map<IEnumerable<TicketDto>>(pagedTickets.Items),
+                PageNumber = pagedTickets.PageNumber,
+                PageSize = pagedTickets.PageSize,
+                TotalCount = pagedTickets.TotalCount
+            };
         }
 
         public async Task<TicketDto> CreateTicketAsync(CreateTicketDto dto)

@@ -12,7 +12,7 @@
         public List<string>? Errors { get; set; } = new();
 
         // Helper for success responses
-        public static ApiResponse<T> SuccessResponse(T data, string message = "Request processed successfully.")
+        public static ApiResponse<T> SuccessResponse(T? data, string message = "Request processed successfully.")
         {
             return new ApiResponse<T>
             {

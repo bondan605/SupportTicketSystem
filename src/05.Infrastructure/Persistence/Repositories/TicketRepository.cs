@@ -2,6 +2,8 @@
 using SupportTicketSystem.Application.Interfaces.Repositories;
 using SupportTicketSystem.Domain.Entities;
 using SupportTicketSystem.Infrastructure.Persistence;
+using SupportTicketSystem.Shared.Models;
+using System.Net.NetworkInformation;
 
 namespace SupportTicketSystem.Infrastructure.Repositories
 {
@@ -14,36 +16,64 @@ namespace SupportTicketSystem.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<int> GetNextTicketSequenceAsync()
+        public async Task<PagedResult<Ticket>> GetFilteredTicketsAsync(string? status, Guid? assignedTo, PagedRequest request)
         {
-            return await _context.Tickets.CountAsync() + 1;
-        }
+            var query = _context.Tickets.AsNoTracking();
 
-        public async Task<IEnumerable<Ticket>> GetFilteredTicketsAsync(string? status, Guid? assignedTo)
-        {
-            var query = _context.Tickets.AsQueryable();
-
+            // Filtering Logic
             if (!string.IsNullOrEmpty(status))
-            {
                 query = query.Where(t => t.Status.ToString() == status);
-            }
 
             if (assignedTo.HasValue)
-            {
                 query = query.Where(t => t.AssignedTo == assignedTo);
-            }
 
-            return await query.OrderByDescending(t => t.CreatedAt).ToListAsync();
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync();
+
+            return new PagedResult<Ticket>
+            {
+                Items = items,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                TotalCount = totalCount
+            };
         }
 
         public async Task<Ticket?> GetByIdAsync(Guid id) => await _context.Tickets.FindAsync(id);
 
-        public async Task<IEnumerable<Ticket>> GetAllAsync() => await _context.Tickets.ToListAsync();
+        public async Task<PagedResult<Ticket>> GetAllAsync(PagedRequest request) 
+        {
+            var query = _context.Tickets.AsNoTracking();
+
+            var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync();
+
+            return new PagedResult<Ticket>
+            {
+                Items = items,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                TotalCount = totalCount
+            };
+        }
 
         public async Task AddAsync(Ticket ticket) => await _context.Tickets.AddAsync(ticket);
 
         public void Update(Ticket ticket) => _context.Tickets.Update(ticket);
 
         public void Delete(Ticket ticket) => _context.Tickets.Remove(ticket);
+
+        public async Task<int> GetNextTicketSequenceAsync()
+        {
+            return await _context.Tickets.CountAsync() + 1;
+        }
     }
 }
