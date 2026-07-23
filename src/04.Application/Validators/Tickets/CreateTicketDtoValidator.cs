@@ -11,10 +11,12 @@ namespace SupportTicketSystem.Application.Validators
                 .NotEmpty().WithMessage("Customer name is required.");
 
             RuleFor(x => x.CustomerEmail)
+                .Cascade(CascadeMode.Stop)
                 .NotEmpty().WithMessage("Customer email is required.")
                 .EmailAddress().WithMessage("A valid email address is required.");
 
             RuleFor(x => x.Title)
+                .Cascade(CascadeMode.Stop)
                 .NotEmpty().WithMessage("Issue title is required.")
                 .MaximumLength(100).WithMessage("Title cannot exceed 100 characters.");
 

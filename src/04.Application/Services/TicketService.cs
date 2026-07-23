@@ -6,6 +6,7 @@ using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Shared.Exceptions;
 using AutoMapper;
 using SupportTicketSystem.Shared.Models;
+using FluentValidation;
 
 namespace SupportTicketSystem.Application.Services
 {
@@ -13,11 +14,15 @@ namespace SupportTicketSystem.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IValidator<CreateTicketDto> _createTicketValidator;
+        private readonly IValidator<UpdateTicketDto> _updateTicketValidator;
 
-        public TicketService(IUnitOfWork unitOfWork, IMapper mapper)
+        public TicketService(IUnitOfWork unitOfWork, IMapper mapper, IValidator<CreateTicketDto> createTicketValidator, IValidator<UpdateTicketDto> updateTicketValidator)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _createTicketValidator = createTicketValidator;
+            _updateTicketValidator = updateTicketValidator;
         }
 
         public async Task<TicketDto> GetTicketByIdAsync(Guid id)
@@ -53,6 +58,8 @@ namespace SupportTicketSystem.Application.Services
 
         public async Task<TicketDto> CreateTicketAsync(CreateTicketDto dto)
         {
+            await _createTicketValidator.ValidateAndThrowAsync(dto);
+
             var ticket = _mapper.Map<Ticket>(dto);
             ticket.Id = Guid.NewGuid();
             ticket.Status = TicketStatus.Open;
@@ -71,6 +78,8 @@ namespace SupportTicketSystem.Application.Services
 
         public async Task UpdateTicketAsync(Guid id, UpdateTicketDto dto)
         {
+            await _updateTicketValidator.ValidateAndThrowAsync(dto);
+
             var ticket = await GetAndValidateTicket(id);
 
             // Business Rule: Closed tickets cannot be modified
