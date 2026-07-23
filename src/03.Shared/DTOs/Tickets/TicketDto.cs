@@ -1,4 +1,5 @@
 ﻿using SupportTicketSystem.Domain.Enums;
+using System.Text.Json.Serialization;
 
 namespace SupportTicketSystem.Shared.DTOs.Tickets
 {
@@ -10,6 +11,8 @@ namespace SupportTicketSystem.Shared.DTOs.Tickets
         public string CustomerEmail { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public TicketStatus Status { get; set; } = TicketStatus.Open;
         public Guid? AssignedTo { get; set; }
         public DateTime CreatedAt { get; set; }

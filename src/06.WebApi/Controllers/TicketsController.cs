@@ -11,7 +11,7 @@ using System.Linq;
 
 namespace SupportTicketSystem.WebApi.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [ApiController]
     [Route(ApiRoutes.Tickets.Base)]
     [Produces("application/json")]
@@ -30,7 +30,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <returns>A list of all tickets.</returns>
         /// <response code="200">Returns the list of tickets successfully.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
-        [Authorize(Roles = "Manager")]
+        //[Authorize(Roles = "Manager")]
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]

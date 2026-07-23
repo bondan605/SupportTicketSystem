@@ -14,7 +14,6 @@ builder.Services.AddControllers()
 
 builder.Services.AddControllers();
 
-builder.Services.AddApiVersioningConfiguration();
 builder.Services.AddSwaggerDocumentation();
 
 var app = builder.Build();

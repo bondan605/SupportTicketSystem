@@ -2,7 +2,7 @@
 {
     public static class ApiRoutes
     {
-        private const string BaseApi = "api/v{version:apiVersion}";
+        private const string BaseApi = "api";
 
         public static class Auth
         {

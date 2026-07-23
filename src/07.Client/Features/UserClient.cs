@@ -17,7 +17,24 @@ namespace SupportTicketSystem.Client.Clients
 
         public async Task<ApiResponse<IEnumerable<UserDto>>> GetAllAgentsAsync()
         {
-            return await _httpClient.GetFromJsonAsync<ApiResponse<IEnumerable<UserDto>>>(ApiRoutes.Users.Base) ?? new ApiResponse<IEnumerable<UserDto>> { Success = false };
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<ApiResponse<IEnumerable<UserDto>>>(ApiRoutes.Users.Base);
+
+                return response ?? new ApiResponse<IEnumerable<UserDto>>
+                {
+                    Success = false,
+                    Message = "No response received from the server."
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<UserDto>>
+                {
+                    Success = false,
+                    Message = $"Client Error: {ex.Message}"
+                };
+            }
         }
     }
 }
