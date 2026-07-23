@@ -1,103 +1,133 @@
 @page "/login"
-@using System.ComponentModel.DataAnnotations
-@using System.Net.Http.Json
-@inject HttpClient Http
-@inject NavigationManager Navigation
+@layout Layout.AuthLayout
+@using FluentValidation
+@using SupportTicketSystem.Shared.DTOs.Auth
+@using SupportTicketSystem.Domain.Enums
+@using SupportTicketSystem.Client.Features.Interfaces
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
-    <MudPaper Elevation="3" Class="pa-8">
+@inject IAuthClient AuthClient
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
-        <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-2 font-bold">
-            Sign In
-        </MudText>
-        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-8 text-gray-500">
-            Support Ticket Management System
-        </MudText>
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center mud-width-full" Style="height: 100vh;">
+    <MudCard Elevation="4" Class="pa-6" Width="100%">
+        <MudCardHeader Class="d-flex justify-center pb-0">
+            <CardHeaderContent>
+                <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Primary" Class="mb-2">
+                    <b>Obscura</b> Support
+                </MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">
+                    Sign in to access your workspace
+                </MudText>
+            </CardHeaderContent>
+        </MudCardHeader>
 
-        <EditForm Model="@_loginRequest" OnValidSubmit="HandleLoginAsync">
-            <DataAnnotationsValidator />
+        <MudCardContent>
+            <MudForm Model="@_model" @ref="_form" Validation="@(_loginValidator.ValidateValue)" ValidationDelay="0">
+                <MudTextField @bind-Value="_model.Email"
+                              For="@(() => _model.Email)"
+                              Label="Email Address"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Class="mb-4"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.Email" />
 
-            @if (!string.IsNullOrEmpty(_errorMessage))
-            {
-                <MudAlert Severity="Severity.Error" Class="mb-4">@_errorMessage</MudAlert>
-            }
+                <MudTextField @bind-Value="_model.Password"
+                              For="@(() => _model.Password)"
+                              Label="Password"
+                              Variant="Variant.Outlined"
+                              InputType="InputType.Password"
+                              Margin="Margin.Dense"
+                              Class="mb-4"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.Lock" />
+            </MudForm>
+        </MudCardContent>
 
-            <MudTextField @bind-Value="_loginRequest.Email"
-                          For="@(() => _loginRequest.Email)"
-                          Label="Email Address"
-                          Variant="Variant.Outlined"
-                          Margin="Margin.Normal"
-                          Disabled="@_isLoading"
-                          Immediate="true" />
-
-            <MudTextField @bind-Value="_loginRequest.Password"
-                          For="@(() => _loginRequest.Password)"
-                          Label="Password"
-                          InputType="InputType.Password"
-                          Variant="Variant.Outlined"
-                          Margin="Margin.Normal"
-                          Disabled="@_isLoading"
-                          Immediate="true" />
-
-            <MudButton ButtonType="ButtonType.Submit"
+        <MudCardActions Class="d-flex flex-column px-4 pb-4">
+            <MudButton OnClick="HandleLoginAsync"
                        Variant="Variant.Filled"
                        Color="Color.Primary"
                        Size="Size.Large"
                        FullWidth="true"
-                       Class="mt-6"
                        Disabled="@_isLoading">
                 @if (_isLoading)
                 {
                     <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-                    <MudText Class="ms-2">Processing...</MudText>
+                    <MudText Class="ms-2">Authenticating...</MudText>
                 }
                 else
                 {
                     <MudText>Sign In</MudText>
                 }
             </MudButton>
-        </EditForm>
-    </MudPaper>
+        </MudCardActions>
+    </MudCard>
 </MudContainer>
 
 @code {
-    // DTO instance to hold form data
-    private LoginRequestDto _loginRequest = new();
+    private MudForm _form = null!;
+    private readonly LoginRequestDto _model = new();
+    private readonly LoginRequestDtoValidator _loginValidator = new();
+    private bool _isLoading = false;
 
-    // UI state for loading indicators and error messages
-    private bool _isLoading;
-    private string? _errorMessage;
-
-    /// <summary>
-    /// Handles the form submission when client-side validation succeeds.
-    /// Calls the POST /api/auth/login endpoint.
-    /// </summary>
     private async Task HandleLoginAsync()
     {
+        await _form.ValidateAsync();
+        if (!_form.IsValid)
+        {
+            return;
+        }
+
         _isLoading = true;
-        _errorMessage = null;
 
         try
         {
-            // Call Backend API using the injected HttpClient
-            var response = await Http.PostAsJsonAsync("/api/auth/login", _loginRequest);
+            // --- TEMPORARY MOCK / DUMMY DATA ---
+            // Uncomment the line below and remove the mock data when the backend auth is ready
+            // var response = await AuthClient.LoginAsync(_model);
 
-            if (response.IsSuccessStatusCode)
+            // 1. Simulate network latency for UI testing
+            await Task.Delay(1500);
+
+            // 2. Determine dummy role based on email input for testing flexibility
+            UserRole dummyRole = _model.Email.Contains("manager", StringComparison.OrdinalIgnoreCase)
+                                 ? UserRole.Manager
+                                 : (UserRole)2; // Assuming 2 or anything else is Agent/Support
+
+            // 3. Create dummy response
+            var response = new LoginResponseDto
             {
-                // TODO: Save JWT Token (e.g., to LocalStorage or via Custom AuthenticationStateProvider)
+                UserId = Guid.NewGuid(),
+                Name = "Mock User",
+                Email = _model.Email,
+                Role = dummyRole,
+                Token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_token_payload.signature_12345"
+            };
+            // --- END OF MOCK DATA ---
 
-                // Navigate to dashboard or ticket list upon success
-                Navigation.NavigateTo("/tickets");
+            if (response != null && !string.IsNullOrEmpty(response.Token))
+            {
+                Snackbar.Add("Login successful (Mock Mode)", MudBlazor.Severity.Success);
+
+                if (response.Role == UserRole.Manager)
+                {
+                    NavigationManager.NavigateTo("/dashboard");
+                }
+                else
+                {
+                    NavigationManager.NavigateTo("/tickets");
+                }
             }
             else
             {
-                _errorMessage = "Invalid credentials or server error. Please try again.";
+                Snackbar.Add("Invalid credentials. Please try again.", MudBlazor.Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            _errorMessage = "Unable to connect to the server. Please check your internet connection.";
-            Console.WriteLine(ex.Message); // Internal logging
+            Snackbar.Add($"Authentication failed: {ex.Message}", MudBlazor.Severity.Error);
         }
         finally
         {
@@ -105,17 +135,24 @@
         }
     }
 
-    /// <summary>
-    /// Data Transfer Object (DTO) for login requests.
-    /// Note: Following Clean Architecture, this should eventually be moved to the 03.Shared project.
-    /// </summary>
-    public class LoginRequestDto
+    public class LoginRequestDtoValidator : AbstractValidator<LoginRequestDto>
     {
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Invalid email format.")]
-        public string Email { get; set; } = string.Empty;
+        public LoginRequestDtoValidator()
+        {
+            RuleFor(x => x.Email)
+                .NotEmpty().WithMessage("Email is required.")
+                .EmailAddress().WithMessage("Please enter a valid email format.");
 
-        [Required(ErrorMessage = "Password is required.")]
-        public string Password { get; set; } = string.Empty;
+            RuleFor(x => x.Password)
+                .NotEmpty().WithMessage("Password is required.");
+        }
+
+        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
+        {
+            var result = await ValidateAsync(ValidationContext<LoginRequestDto>.CreateWithOptions((LoginRequestDto)model, x => x.IncludeProperties(propertyName)));
+            if (result.IsValid)
+                return Array.Empty<string>();
+            return result.Errors.Select(e => e.ErrorMessage);
+        };
     }
 }

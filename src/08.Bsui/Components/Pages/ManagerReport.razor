@@ -1,0 +1,290 @@
+﻿@page "/manager-report"
+@using Microsoft.AspNetCore.Authorization
+@using SupportTicketSystem.Shared.DTOs.Tickets
+@using SupportTicketSystem.Shared.DTOs.Users
+@using SupportTicketSystem.Shared.Models
+@using SupportTicketSystem.Domain.Enums
+@* Sesuaikan namespace Client Interface di bawah ini dengan struktur asli Anda *@
+@using SupportTicketSystem.Client.Features.Interfaces
+@using MudBlazor
+
+@* Protect this route at the framework level (Bypass sementara jika API Auth belum siap) *@
+@* @attribute [Authorize(Roles = "Manager")] *@
+
+@inject ITicketClient TicketClient
+@inject IUserClient UserClient
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <div class="mb-6">
+        <MudText Typo="Typo.h4" Color="Color.Primary"><b>Manager Report</b></MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary">Comprehensive view of all customer support tickets.</MudText>
+    </div>
+
+    @* Dense, Hover, and Outlined table matching our minimalist enterprise guidelines.
+       ServerData handles the pagination and data fetching.
+    *@
+    <MudTable ServerData="ServerReloadAsync"
+              @ref="_table"
+              Dense="true"
+              Hover="true"
+              Outlined="true"
+              Elevation="0"
+              Loading="@_isLoading">
+
+        <ToolBarContent>
+            <MudGrid Spacing="2" Class="mb-2 align-center w-100">
+                <MudItem xs="12" md="4">
+                    <MudTextField T="string"
+                                  ValueChanged="@(s => OnSearch(s))"
+                                  Placeholder="Search Customer or Ticket (e.g. TKT-00001)"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  IconSize="Size.Medium"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Clearable="true" />
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudSelect T="TicketStatus?"
+                               Value="@_selectedStatus"
+                               ValueChanged="OnStatusChanged"
+                               Label="Filter by Status"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Clearable="true">
+                        @foreach (TicketStatus status in Enum.GetValues(typeof(TicketStatus)))
+                        {
+                            <MudSelectItem T="TicketStatus?" Value="@status">@status.ToString()</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    @* Catatan: Tipe Guid? digunakan karena ITicketClient meminta Guid?.
+                        Ada ketidaksesuaian tipe (int vs Guid) dengan UserDto.UserId.
+                    *@
+                    <MudSelect T="Guid?"
+                               Value="@_selectedAgentId"
+                               ValueChanged="OnAgentChanged"
+                               Label="Filter by Agent"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Clearable="true">
+                        @foreach (var agent in _agentList)
+                        {
+                            <MudSelectItem T="Guid?" Value="@(agent.Id)">
+                                @agent.Name
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="2" Class="d-flex justify-end">
+                    <MudButton Variant="Variant.Outlined"
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               Color="Color.Primary"
+                               OnClick="@(() => _table.ReloadServerData())">
+                        Refresh
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </ToolBarContent>
+
+        <HeaderContent>
+            <MudTh>Ticket No.</MudTh>
+            <MudTh>Customer</MudTh>
+            <MudTh>Title</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Created At</MudTh>
+            <MudTh Style="text-align: right;">Actions</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="Ticket No."><b>@context.TicketNumber</b></MudTd>
+            <MudTd DataLabel="Customer">
+                <div>@context.CustomerName</div>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@context.CustomerEmail</MudText>
+            </MudTd>
+            <MudTd DataLabel="Title">@context.Title</MudTd>
+            <MudTd DataLabel="Status">
+                <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Status)">
+                    @context.Status.ToString()
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Created At">@context.CreatedAt.ToString("MMM dd, yyyy HH:mm")</MudTd>
+            <MudTd DataLabel="Actions" Style="text-align: right;">
+                <MudTooltip Text="Assign Agent">
+                    <MudIconButton Icon="@Icons.Material.Filled.PersonAdd"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="@(() => OpenAssignDialogAsync(context))" />
+                </MudTooltip>
+                <MudTooltip Text="Edit Ticket">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Warning"
+                                   Size="Size.Small"
+                                   OnClick="@(() => OpenEditDialogAsync(context))" />
+                </MudTooltip>
+                <MudTooltip Text="View Details">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                   Color="Color.Info"
+                                   Size="Size.Small"
+                                   OnClick="@(() => OpenDetailsDialogAsync(context))" />
+                </MudTooltip>
+            </MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText Align="Align.Center" Class="py-4">No tickets found matching your criteria.</MudText>
+        </NoRecordsContent>
+
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+
+</MudContainer>
+
+@code {
+    private MudTable<TicketDto> _table = null!;
+    private bool _isLoading = false;
+
+    // Filter States
+    private string? _searchString;
+    private TicketStatus? _selectedStatus;
+    private Guid? _selectedAgentId;
+
+    // Data dari API via IUserClient
+    private List<UserDto> _agentList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAgentsAsync();
+    }
+
+    private async Task LoadAgentsAsync()
+    {
+        try
+        {
+            var response = await UserClient.GetAllAgentsAsync();
+            if (response != null && response.Success && response.Data != null)
+            {
+                _agentList = response.Data.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load agents: {ex.Message}", MudBlazor.Severity.Warning);
+        }
+    }
+
+    /// <summary>
+    /// This method bridges MudBlazor's TableState with your custom PagedRequest and ITicketClient.
+    /// </summary>
+    private async Task<TableData<TicketDto>> ServerReloadAsync(TableState state, CancellationToken token)
+    {
+        _isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // 1. Map MudBlazor state to your PagedRequest DTO
+            var request = new PagedRequest
+            {
+                PageNumber = state.Page + 1, // MudBlazor is 0-indexed, your PagedRequest starts at 1
+                PageSize = state.PageSize
+            };
+
+            var statusFilter = _selectedStatus?.ToString();
+
+            // 2. Fetch data from the Client layer
+            var response = await TicketClient.GetFilteredTicketsAsync(statusFilter, _selectedAgentId, request);
+
+            // Pastikan tidak null
+            IEnumerable<TicketDto> data = response?.Items ?? Array.Empty<TicketDto>();
+
+            // 3. Client-side search application
+            if (!string.IsNullOrWhiteSpace(_searchString))
+            {
+                data = data.Where(x =>
+                    x.TicketNumber.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ||
+                    x.CustomerName.Contains(_searchString, StringComparison.OrdinalIgnoreCase)
+                );
+            }
+
+            return new TableData<TicketDto> { TotalItems = response?.TotalCount ?? 0, Items = data };
+        }
+        catch (Exception ex)
+        {
+            // Ditambahkan pengecekan log spesifik untuk kemudahan debugging (misal: 401 Unauthorized)
+            Snackbar.Add($"Error loading tickets: {ex.Message}", MudBlazor.Severity.Error);
+            return new TableData<TicketDto> { TotalItems = 0, Items = Array.Empty<TicketDto>() };
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // --- Filter Event Handlers ---
+
+    private void OnSearch(string text)
+    {
+        _searchString = text;
+        _table.ReloadServerData();
+    }
+
+    private void OnStatusChanged(TicketStatus? status)
+    {
+        _selectedStatus = status;
+        _table.ReloadServerData();
+    }
+
+    private void OnAgentChanged(Guid? agentId)
+    {
+        _selectedAgentId = agentId;
+        _table.ReloadServerData();
+    }
+
+    // --- Action Dialog Triggers ---
+
+    private async Task OpenAssignDialogAsync(TicketDto ticket)
+    {
+        var parameters = new DialogParameters { ["TicketId"] = ticket.Id, ["CurrentAssignee"] = ticket.AssignedTo };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        await DialogService.ShowMessageBoxAsync("Assign Action", $"Modal to assign {ticket.TicketNumber} would open here.");
+    }
+
+    private async Task OpenEditDialogAsync(TicketDto ticket)
+    {
+        var parameters = new DialogParameters { ["TicketId"] = ticket.Id };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        await DialogService.ShowMessageBoxAsync("Edit Action", $"Modal to edit {ticket.TicketNumber} would open here.");
+    }
+
+    private async Task OpenDetailsDialogAsync(TicketDto ticket)
+    {
+        var parameters = new DialogParameters { ["Ticket"] = ticket };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        await DialogService.ShowMessageBoxAsync("Details Action", $"Modal to view {ticket.TicketNumber} details would open here.");
+    }
+
+    // --- UI Helpers ---
+
+    private Color GetStatusColor(TicketStatus status)
+    {
+        return status switch
+        {
+            TicketStatus.Open => Color.Info,
+            TicketStatus.InProgress => Color.Warning,
+            TicketStatus.Resolved => Color.Success,
+            TicketStatus.Closed => Color.Dark,
+            _ => Color.Default
+        };
+    }
+}
