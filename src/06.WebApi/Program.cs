@@ -1,3 +1,4 @@
+using SupportTicketSystem.Application;
 using SupportTicketSystem.Infrastructure;
 using SupportTicketSystem.WebApi.Extensions;
 
@@ -8,6 +9,7 @@ builder.Services.AddApiVersioningConfiguration();
 builder.Services.AddSwaggerDocumentation();
 
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
 
 var app = builder.Build();
 
