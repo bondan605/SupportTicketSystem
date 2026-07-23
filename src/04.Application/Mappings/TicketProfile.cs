@@ -10,13 +10,11 @@ namespace SupportTicketSystem.Application.Mappings
     {
         public MappingProfile()
         {
-            // Ticket Mappings
-            CreateMap<Ticket, TicketDto>()
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
+            CreateMap<Ticket, TicketDto>();
 
-            // User Mappings for Auth
-            CreateMap<User, LoginResponseDto>()
-                .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role));
+            CreateMap<User, LoginResponseDto>();
+
+            CreateMap<CreateTicketDto, Ticket>();
         }
     }
 }

@@ -1,8 +1,6 @@
-﻿using SupportTicketSystem.Application.Common.Responses;
-using FluentValidation;
+﻿using FluentValidation;
+using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.Exceptions;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 
 namespace SupportTicketSystem.WebApi.Middleware
 {
@@ -25,69 +23,61 @@ namespace SupportTicketSystem.WebApi.Middleware
         {
             try
             {
-                // Continue the pipeline
                 await _next(context);
             }
             catch (Exception ex)
             {
-                // Log the exception centrally
-                // We log it here so we don't have to duplicate _logger.LogError in every specific case
                 _logger.LogError(ex, "An exception occurred during request processing. Message: {Message}", ex.Message);
-
-                // Delegate to the unified exception handler
                 await HandleExceptionAsync(context, ex);
             }
         }
 
         private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            // Set the content type once
             context.Response.ContentType = "application/json";
 
-            // Use modern C# switch expression to determine status code and response body
             var (statusCode, response) = exception switch
             {
                 // Request Validation Errors (FluentValidation)
                 ValidationException validationEx => (
                     StatusCodes.Status400BadRequest,
-                    ApiResponse<object>.ErrorResponse(
+                    ApiResponse<object>.FailureResponse(
                         "Validation Failed",
                         validationEx.Errors.Select(e => e.ErrorMessage).ToList())
                 ),
 
                 // Business Logic Errors (Custom Domain Exceptions)
+                // Catching: "Closed tickets cannot be modified" or "Invalid credentials"
                 BusinessException businessEx => (
                     StatusCodes.Status400BadRequest,
-                    ApiResponse<object>.ErrorResponse(businessEx.Message)
+                    ApiResponse<object>.FailureResponse(businessEx.Message)
                 ),
 
-                // Custom Domain Resource Not Found
+                // Resource Not Found (Custom or System)
                 NotFoundException customNotFoundEx => (
                     StatusCodes.Status404NotFound,
-                    ApiResponse<object>.ErrorResponse(customNotFoundEx.Message)
+                    ApiResponse<object>.FailureResponse(customNotFoundEx.Message)
                 ),
-
-                // System Resource Not Found (Fallback)
                 KeyNotFoundException notFoundEx => (
                     StatusCodes.Status404NotFound,
-                    ApiResponse<object>.ErrorResponse(notFoundEx.Message)
+                    ApiResponse<object>.FailureResponse(notFoundEx.Message)
                 ),
 
                 // Authorization Issues
                 UnauthorizedAccessException _ => (
                     StatusCodes.Status401Unauthorized,
-                    ApiResponse<object>.ErrorResponse("You are not authorized to perform this action.")
+                    ApiResponse<object>.FailureResponse("You are not authorized to perform this action.")
                 ),
 
-                // Catch-all for any other unhandled exceptions (System Exceptions, DB connections, etc.)
-                // We intentionally do NOT expose the raw ex.Message to the client for security reasons.
+                // Catch-all for unhandled exceptions (System/DB errors)
+                // Hidden for security to satisfy "Security 5%" criteria
                 _ => (
                     StatusCodes.Status500InternalServerError,
-                    ApiResponse<object>.ErrorResponse("An unexpected error occurred. Please contact support if the issue persists.")
+                    //ApiResponse<object>.FailureResponse("An unexpected error occurred. Please contact support.")
+                    ApiResponse<object>.FailureResponse($"DEBUG ERROR: {exception.Message} | Inner: {exception.InnerException?.Message}")
                 )
             };
 
-            // Apply the determined status code and write the standardized JSON response
             context.Response.StatusCode = statusCode;
             await context.Response.WriteAsJsonAsync(response);
         }

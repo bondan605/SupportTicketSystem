@@ -19,12 +19,10 @@ namespace SupportTicketSystem.Application.Services
 
         public async Task<LoginResponseDto> LoginAsync(LoginRequestDto dto)
         {
-            // [Lead Decision] Check if user exists by email
             var user = await _unitOfWork.Users.GetByEmailAsync(dto.Email);
 
             if (user == null)
             {
-                // Professional error handling instead of generic 500
                 throw new BusinessException("Invalid email or password.");
             }
 

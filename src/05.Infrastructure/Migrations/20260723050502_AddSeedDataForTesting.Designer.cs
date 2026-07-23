@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SupportTicketSystem.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using SupportTicketSystem.Infrastructure.Persistence;
 namespace SupportTicketSystem.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260723050502_AddSeedDataForTesting")]
+    partial class AddSeedDataForTesting
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -81,67 +84,6 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Tickets", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("e1111111-1111-1111-1111-111111111111"),
-                            CreatedAt = new DateTime(2026, 7, 22, 5, 50, 53, 594, DateTimeKind.Utc).AddTicks(87),
-                            CustomerEmail = "john@client.com",
-                            CustomerName = "John Doe",
-                            Description = "Urgent: Server is not responding.",
-                            Status = "Open",
-                            TicketNumber = "TKT-00001",
-                            Title = "System Down"
-                        },
-                        new
-                        {
-                            Id = new Guid("e2222222-2222-2222-2222-222222222222"),
-                            AssignedTo = new Guid("b2c3d4e5-f6a7-4b6c-9d0e-1f2a3b4c5d6e"),
-                            CreatedAt = new DateTime(2026, 7, 22, 17, 50, 53, 594, DateTimeKind.Utc).AddTicks(106),
-                            CustomerEmail = "jane@client.com",
-                            CustomerName = "Jane Smith",
-                            Description = "Button color is wrong on dark mode.",
-                            Status = "InProgress",
-                            TicketNumber = "TKT-00002",
-                            Title = "UI Bug"
-                        },
-                        new
-                        {
-                            Id = new Guid("e3333333-3333-3333-3333-333333333333"),
-                            AssignedTo = new Guid("b2c3d4e5-f6a7-4b6c-9d0e-1f2a3b4c5d6e"),
-                            CreatedAt = new DateTime(2026, 7, 20, 5, 50, 53, 594, DateTimeKind.Utc).AddTicks(110),
-                            CustomerEmail = "mark@client.com",
-                            CustomerName = "Mark Lee",
-                            Description = "User forgot password.",
-                            Status = "Closed",
-                            TicketNumber = "TKT-00003",
-                            Title = "Password Reset"
-                        },
-                        new
-                        {
-                            Id = new Guid("939be3ad-6997-4e92-9724-e06191b9978c"),
-                            AssignedTo = new Guid("e5f6a7b8-c9d0-4e1f-b2a3-b4c5d6e7f8a9"),
-                            CreatedAt = new DateTime(2026, 7, 23, 0, 50, 53, 594, DateTimeKind.Utc).AddTicks(138),
-                            CustomerEmail = "emily@client.com",
-                            CustomerName = "Emily Blunt",
-                            Description = "Credit card rejected.",
-                            Status = "InProgress",
-                            TicketNumber = "TKT-00004",
-                            Title = "Payment Issue"
-                        },
-                        new
-                        {
-                            Id = new Guid("1d9c3923-e771-4b54-8a3c-c8955f18b35f"),
-                            AssignedTo = new Guid("b2c3d4e5-f6a7-4b6c-9d0e-1f2a3b4c5d6e"),
-                            CreatedAt = new DateTime(2026, 7, 21, 5, 50, 53, 594, DateTimeKind.Utc).AddTicks(141),
-                            CustomerEmail = "kevin@client.com",
-                            CustomerName = "Kevin Hart",
-                            Description = "CSV export is empty.",
-                            Status = "Resolved",
-                            TicketNumber = "TKT-00005",
-                            Title = "Export Failure"
-                        });
                 });
 
             modelBuilder.Entity("SupportTicketSystem.Domain.Entities.TicketHistory", b =>
@@ -191,39 +133,6 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                     b.HasIndex("TicketId");
 
                     b.ToTable("TicketHistories", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("e5bd5fc0-5a77-486e-bc93-c7bfef492444"),
-                            Action = "Created",
-                            ChangedBy = new Guid("a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(5360),
-                            NewStatus = "Open",
-                            TicketId = new Guid("e1111111-1111-1111-1111-111111111111"),
-                            Timestamp = new DateTime(2026, 7, 22, 5, 50, 53, 594, DateTimeKind.Utc).AddTicks(5379)
-                        },
-                        new
-                        {
-                            Id = new Guid("0e669024-e40b-4a0f-a80d-a2874fff6f57"),
-                            Action = "Assigned",
-                            ChangedBy = new Guid("c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(5381),
-                            NewStatus = "InProgress",
-                            TicketId = new Guid("e2222222-2222-2222-2222-222222222222"),
-                            Timestamp = new DateTime(2026, 7, 22, 19, 50, 53, 594, DateTimeKind.Utc).AddTicks(5383)
-                        },
-                        new
-                        {
-                            Id = new Guid("e512de76-4d2e-4845-a3f5-f1fa7d06650c"),
-                            Action = "StatusChanged",
-                            ChangedBy = new Guid("b2c3d4e5-f6a7-4b6c-9d0e-1f2a3b4c5d6e"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(5385),
-                            NewStatus = "Closed",
-                            PreviousStatus = "InProgress",
-                            TicketId = new Guid("e3333333-3333-3333-3333-333333333333"),
-                            Timestamp = new DateTime(2026, 7, 23, 3, 50, 53, 594, DateTimeKind.Utc).AddTicks(5387)
-                        });
                 });
 
             modelBuilder.Entity("SupportTicketSystem.Domain.Entities.User", b =>
@@ -274,7 +183,7 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(7621),
+                            CreatedAt = new DateTime(2026, 7, 23, 12, 5, 1, 19, DateTimeKind.Local).AddTicks(7029),
                             Email = "azwar@support.com",
                             Name = "Azwar Manager",
                             PasswordHash = "hashed_pass",
@@ -283,7 +192,7 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("c3d4e5f6-a7b8-4c9d-8e1f-2a3b4c5d6e7f"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(7630),
+                            CreatedAt = new DateTime(2026, 7, 23, 12, 5, 1, 19, DateTimeKind.Local).AddTicks(7057),
                             Email = "sarah.m@support.com",
                             Name = "Sarah Miller",
                             PasswordHash = "hashed_pass",
@@ -292,7 +201,7 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("d4e5f6a7-b8c9-4d0e-9f2a-3b4c5d6e7f8a"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(7631),
+                            CreatedAt = new DateTime(2026, 7, 23, 12, 5, 1, 19, DateTimeKind.Local).AddTicks(7060),
                             Email = "david.c@support.com",
                             Name = "David Chen",
                             PasswordHash = "hashed_pass",
@@ -301,7 +210,7 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("b2c3d4e5-f6a7-4b6c-9d0e-1f2a3b4c5d6e"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(7634),
+                            CreatedAt = new DateTime(2026, 7, 23, 12, 5, 1, 19, DateTimeKind.Local).AddTicks(7062),
                             Email = "budi@support.com",
                             Name = "Budi Agent",
                             PasswordHash = "hashed_pass",
@@ -310,7 +219,7 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("e5f6a7b8-c9d0-4e1f-b2a3-b4c5d6e7f8a9"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(7636),
+                            CreatedAt = new DateTime(2026, 7, 23, 12, 5, 1, 19, DateTimeKind.Local).AddTicks(7064),
                             Email = "alice.j@support.com",
                             Name = "Alice Johnson",
                             PasswordHash = "hashed_pass",
@@ -319,7 +228,7 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("f6a7b8c9-d0e1-4f2a-c3b4-c5d6e7f8a9b0"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(7637),
+                            CreatedAt = new DateTime(2026, 7, 23, 12, 5, 1, 19, DateTimeKind.Local).AddTicks(7065),
                             Email = "robert.s@support.com",
                             Name = "Robert Smith",
                             PasswordHash = "hashed_pass",
@@ -328,7 +237,7 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(7640),
+                            CreatedAt = new DateTime(2026, 7, 23, 12, 5, 1, 19, DateTimeKind.Local).AddTicks(7067),
                             Email = "emily.d@support.com",
                             Name = "Emily Davis",
                             PasswordHash = "hashed_pass",
@@ -337,7 +246,7 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("1b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(7642),
+                            CreatedAt = new DateTime(2026, 7, 23, 12, 5, 1, 19, DateTimeKind.Local).AddTicks(7068),
                             Email = "michael.b@support.com",
                             Name = "Michael Brown",
                             PasswordHash = "hashed_pass",
@@ -346,7 +255,7 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("2c3d4e5f-6a7b-8c9d-0e1f-2a3b4c5d6e7f"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(7645),
+                            CreatedAt = new DateTime(2026, 7, 23, 12, 5, 1, 19, DateTimeKind.Local).AddTicks(7070),
                             Email = "jessica.w@support.com",
                             Name = "Jessica Wilson",
                             PasswordHash = "hashed_pass",
@@ -355,7 +264,7 @@ namespace SupportTicketSystem.Infrastructure.Migrations
                         new
                         {
                             Id = new Guid("3d4e5f6a-7b8c-9d0e-1f2a-3b4c5d6e7f8a"),
-                            CreatedAt = new DateTime(2026, 7, 23, 12, 50, 53, 594, DateTimeKind.Local).AddTicks(7647),
+                            CreatedAt = new DateTime(2026, 7, 23, 12, 5, 1, 19, DateTimeKind.Local).AddTicks(7071),
                             Email = "kevin.l@support.com",
                             Name = "Kevin Lee",
                             PasswordHash = "hashed_pass",
