@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TicketManagement.Domain.Entities;
+using SupportTicketSystem.Domain.Entities;
 
 namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
 {

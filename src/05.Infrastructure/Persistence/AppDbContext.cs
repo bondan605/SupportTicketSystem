@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SupportTicketSystem.Base.Entities;
 using SupportTicketSystem.Domain.Entities;
-using TicketManagement.Domain.Entities;
 
 namespace SupportTicketSystem.Infrastructure.Persistence
 {
