@@ -1,12 +1,65 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SupportTicketSystem.Client.Features.Interfaces;
+using SupportTicketSystem.Shared.Constants;
+using SupportTicketSystem.Shared.DTOs;
+using SupportTicketSystem.Shared.DTOs.Tickets;
+using SupportTicketSystem.Shared.Models;
+using System.Net.Http.Json;
 
-namespace SupportTicketSystem.Client.Features
+namespace SupportTicketSystem.Client.Features;
+
+public class TicketClient : ITicketClient
 {
-    public class TicketClient
+    private readonly HttpClient _httpClient;
+
+    public TicketClient(HttpClient httpClient) => _httpClient = httpClient;
+
+    public async Task<ApiResponse<TicketDto>> GetTicketByIdAsync(Guid id)
     {
+        return await _httpClient.GetFromJsonAsync<ApiResponse<TicketDto>>($"{ApiRoutes.Tickets.Base}/{id}") ?? new ApiResponse<TicketDto> { Success = false };
+    }
+
+    public async Task<PagedResult<TicketDto>> GetAllTicketsAsync(PagedRequest request)
+    {
+        var url = $"{ApiRoutes.Tickets.Base}?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
+        var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<TicketDto>>>(url);
+        return response?.Data ?? new PagedResult<TicketDto>();
+    }
+
+    public async Task<PagedResult<TicketDto>> GetFilteredTicketsAsync(string? status, Guid? assignedTo, PagedRequest request)
+    {
+        var url = $"{ApiRoutes.Tickets.Report}?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
+
+        if (!string.IsNullOrEmpty(status))
+            url += $"&status={Uri.EscapeDataString(status)}";
+
+        if (assignedTo.HasValue)
+            url += $"&assignedTo={assignedTo.Value}";
+
+        var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<TicketDto>>>(url);
+        return response?.Data ?? new PagedResult<TicketDto>();
+    }
+
+    public async Task<ApiResponse<object>> CreateTicketAsync(CreateTicketDto dto)
+    {
+        var response = await _httpClient.PostAsJsonAsync(ApiRoutes.Tickets.Base, dto);
+        return await response.Content.ReadFromJsonAsync<ApiResponse<object>>() ?? new ApiResponse<object> { Success = false };
+    }
+
+    public async Task<ApiResponse<object>> UpdateTicketAsync(Guid id, UpdateTicketDto dto)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"{ApiRoutes.Tickets.Base}/{id}", dto);
+        return await response.Content.ReadFromJsonAsync<ApiResponse<object>>() ?? new ApiResponse<object> { Success = false };
+    }
+
+    public async Task<ApiResponse<object>> DeleteTicketAsync(Guid id)
+    {
+        var response = await _httpClient.DeleteAsync($"{ApiRoutes.Tickets.Base}/{id}");
+        return await response.Content.ReadFromJsonAsync<ApiResponse<object>>() ?? new ApiResponse<object> { Success = false };
+    }
+
+    public async Task<ApiResponse<object>> AssignTicketAsync(Guid ticketId, Guid userId)
+    {
+        var response = await _httpClient.PutAsJsonAsync(ApiRoutes.Tickets.Assign.Replace("{id}", ticketId.ToString()), new { userId });
+        return await response.Content.ReadFromJsonAsync<ApiResponse<object>>() ?? new ApiResponse<object> { Success = false };
     }
 }
