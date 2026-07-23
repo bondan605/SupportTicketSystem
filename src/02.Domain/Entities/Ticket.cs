@@ -12,6 +12,8 @@ namespace SupportTicketSystem.Domain.Entities
         public string Description { get; set; } = string.Empty;
         public TicketStatus Status { get; set; }
         public Guid? AssignedTo { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime? UpdatedDate { get; set; }
 
         // Navigation property
         public virtual User? Assignee { get; set; }
