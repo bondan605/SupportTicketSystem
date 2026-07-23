@@ -7,6 +7,7 @@ namespace SupportTicketSystem.Domain.Entities
     {
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public required string PasswordHash { get; set; }
         public UserRole Role { get; set; }
 
         // Navigation property for tickets assigned to this user
