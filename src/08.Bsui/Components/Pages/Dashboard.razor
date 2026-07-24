@@ -15,7 +15,7 @@
     <div style="height: 4px;" class="mb-4">
         @if (_isLoading)
         {
-            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+            <MudProgressLinear Indeterminate="true" Color="Color.Primary" />     
         }
     </div>
 
@@ -25,13 +25,22 @@
             <MudText Typo="Typo.h4" Color="Color.Primary"><b>Dashboard</b></MudText>
             <MudText Typo="Typo.body1" Color="Color.Secondary">Selamat datang kembali, @_managerName! Berikut adalah ringkasan sistem saat ini.</MudText>
         </div>
-        <MudButton Variant="Variant.Outlined"
-                   StartIcon="@Icons.Material.Filled.Refresh"
-                   Color="Color.Primary"
-                   OnClick="LoadDataAsync"
-                   Disabled="@_isLoading">
-            Refresh Data
-        </MudButton>
+        <div class="d-flex gap-4">
+            <MudButton Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Assessment"
+                       Color="Color.Info"
+                       Href="/manager-report">
+                Manager Report
+            </MudButton>
+
+            <MudButton Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       Color="Color.Primary"
+                       OnClick="LoadDataAsync"
+                       Disabled="@_isLoading">
+                Refresh Data
+            </MudButton>
+        </div>
     </div>
 
     @* Grid Metrik Utama *@

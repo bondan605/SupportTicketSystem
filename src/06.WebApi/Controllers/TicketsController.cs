@@ -95,7 +95,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="400">If the request data is invalid.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpPost]
-        [Authorize(Roles = "SupportAgent")]
+        [Authorize(Roles = "Manager, SupportAgent")]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]

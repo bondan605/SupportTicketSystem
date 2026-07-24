@@ -40,19 +40,21 @@
                 <MudGrid Spacing="1">
                     <MudItem xs="12" sm="6">
                         <MudTextField T="string"
-                                      @bind-Value="_currentUserName"
+                                      Value="@_currentUserName"
                                       Label="Customer Name (Logged User)"
-                                      Placeholder="Input Customer Name"
                                       Variant="Variant.Outlined"
-                                      Margin="Margin.Dense" />
+                                      Margin="Margin.Dense"
+                                      ReadOnly="true"
+                                      Disabled/>
                     </MudItem>
                     <MudItem xs="12" sm="6">
                         <MudTextField T="string"
-                                      @bind-Value="_currentUserEmail"
+                                      Value="@_currentUserEmail"
                                       Label="Customer Email (Logged User)"
-                                      Placeholder="Input Customer Email"
                                       Variant="Variant.Outlined"
-                                      Margin="Margin.Dense" />
+                                      Margin="Margin.Dense"
+                                      ReadOnly="true"
+                                      Disabled/>
                     </MudItem>
                 </MudGrid>
             </MudItem>
@@ -165,8 +167,8 @@
     private string _newTicketDescription = string.Empty;
 
     // State User Logged-in
-    private string _currentUserName = string.Empty;
-    private string _currentUserEmail = string.Empty;
+    private string _currentUserName = "System User";
+    private string _currentUserEmail = "user@example.com";
 
     protected override async Task OnInitializedAsync()
     {

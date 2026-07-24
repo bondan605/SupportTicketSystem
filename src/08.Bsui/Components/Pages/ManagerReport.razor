@@ -8,9 +8,20 @@
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
-    <div class="mb-6">
-        <MudText Typo="Typo.h4" Color="Color.Primary"><b>Manager Report</b></MudText>
-        <MudText Typo="Typo.body1" Color="Color.Secondary">Comprehensive view of all customer support tickets.</MudText>
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h4" Color="Color.Primary"><b>Manager Report</b></MudText>
+            <MudText Typo="Typo.body1" Color="Color.Secondary">Comprehensive view of all customer support tickets.</MudText>
+        </div>
+
+        <div class="d-flex gap-4">
+            <MudButton Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Dashboard"
+                       Color="Color.Success"
+                       Href="/dashboard">
+                Dashboard
+            </MudButton>
+        </div>
     </div>
 
     @* Dense, Hover, and Outlined table matching our minimalist enterprise guidelines.
@@ -52,9 +63,6 @@
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="3">
-                    @* Catatan: Tipe Guid? digunakan karena ITicketClient meminta Guid?.
-                        Ada ketidaksesuaian tipe (int vs Guid) dengan UserDto.UserId.
-                    *@
                     <MudSelect T="Guid?"
                                Value="@_selectedAgentId"
                                ValueChanged="OnAgentChanged"
