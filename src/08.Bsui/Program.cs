@@ -1,11 +1,25 @@
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.DataProtection;
 using MudBlazor.Services;
 using SupportTicketSystem.Bsui.Components;
+using SupportTicketSystem.Bsui.Services;
 using SupportTicketSystem.Client;
-using Microsoft.AspNetCore.Components.Authorization;
+using SupportTicketSystem.Client.Features.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
-var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"]
-                 ?? throw new InvalidOperationException("API Base URL is not configured.");
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? throw new InvalidOperationException("API Base URL is not configured.");
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(
+        Path.Combine(builder.Environment.ContentRootPath, "keys")))
+    .SetApplicationName("TicketSystemApp");
+
+builder.Services.AddScoped<ProtectedLocalStorage>();
+builder.Services.AddScoped<ITokenProvider, ProtectedLocalStorageTokenProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
+builder.Services.AddAuthorizationCore();
+
 
 // Add Razor Components & Interactive Server
 builder.Services.AddRazorComponents()
@@ -16,7 +30,6 @@ builder.Services.AddClientServices(apiBaseUrl);
 
 // Add Blazor Authentication Infrastructure
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddAuthorizationCore();
 
 builder.Services.AddMudServices();
 

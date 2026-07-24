@@ -9,12 +9,12 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddClientServices(this IServiceCollection services, string apiBaseUrl)
     {
-        services.AddHttpClient<ITicketClient, TicketClient>(client =>
+        services.AddHttpClient<IAuthClient, AuthClient>(client =>
         {
             client.BaseAddress = new Uri(apiBaseUrl);
         });
 
-        services.AddHttpClient<IAuthClient, AuthClient>(client =>
+        services.AddHttpClient<ITicketClient, TicketClient>(client =>
         {
             client.BaseAddress = new Uri(apiBaseUrl);
         });

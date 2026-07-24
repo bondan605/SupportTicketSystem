@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SupportTicketSystem.Application.Interfaces;
 using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Dashboard;
@@ -13,12 +14,14 @@ namespace SupportTicketSystem.WebApi.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]
+    [Authorize]
     public class DashboardController : ControllerBase
     {
         private readonly IDashboardService _service;
         public DashboardController(IDashboardService service) => _service = service;
 
         [HttpGet("summary")]
+        [Authorize(Roles = "Manager")]
         public async Task<ActionResult<ApiResponse<DashboardSummaryDto>>> GetSummary()
         {
             var result = await _service.GetDashboardSummaryAsync();

@@ -4,6 +4,7 @@
 @inject IAuthClient AuthClient
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center mud-width-full" Style="height: 100vh;">
     <MudCard Elevation="4" Class="pa-6" Width="100%">
@@ -80,34 +81,18 @@
 
         try
         {
-            // --- TEMPORARY MOCK / DUMMY DATA ---
-            // Uncomment the line below and remove the mock data when the backend auth is ready
-            // var response = await AuthClient.LoginAsync(_model);
+            var response = await AuthClient.LoginAsync(_model);
+            var data = response?.Data;
 
-            // 1. Simulate network latency for UI testing
-            await Task.Delay(1500);
-
-            // 2. Determine dummy role based on email input for testing flexibility
-            UserRole dummyRole = _model.Email.Contains("manager", StringComparison.OrdinalIgnoreCase)
-                                 ? UserRole.Manager
-                                 : (UserRole)2; // Assuming 2 or anything else is Agent/Support
-
-            // 3. Create dummy response
-            var response = new LoginResponseDto
+            if (data != null && !string.IsNullOrEmpty(data.Token))
             {
-                UserId = Guid.NewGuid(),
-                Name = "Mock User",
-                Email = _model.Email,
-                Role = dummyRole,
-                Token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy_token_payload.signature_12345"
-            };
-            // --- END OF MOCK DATA ---
+                // Simpan token & update auth state di seluruh app
+                var customAuthProvider = (CustomAuthStateProvider)AuthStateProvider;
+                await customAuthProvider.MarkUserAsAuthenticated(data.Token);
 
-            if (response != null && !string.IsNullOrEmpty(response.Token))
-            {
-                Snackbar.Add("Login successful (Mock Mode)", MudBlazor.Severity.Success);
+                Snackbar.Add("Login successful", MudBlazor.Severity.Success);
 
-                if (response.Role == UserRole.Manager)
+                if (data.Role == UserRole.Manager)
                 {
                     NavigationManager.NavigateTo("/dashboard");
                 }
@@ -120,6 +105,11 @@
             {
                 Snackbar.Add("Invalid credentials. Please try again.", MudBlazor.Severity.Error);
             }
+        }
+        catch (BusinessException ex)
+        {
+            // Ini exception dari backend untuk "Invalid email or password"
+            Snackbar.Add(ex.Message, MudBlazor.Severity.Error);
         }
         catch (Exception ex)
         {

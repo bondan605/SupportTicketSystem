@@ -2,6 +2,7 @@
 using SupportTicketSystem.Shared.Constants;
 using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Dashboard;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 namespace SupportTicketSystem.Client.Clients;
@@ -9,12 +10,25 @@ namespace SupportTicketSystem.Client.Clients;
 public class DashboardClient : IDashboardClient
 {
     private readonly HttpClient _httpClient;
-    public DashboardClient(HttpClient httpClient) => _httpClient = httpClient;
+    private readonly ITokenProvider _tokenProvider;
+
+    public DashboardClient(HttpClient httpClient, ITokenProvider tokenProvider)
+    {
+        _httpClient = httpClient;
+        _tokenProvider = tokenProvider;
+    }
 
     public async Task<ApiResponse<DashboardSummaryDto>> GetSummaryAsync()
     {
         try
         {
+            var token = await _tokenProvider.GetTokenAsync();
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+            }
+
             var response = await _httpClient.GetFromJsonAsync<ApiResponse<DashboardSummaryDto>>(ApiRoutes.Dashboard.Summary);
 
             return response ?? new ApiResponse<DashboardSummaryDto>
@@ -31,6 +45,5 @@ public class DashboardClient : IDashboardClient
                 Message = $"Client Error: {ex.Message}"
             };
         }
-        ;
     }
 }

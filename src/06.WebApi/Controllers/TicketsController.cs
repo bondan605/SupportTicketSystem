@@ -7,6 +7,7 @@ using SupportTicketSystem.Shared.Constants;
 using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Tickets;
 using SupportTicketSystem.Shared.Models;
+using SupportTicketSystem.WebApi.Extensions;
 using System.Linq;
 
 namespace SupportTicketSystem.WebApi.Controllers
@@ -14,10 +15,10 @@ namespace SupportTicketSystem.WebApi.Controllers
     /// <summary>
     /// Controller for managing ticket operations.
     /// </summary>
-    //[Authorize]
     [ApiController]
     [Route(ApiRoutes.Tickets.Base)]
     [Produces("application/json")]
+    [Authorize]
     public class TicketsController : ControllerBase
     {
         private readonly ITicketService _ticketService;
@@ -33,13 +34,18 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <returns>A list of all tickets.</returns>
         /// <response code="200">Returns the list of tickets successfully.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
-        //[Authorize(Roles = "Manager")]
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll([FromQuery] PagedRequest request)
         {
-            var data = await _ticketService.GetAllTicketsAsync(request);
+            var userId = User.GetUserId();
+            var role = User.GetRole();
+
+            var data = role == "Manager"
+                ? await _ticketService.GetAllTicketsAsync(request)
+                : await _ticketService.GetTicketsForAgentAsync(userId, request);
+
             return Ok(ApiResponse<PagedResult<TicketDto>>.SuccessResponse(data, "Tickets retrieved successfully."));
         }
 
@@ -71,6 +77,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="200">Returns the filtered tickets successfully.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpGet(ApiRoutes.Tickets.ReportSegment)]
+        [Authorize(Roles = "Manager")]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetReport([FromQuery] string? status, [FromQuery] Guid? assignedTo, [FromQuery] PagedRequest request)
@@ -88,13 +95,14 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="400">If the request data is invalid.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpPost]
+        [Authorize(Roles = "SupportAgent")]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Create([FromBody] CreateTicketDto dto)
         {
-            // Requirement: Agents create tickets
-            var result = await _ticketService.CreateTicketAsync(dto);
+            var userId = User.GetUserId();
+            var result = await _ticketService.CreateTicketAsync(dto, userId);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, ApiResponse<object>.SuccessResponse(result, "Ticket created successfully."));
         }
 
@@ -108,14 +116,16 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="404">If the ticket is not found.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpPut("{id}")]
+        [Authorize(Roles = "SupportAgent, Manager")]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTicketDto dto)
         {
-            // Requirement: Agents update tickets
-            await _ticketService.UpdateTicketAsync(id, dto);
+            var userId = User.GetUserId();
+            var role = User.GetRole();
+            await _ticketService.UpdateTicketAsync(id, dto, userId, role);
             return Ok(ApiResponse.SuccessResponse(null, "Ticket updated successfully."));
         }
 
@@ -127,6 +137,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="404">If the ticket is not found.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Manager")]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
@@ -146,6 +157,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="404">If the ticket or user is not found.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpPut(ApiRoutes.Tickets.AssignSegment)]
+        [Authorize(Roles = "Manager")]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]

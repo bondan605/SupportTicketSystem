@@ -56,7 +56,20 @@ namespace SupportTicketSystem.Application.Services
             };
         }
 
-        public async Task<TicketDto> CreateTicketAsync(CreateTicketDto dto)
+        public async Task<PagedResult<TicketDto>> GetTicketsForAgentAsync(Guid userId, PagedRequest request)
+        {
+            var pagedTickets = await _unitOfWork.Tickets.GetTicketsForUserAsync(userId, request);
+
+            return new PagedResult<TicketDto>
+            {
+                Items = _mapper.Map<IEnumerable<TicketDto>>(pagedTickets.Items),
+                PageNumber = pagedTickets.PageNumber,
+                PageSize = pagedTickets.PageSize,
+                TotalCount = pagedTickets.TotalCount
+            };
+        }
+
+        public async Task<TicketDto> CreateTicketAsync(CreateTicketDto dto, Guid CreatedBy)
         {
             await _createTicketValidator.ValidateAndThrowAsync(dto);
 
@@ -64,7 +77,7 @@ namespace SupportTicketSystem.Application.Services
             ticket.Id = Guid.NewGuid();
             ticket.Status = TicketStatus.Open;
             ticket.CreatedAt = DateTime.UtcNow;
-            ticket.CreatedBy = Guid.NewGuid(); // Assuming the system generates a new GUID for the creator; replace with actual user ID if available
+            ticket.CreatedBy = CreatedBy; 
 
             // Business Rule: TKT-00001 format
             int sequence = await _unitOfWork.Tickets.GetNextTicketSequenceAsync();
@@ -76,7 +89,7 @@ namespace SupportTicketSystem.Application.Services
             return _mapper.Map<TicketDto>(ticket);
         }
 
-        public async Task UpdateTicketAsync(Guid id, UpdateTicketDto dto)
+        public async Task UpdateTicketAsync(Guid id, UpdateTicketDto dto, Guid userId, string userRole)
         {
             await _updateTicketValidator.ValidateAndThrowAsync(dto);
 
@@ -84,6 +97,11 @@ namespace SupportTicketSystem.Application.Services
 
             // Business Rule: Closed tickets cannot be modified
             EnsureTicketNotClosed(ticket);
+
+            if (userRole != "Manager" && ticket.CreatedBy != userId && ticket.AssignedTo != userId)
+            {
+                throw new UnauthorizedAccessException("You can only update tickets you created or are assigned to.");
+            }
 
             ticket.Title = dto.Title;
             ticket.Description = dto.Description;

@@ -7,6 +7,7 @@ namespace SupportTicketSystem.Application.Interfaces.Repositories
     {
         Task<Ticket?> GetByIdAsync(Guid id);
         Task<PagedResult<Ticket>> GetAllAsync(PagedRequest request);
+        Task<PagedResult<Ticket>> GetTicketsForUserAsync(Guid userId, PagedRequest request);
         Task AddAsync(Ticket ticket);
         void Update(Ticket ticket);
         void Delete(Ticket ticket);

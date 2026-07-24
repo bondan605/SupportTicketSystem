@@ -5,6 +5,7 @@ using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Infrastructure.Persistence;
 using SupportTicketSystem.Shared.Models;
 using System.Net.NetworkInformation;
+using static SupportTicketSystem.Shared.Constants.ApiRoutes;
 
 namespace SupportTicketSystem.Infrastructure.Repositories
 {
@@ -58,6 +59,29 @@ namespace SupportTicketSystem.Infrastructure.Repositories
             var query = _context.Tickets.AsNoTracking();
 
             var totalCount = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync();
+
+            return new PagedResult<Ticket>
+            {
+                Items = items,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                TotalCount = totalCount
+            };
+        }
+
+        public async Task<PagedResult<Ticket>> GetTicketsForUserAsync(Guid userId, PagedRequest request)
+        {
+            var query = _context.Tickets
+                .Where(t => t.CreatedBy == userId || t.AssignedTo == userId)
+                .AsNoTracking();
+
+            var totalCount = await query.CountAsync();
+
             var items = await query
                 .OrderByDescending(t => t.CreatedAt)
                 .Skip((request.PageNumber - 1) * request.PageSize)

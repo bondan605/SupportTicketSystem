@@ -1,4 +1,4 @@
-﻿@page "/support-agent"
+﻿@page "/technical-agent"
 @* @attribute [Authorize(Roles = "Agent, SupportAgent")] *@
 
 @using System.Security.Claims
@@ -18,7 +18,7 @@
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
 
     <div class="mb-6">
-        <MudText Typo="Typo.h4" Color="Color.Primary"><b>Support Agent Workspace</b></MudText>
+        <MudText Typo="Typo.h4" Color="Color.Primary"><b>Technical Agent Workspace</b></MudText>
         <MudText Typo="Typo.body1" Color="Color.Secondary">Manage and process customer support tickets.</MudText>
     </div>
 
@@ -126,15 +126,6 @@
             </MudTd>
             <MudTd DataLabel="Created At">@context.CreatedAt.ToString("MMM dd, yyyy HH:mm")</MudTd>
             <MudTd DataLabel="Actions" Style="text-align: right;">
-                @if (context.Status == TicketStatus.InProgress || context.Status == TicketStatus.Resolved)
-                {
-                    <MudTooltip Text="Edit Ticket">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                       Color="Color.Warning"
-                                       Size="Size.Small"
-                                       OnClick="@(() => OpenEditDialogAsync(context))" />
-                    </MudTooltip>
-                }
                 <MudTooltip Text="View Details">
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                    Color="Color.Info"

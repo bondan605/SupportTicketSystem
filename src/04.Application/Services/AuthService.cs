@@ -36,15 +36,9 @@ namespace SupportTicketSystem.Application.Services
 
             var user = await _unitOfWork.Users.GetByEmailAsync(dto.Email);
 
-            if (user == null)
+            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             {
                 throw new BusinessException("Invalid email or password.");
-            }
-
-            var isPasswordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
-            if (!isPasswordValid)
-            {
-                throw new FluentValidation.ValidationException("Email atau password salah.");
             }
 
             var (token, expiresAt) = GenerateJwtToken(user);
