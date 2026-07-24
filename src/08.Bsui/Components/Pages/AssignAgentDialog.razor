@@ -3,7 +3,6 @@
 
 <MudDialog>
     <DialogContent>
-
         <MudSelect T="Guid?"
                    Label="Assign Agent"
                    Variant="Variant.Outlined"
@@ -13,10 +12,9 @@
             @foreach (var agent in Agents)
             {
                 <MudSelectItem T="Guid?" Value="@agent.Id">
-                    @agent.Id
+                    @agent.Name
                 </MudSelectItem>
             }
-
         </MudSelect>
 
     </DialogContent>

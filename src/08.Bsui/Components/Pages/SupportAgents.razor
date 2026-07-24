@@ -43,19 +43,19 @@
                 <MudGrid Spacing="1">
                     <MudItem xs="12" sm="6">
                         <MudTextField T="string"
-                                      Value="@_currentUserName"
+                                      @bind-Value="_currentUserName"
                                       Label="Customer Name (Logged User)"
+                                      Placeholder="Input Customer Name"
                                       Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      ReadOnly="true" />
+                                      Margin="Margin.Dense" />
                     </MudItem>
                     <MudItem xs="12" sm="6">
                         <MudTextField T="string"
-                                      Value="@_currentUserEmail"
+                                      @bind-Value="_currentUserEmail"
                                       Label="Customer Email (Logged User)"
+                                      Placeholder="Input Customer Email"
                                       Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      ReadOnly="true" />
+                                      Margin="Margin.Dense" />
                     </MudItem>
                 </MudGrid>
             </MudItem>
@@ -78,7 +78,7 @@
                            OnClick="@(() => _table.ReloadServerData())">
                     Refresh Table
                 </MudButton>
-                <MudButton Variant="Variant.Filled"
+                <MudButton Variant="Variant.Outlined"
                            StartIcon="@Icons.Material.Filled.Add"
                            Color="Color.Primary"
                            Disabled="@_isSubmitting"
@@ -90,7 +90,7 @@
                     }
                     else
                     {
-                        <MudText>Tambah Ticket</MudText>
+                        <MudText>Add Ticket</MudText>
                     }
                 </MudButton>
             </MudItem>
@@ -129,12 +129,15 @@
             </MudTd>
             <MudTd DataLabel="Created At">@context.CreatedAt.ToString("MMM dd, yyyy HH:mm")</MudTd>
             <MudTd DataLabel="Actions" Style="text-align: right;">
-                <MudTooltip Text="Edit Ticket">
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                   Color="Color.Warning"
-                                   Size="Size.Small"
-                                   OnClick="@(() => OpenEditDialogAsync(context))" />
-                </MudTooltip>
+                @if (context.Status == TicketStatus.InProgress || context.Status == TicketStatus.Resolved)
+                {
+                    <MudTooltip Text="Edit Ticket">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Warning"
+                                       Size="Size.Small"
+                                       OnClick="@(() => OpenEditDialogAsync(context))" />
+                    </MudTooltip>
+                }
                 <MudTooltip Text="View Details">
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                    Color="Color.Info"
@@ -165,8 +168,8 @@
     private string _newTicketDescription = string.Empty;
 
     // State User Logged-in
-    private string _currentUserName = "System User";
-    private string _currentUserEmail = "user@example.com";
+    private string _currentUserName = string.Empty;
+    private string _currentUserEmail = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -288,12 +291,54 @@
 
     private async Task OpenEditDialogAsync(TicketDto ticket)
     {
-        await DialogService.ShowMessageBoxAsync("Edit Action", $"Modal to edit {ticket.TicketNumber} would open here.");
+        var parameters = new DialogParameters
+        {
+            ["TicketId"] = ticket.Id,
+            ["CurrentStatus"] = ticket.Status,
+            ["AllowedStatuses"] = new List<TicketStatus> { TicketStatus.Resolved, TicketStatus.Closed }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<EditTicketDialog>("Update Status", parameters, options);
+
+        var result = await dialog.Result;
+
+        if (result is null || result.Canceled)
+        {
+            return;
+        }
+
+        if (result.Data is not TicketStatus status)
+        {
+            Snackbar.Add("Please select a status before saving.", MudBlazor.Severity.Warning);
+            return;
+        }
+
+        var response = await TicketClient.UpdateTicketAsync(ticket.Id, new UpdateTicketDto
+        {
+            Title = ticket.Title,
+            Description = ticket.Description,
+            Status = status
+        });
+
+        if (response != null && response.Success)
+        {
+            Snackbar.Add(response.Message, MudBlazor.Severity.Success);
+            await _table.ReloadServerData();
+        }
+        else
+        {
+            Snackbar.Add(response?.Message ?? "Failed to update ticket.", MudBlazor.Severity.Error);
+        }
     }
 
     private async Task OpenDetailsDialogAsync(TicketDto ticket)
     {
-        await DialogService.ShowMessageBoxAsync("Details Action", $"Modal to view {ticket.TicketNumber} details would open here.");
+        // await DialogService.ShowMessageBoxAsync("Details Action", $"Modal to view {ticket.TicketNumber} details would open here.");
+        var parameters = new DialogParameters { ["Ticket"] = ticket, ["Description"] = ticket.Description };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        await DialogService.ShowAsync<DescriptionDialog>("Ticket Detail", parameters, options);
     }
 
     private Color GetStatusColor(TicketStatus status)

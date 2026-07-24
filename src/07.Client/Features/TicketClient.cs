@@ -64,7 +64,6 @@ public class TicketClient : ITicketClient
 
     public async Task<ApiResponse<object>> AssignTicketAsync(Guid ticketId, Guid userId)
     {
-        //var response = await _httpClient.PutAsJsonAsync(ApiRoutes.Tickets.Assign.Replace("{id}", ticketId.ToString()), new { userId });
         var response = await _httpClient.PutAsJsonAsync(ApiRoutes.Tickets.Assign.Replace("{id}", ticketId.ToString()), userId);
         return await response.Content.ReadFromJsonAsync<ApiResponse<object>>() ?? new ApiResponse<object> { Success = false };
     }

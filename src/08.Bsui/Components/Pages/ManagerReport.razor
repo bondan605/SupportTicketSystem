@@ -111,7 +111,7 @@
                              Color="Color.Primary"
                              Variant="Variant.Outlined"
                              StartIcon="@Icons.Material.Filled.Person">
-                        @context.AssignedTo.Value
+                        @GetAgentName(context.AssignedTo.Value)
                     </MudChip>
                 }
                 else
@@ -126,18 +126,24 @@
             </MudTd>
             <MudTd DataLabel="Created At">@context.CreatedAt.ToString("MMM dd, yyyy HH:mm")</MudTd>
             <MudTd DataLabel="Actions" Style="text-align: right;">
-                <MudTooltip Text="Assign Agent">
-                    <MudIconButton Icon="@Icons.Material.Filled.PersonAdd"
-                                   Color="Color.Primary"
-                                   Size="Size.Small"
-                                   OnClick="@(() => OpenAssignDialogAsync(context))" />
-                </MudTooltip>
-                <MudTooltip Text="Edit Ticket">
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                   Color="Color.Warning"
-                                   Size="Size.Small"
-                                   OnClick="@(() => OpenEditDialogAsync(context))" />
-                </MudTooltip>
+                @if (context.Status == TicketStatus.Open)
+                {
+                    <MudTooltip Text="Assign Agent">
+                        <MudIconButton Icon="@Icons.Material.Filled.PersonSearch"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(() => OpenAssignDialogAsync(context, "Assign Agent"))" />
+                    </MudTooltip>
+                }
+                @if (context.Status == TicketStatus.InProgress)
+                {
+                    <MudTooltip Text="Edit Agent">
+                        <MudIconButton Icon="@Icons.Material.Filled.PersonAdd"
+                                       Color="Color.Warning"
+                                       Size="Size.Small"
+                                       OnClick="@(() => OpenAssignDialogAsync(context, "Edit Agent"))" />
+                    </MudTooltip>
+                }
                 <MudTooltip Text="View Details">
                     <MudIconButton Icon="@Icons.Material.Filled.Visibility"
                                    Color="Color.Info"
@@ -261,24 +267,37 @@
     }
 
     // --- Action Dialog Triggers ---
-
-    private async Task OpenAssignDialogAsync(TicketDto ticket)
+    private async Task OpenAssignDialogAsync(TicketDto ticket, string title = "Assign Agent")
     {
         var parameters = new DialogParameters { ["TicketId"] = ticket.Id, ["Agents"] = _agentList };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
 
-        var dialog = await DialogService.ShowAsync<AssignAgentDialog>("Assign Agent", parameters, options);
+        var dialog = await DialogService.ShowAsync<AssignAgentDialog>(title, parameters, options);
 
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is Guid agentId)
+        if (result is null || result.Canceled)
         {
-            Snackbar.Add($"Selected Agent: {agentId}", MudBlazor.Severity.Success);
-
-            Snackbar.Add("Agent assigned successfully.", MudBlazor.Severity.Success);
-            await TicketClient.AssignTicketAsync(ticket.Id, agentId);
+            return;
         }
 
+        if (result.Data is not Guid agentId)
+        {
+            Snackbar.Add("Please select an agent before saving.", MudBlazor.Severity.Warning);
+            return;
+        }
+
+        var assignResponse = await TicketClient.AssignTicketAsync(ticket.Id, agentId);
+
+        if (assignResponse != null && assignResponse.Success)
+        {
+            Snackbar.Add("Agent assigned successfully.", MudBlazor.Severity.Success);
+            await _table.ReloadServerData();
+        }
+        else
+        {
+            Snackbar.Add($"Failed to assign agent: {assignResponse?.Message}", MudBlazor.Severity.Error);
+        }
     }
 
     private async Task OpenEditDialogAsync(TicketDto ticket)
@@ -290,25 +309,32 @@
 
         var result = await dialog.Result;
 
-        if (!result.Canceled && result.Data is TicketStatus status)
+        if (result is null || result.Canceled)
         {
-            var response = await TicketClient.UpdateTicketAsync(ticket.Id, new UpdateTicketDto
-            {
-                Title = ticket.Title,
-                Description = ticket.Description,
-                Status = status
-            });
-            if (response.Success)
-            {
-                Snackbar.Add(response.Message, MudBlazor.Severity.Success);
+            return;
+        }
 
-                await _table.ReloadServerData();
-            }
-            else
-            {
-                Snackbar.Add(response.Message, MudBlazor.Severity.Error);
-            }
+        if (result.Data is not TicketStatus status)
+        {
+            Snackbar.Add("Please select a status before saving.", MudBlazor.Severity.Warning);
+            return;
+        }
 
+        var response = await TicketClient.UpdateTicketAsync(ticket.Id, new UpdateTicketDto
+        {
+            Title = ticket.Title,
+            Description = ticket.Description,
+            Status = status
+        });
+
+        if (response != null && response.Success)
+        {
+            Snackbar.Add(response.Message, MudBlazor.Severity.Success);
+            await _table.ReloadServerData();
+        }
+        else
+        {
+            Snackbar.Add(response?.Message ?? "Failed to update ticket.", MudBlazor.Severity.Error);
         }
     }
 
@@ -317,12 +343,15 @@
         var parameters = new DialogParameters { ["Ticket"] = ticket, ["Description"] = ticket.Description };
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
 
-
         await DialogService.ShowAsync<DescriptionDialog>("Ticket Detail", parameters, options);
-
     }
 
     // --- UI Helpers ---
+    private string GetAgentName(Guid agentId)
+    {
+        var agent = _agentList.FirstOrDefault(a => a.Id == agentId);
+        return agent?.Name ?? "Unknown Agent";
+    }
 
     private Color GetStatusColor(TicketStatus status)
     {

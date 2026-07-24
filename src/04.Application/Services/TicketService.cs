@@ -114,6 +114,7 @@ namespace SupportTicketSystem.Application.Services
                 throw new BusinessException("Target user does not exist.");
 
             ticket.AssignedTo = userId;
+            ticket.Status = TicketStatus.InProgress;
             ticket.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.Tickets.Update(ticket);

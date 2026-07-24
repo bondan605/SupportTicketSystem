@@ -11,7 +11,7 @@
                    Margin="Margin.Dense"
                    @bind-Value="_selectedStatus">
 
-            @foreach (var status in Enum.GetValues<TicketStatus>())
+            @foreach (var status in _statusOptions)
             {
                 <MudSelectItem T="TicketStatus" Value="@status">
                     @status
@@ -46,13 +46,27 @@
 
 
     [Parameter]
+    public Guid TicketId { get; set; }
+
+    [Parameter]
     public TicketStatus CurrentStatus { get; set; }
 
+    /// <summary>
+    /// Opsi status yang boleh dipilih di dropdown. Jika tidak diberikan (null),
+    /// semua status akan ditampilkan.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyList<TicketStatus>? AllowedStatuses { get; set; }
+
     private TicketStatus _selectedStatus;
+    private IReadOnlyList<TicketStatus> _statusOptions = Array.Empty<TicketStatus>();
 
     protected override void OnInitialized()
     {
         _selectedStatus = CurrentStatus;
+        _statusOptions = AllowedStatuses is { Count: > 0 }
+            ? AllowedStatuses
+            : Enum.GetValues<TicketStatus>();
     }
 
     private void Save()
