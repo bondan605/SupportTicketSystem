@@ -1,22 +1,44 @@
 ﻿<MudNavMenu>
-    @* Home link - Match.All ensures it only highlights on exact root URL *@
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">
+    <MudNavLink Href="@AppRoutes.Home" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">
         Dashboard
     </MudNavLink>
 
-    @* Match.Prefix highlights if URL starts with /categories *@
-    @* Categories link *@
-    <MudNavLink Href="categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Category">
-        Category
+    <MudNavLink Href="@AppRoutes.TicketList" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ConfirmationNumber">
+        Ticket List
     </MudNavLink>
 
-    @* Categories link *@
-    <MudNavLink Href="accounts" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountBalanceWallet">
-        Account
+    <MudNavLink Href="@AppRoutes.TicketHistories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.History">
+        Ticket Histories
     </MudNavLink>
 
-    @* Transactions link *@
-    <MudNavLink Href="transactions" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ReceiptLong">
-        Transaction
+    <MudNavLink Href="@AppRoutes.Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ReceiptLong">
+        Users
+    </MudNavLink>
+
+    <MudNavLink Href="@AppRoutes.TicketList" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.BarChart">
+        Report
+    </MudNavLink>
+
+    <MudText Typo="Typo.overline" Class="sidebar-section-label">Settings</MudText>
+
+    <MudNavLink Href="@AppRoutes.Profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person">
+        Profile
+    </MudNavLink>
+
+    <MudNavLink Href="@AppRoutes.Settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Settings">
+        Settings
+    </MudNavLink>
+
+    <MudSpacer />
+    
+    <MudNavLink OnClick="Logout" Icon="@Icons.Material.Outlined.Logout" Class="sidebar-logout">
+        Logout
     </MudNavLink>
 </MudNavMenu>
+
+@code {
+    private void Logout()
+    {
+        // TODO: implement logout logic
+    }
+}

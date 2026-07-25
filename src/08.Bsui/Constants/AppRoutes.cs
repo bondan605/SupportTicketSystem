@@ -1,0 +1,13 @@
+﻿namespace SupportTicketSystem.Bsui.Constants
+{
+    public static class AppRoutes
+    {
+        public const string Home = "/";
+        public const string TicketList = "/ticket-list";
+        public const string TicketHistories = "/ticket-histories";
+        public const string Users = "/user";
+        public const string Report = "/report";
+        public const string Profile = "/profile";
+        public const string Settings = "/settings";
+    }
+}

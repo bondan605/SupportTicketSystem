@@ -1,0 +1,91 @@
+﻿@page "/"
+
+<PageTitle>Dashboard</PageTitle>
+
+<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="pa-4 pl-6 pr-6">
+
+    @* Left side: menu toggle + page title/subtitle *@
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                        Color="Color.Default"
+                        Edge="Edge.Start"
+                        OnClick="ToggleSidebar" />
+
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.h5" Class="font-weight-bold" Style="color:#1e293b;">Dashboard</MudText>
+            <MudText Typo="Typo.body2" Style="color:#64748b;">Overview of ticket activities and performance</MudText>
+        </MudStack>
+    </MudStack>
+
+    @* Right side: date range picker + admin profile menu *@
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="4">
+
+        <MudMenu Class="date-range-menu" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+            <ActivatorContent>
+                <MudPaper Outlined="true" Class="pa-2 pl-3 pr-3 rounded-lg d-flex align-center" Style="cursor:pointer; gap:8px;">
+                    <MudIcon Icon="@Icons.Material.Outlined.CalendarMonth" Size="Size.Small" Style="color:#1e3a8a;" />
+                    <MudText Typo="Typo.body2" Style="color:#1e293b;">@dateRangeLabel</MudText>
+                    <MudIcon Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Style="color:#94a3b8;" />
+                </MudPaper>
+            </ActivatorContent>
+            <ChildContent>
+                <MudDateRangePicker @bind-DateRange="dateRange"
+                                     PickerVariant="PickerVariant.Static"
+                                     Elevation="0" />
+            </ChildContent>
+        </MudMenu>
+
+        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+            <ActivatorContent>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Style="cursor:pointer;">
+                    <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Style="background-color:#dbeafe;">
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Style="color:#1e3a8a;" />
+                    </MudAvatar>
+
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.body2" Class="font-weight-bold" Style="color:#1e293b;">Admin User</MudText>
+                        <MudText Typo="Typo.caption" Style="color:#64748b;">Administrator</MudText>
+                    </MudStack>
+
+                    <MudIcon Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Style="color:#94a3b8;" />
+                </MudStack>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Person" OnClick="GoToProfile">Profile</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Settings" OnClick="GoToSettings">Settings</MudMenuItem>
+                <MudDivider />
+                <MudMenuItem Icon="@Icons.Material.Outlined.Logout" OnClick="Logout">Logout</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+
+    </MudStack>
+</MudStack>
+
+<MudDivider />
+
+@code {
+    private DateRange dateRange = new(new DateTime(2026, 6, 26), new DateTime(2026, 7, 24));
+
+    private string dateRangeLabel =>
+        $"{dateRange.Start:dd MMM yyyy} - {dateRange.End:dd MMM yyyy}";
+
+    [Parameter]
+    public EventCallback OnToggleSidebar { get; set; }
+
+    private Task ToggleSidebar() => OnToggleSidebar.InvokeAsync();
+
+    private void GoToProfile()
+    {
+        // TODO: navigate to /profile
+    }
+
+    private void GoToSettings()
+    {
+        // TODO: navigate to /settings
+    }
+
+    private void Logout()
+    {
+        // TODO: trigger logout flow
+    }
+}

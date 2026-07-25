@@ -2,24 +2,26 @@
 @inherits LayoutComponentBase
 @inject IJSRuntime JSRuntime
 
-<MudThemeProvider IsDarkMode="@_isDarkMode" />
+<MudThemeProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudPopoverProvider />
 
 <MudLayout>
-    @* TOP APP BAR *@
-    <MudAppBar Elevation="1">
-        <MudText Typo="Typo.h6" Class="ml-4">Customer Support Ticket Management System</MudText>
-        <MudSpacer />
+    @* Sidebar *@
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="1" Class="sidebar" Variant="DrawerVariant.Responsive">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6" Class="sidebar-title" Align="Align.Center">
+                <MudIcon Icon="@Icons.Material.Outlined.ConfirmationNumber"></MudIcon>
+                System Ticket
+            </MudText>
+        </MudDrawerHeader>
 
-        @* Toggle Light / Dark Mode *@
-        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
-                       Color="Color.Inherit"
-                       OnClick="ToggleDarkModeAsync"
-                       Title="Toggle Dark Mode" />
-    </MudAppBar>
+        @* Injecting the Navigation Menu component *@
+        <NavMenu />
+    </MudDrawer>
 
+    @* Main Content *@
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-6">
             @Body
@@ -29,11 +31,18 @@
 
 @code {
     private bool _isDarkMode = false;
+    private bool _drawerOpen = true;
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            // Retrieve user's theme preference from local storage
             var savedMode = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "is_dark_mode");
 
             if (!string.IsNullOrEmpty(savedMode))
@@ -47,11 +56,67 @@
             }
         }
     }
-
-    private async Task ToggleDarkModeAsync()
-    {
-        _isDarkMode = !_isDarkMode;
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "is_dark_mode", _isDarkMode.ToString().ToLower());
-        StateHasChanged();
-    }
 }
+
+<style>
+    .mud-drawer.sidebar {
+        background-color: #0f1c3f !important;
+    }
+
+    .sidebar .mud-drawer-content {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        box-sizing: border-box;
+        overflow: hidden;
+        padding: 1rem 0;
+    }
+
+    .sidebar .mud-navmenu {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 0;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    /* Sidebar header title */
+    .sidebar-title {
+        color: white !important;
+        font-weight: bold;
+    }
+
+    /* Nav links */
+    .sidebar .mud-nav-link {
+        color: rgba(255, 255, 255, 0.7) !important;
+        margin: 0.2rem 0.75rem !important;
+        border-radius: 6px !important;
+    }
+
+    .sidebar .mud-nav-link:hover {
+        color: white !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .sidebar .mud-nav-link.active {
+        color: white !important;
+        background-color: #1e3a8a !important;
+    }
+
+    .sidebar .mud-nav-link .mud-nav-link-icon {
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    .sidebar .mud-nav-link.active .mud-nav-link-icon,
+    .sidebar .mud-nav-link:hover .mud-nav-link-icon {
+        color: white !important;
+    }
+
+    /* "SETTINGS" section label */
+    .sidebar-section-label {
+        display: block;
+        color: rgba(255, 255, 255, 0.45) !important;
+        letter-spacing: 0.05em;
+        padding: 1.5rem 1rem 0.5rem 1rem;
+    }
+</style>
