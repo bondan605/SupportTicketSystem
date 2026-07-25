@@ -10,6 +10,6 @@ public class ManagerReportItemDto
     public required string Status { get; set; }
     public Guid? AssignedToUserId { get; set; }
     public string? AssignedToAgentName { get; set; }
-    public DateTime CreatedDate { get; set; }
-    public DateTime? UpdatedDate { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 }

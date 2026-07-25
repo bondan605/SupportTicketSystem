@@ -61,8 +61,8 @@ public class ReportService : IReportService
                 Status = t.Status.ToString(),
                 AssignedToUserId = t.AssignedTo,
                 AssignedToAgentName = t.Assignee != null ? t.Assignee.Name : null,
-                CreatedDate = t.CreatedDate,
-                UpdatedDate = t.UpdatedDate
+                CreatedAt = t.CreatedAt,
+                UpdatedAt = t.UpdatedAt
             })
             .ToList();
 
