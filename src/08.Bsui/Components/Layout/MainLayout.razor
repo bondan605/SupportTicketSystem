@@ -1,10 +1,8 @@
 ﻿@using MudBlazor
-@using SupportTicketSystem.Bsui.Themes
 @inherits LayoutComponentBase
 @inject IJSRuntime JSRuntime
 
-@* Provider Tema Global - Menggunakan DefaultTheme dan _isDarkMode (default false) *@
-<MudThemeProvider Theme="@AppThemes.DefaultTheme" IsDarkMode="@_isDarkMode" />
+<MudThemeProvider IsDarkMode="@_isDarkMode" />
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudPopoverProvider />
@@ -15,7 +13,7 @@
         <MudText Typo="Typo.h6" Class="ml-4">Customer Support Ticket Management System</MudText>
         <MudSpacer />
 
-        @* Tombol Toggle Light / Dark Mode *@
+        @* Toggle Light / Dark Mode *@
         <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                        Color="Color.Inherit"
                        OnClick="ToggleDarkModeAsync"
@@ -30,20 +28,17 @@
 </MudLayout>
 
 @code {
-    // Diatur ke false agar Light Mode menjadi default saat pertama kali dibuka
     private bool _isDarkMode = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Cek preferensi pengguna yang tersimpan di LocalStorage
             var savedMode = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "is_dark_mode");
 
             if (!string.IsNullOrEmpty(savedMode))
             {
                 var isDark = savedMode == "true";
-                // Hanya perbarui state jika tersimpan sebagai dark mode (karena default sudah light)
                 if (isDark != _isDarkMode)
                 {
                     _isDarkMode = isDark;
@@ -56,7 +51,6 @@
     private async Task ToggleDarkModeAsync()
     {
         _isDarkMode = !_isDarkMode;
-        // Simpan preferensi mode ke LocalStorage
         await JSRuntime.InvokeVoidAsync("localStorage.setItem", "is_dark_mode", _isDarkMode.ToString().ToLower());
         StateHasChanged();
     }
