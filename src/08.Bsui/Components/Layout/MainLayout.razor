@@ -3,8 +3,8 @@
 @inherits LayoutComponentBase
 @inject IJSRuntime JSRuntime
 
-@* Global Theme & Popover Providers *@
-<MudThemeProvider Theme="@_currentTheme" IsDarkMode="@_isDarkMode" />
+@* Provider Tema Global - Menggunakan DefaultTheme dan _isDarkMode (default false) *@
+<MudThemeProvider Theme="@AppThemes.DefaultTheme" IsDarkMode="@_isDarkMode" />
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudPopoverProvider />
@@ -12,105 +12,52 @@
 <MudLayout>
     @* TOP APP BAR *@
     <MudAppBar Elevation="1">
-        @* Hamburger button to toggle the sidebar *@
-        @* <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => ToggleDrawer())" /> *@
-
         <MudText Typo="Typo.h6" Class="ml-4">Customer Support Ticket Management System</MudText>
         <MudSpacer />
-        
-        @* Light / Dark Mode Toggle Button *@
-        @* <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" Color="Color.Inherit" OnClick="ToggleDarkModeAsync" /> *@
 
-        @* Theme Selector Dropdown Menu (Using ColorLens icon) *@
-        @* <MudMenu Icon="@Icons.Material.Filled.ColorLens" Color="Color.Inherit" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-            <MudMenuItem OnClick="@(() => SetThemeAsync("obsidian"))">Obsidian Theme</MudMenuItem>
-            <MudMenuItem OnClick="@(() => SetThemeAsync("Cobalt"))">Cobalt Theme</MudMenuItem>
-            <MudMenuItem OnClick="@(() => SetThemeAsync("Terminal"))">Terminal Theme</MudMenuItem>
-        </MudMenu> *@
+        @* Tombol Toggle Light / Dark Mode *@
+        <MudIconButton Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                       Color="Color.Inherit"
+                       OnClick="ToggleDarkModeAsync"
+                       Title="Toggle Dark Mode" />
     </MudAppBar>
-    
-    @* SIDEBAR *@
-    @* <MudDrawer @bind-Open="@_open" Elevation="1" Variant="@DrawerVariant.Mini" Breakpoint="Breakpoint.Md" ClipMode="DrawerClipMode.Always">
-        <NavMenu />
-    </MudDrawer> *@
-    
-    @* MAIN CONTENT AREA *@
+
     <MudMainContent>
-        @Body
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-6">
+            @Body
+        </MudContainer>
     </MudMainContent>
 </MudLayout>
 
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
-</div>
-
 @code {
-    // ── UI State ─────────────────────────────────────────────
-    private bool _open = false;
-
-    private void ToggleDrawer()
-    {
-        _open = !_open;
-    }
-
-    // ── Theme State ──────────────────────────────────────────
-    private MudTheme _currentTheme = default!;
-    private bool _isDarkMode = true;
-    
-    protected override void OnInitialized()
-    {
-        // Provide a safe fallback theme for the initial server pre-render
-        _currentTheme = GetThemeConfig("obsidian");
-    }
+    // Diatur ke false agar Light Mode menjadi default saat pertama kali dibuka
+    private bool _isDarkMode = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            var savedTheme = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "preferred_theme");
+            // Cek preferensi pengguna yang tersimpan di LocalStorage
             var savedMode = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "is_dark_mode");
 
             if (!string.IsNullOrEmpty(savedMode))
             {
-                _isDarkMode = savedMode == "true";
-            }
-
-            if (string.IsNullOrEmpty(savedTheme))
-            {
-                await SetThemeAsync("obsidian");
-            }
-            else
-            {
-                await SetThemeAsync(savedTheme);
+                var isDark = savedMode == "true";
+                // Hanya perbarui state jika tersimpan sebagai dark mode (karena default sudah light)
+                if (isDark != _isDarkMode)
+                {
+                    _isDarkMode = isDark;
+                    StateHasChanged();
+                }
             }
         }
     }
 
-    // ── Mode & Theme Switcher Logic ──────────────────────────
     private async Task ToggleDarkModeAsync()
     {
         _isDarkMode = !_isDarkMode;
+        // Simpan preferensi mode ke LocalStorage
         await JSRuntime.InvokeVoidAsync("localStorage.setItem", "is_dark_mode", _isDarkMode.ToString().ToLower());
         StateHasChanged();
-    }
-
-    private async Task SetThemeAsync(string themeName)
-    {
-        _currentTheme = GetThemeConfig(themeName);
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "preferred_theme", themeName);
-        StateHasChanged();
-    }
-
-    // Pull themes directly from the static AppThemes class
-    private MudTheme GetThemeConfig(string themeName)
-    {
-        return themeName switch
-        {
-            "Cobalt" => AppThemes.CobaltTheme,
-            "Terminal" => AppThemes.ObscuraTerminalTheme,
-            _ => AppThemes.ObsidianTheme
-        };
     }
 }
