@@ -14,11 +14,10 @@ public class TicketHistory : BaseEntity
     public Guid TicketId { get; set; }
 
     /// <summary>
-    /// The type of change this entry represents (e.g. "StatusChanged", "AssigneeChanged",
-    /// "PriorityChanged", "CommentAdded", "TicketUpdated"). Used to determine how OldValue/
-    /// NewValue/Note should be interpreted and displayed.
+    /// The type of change this entry represents. Used to determine how OldValue/NewValue/Note
+    /// should be interpreted and displayed.
     /// </summary>
-    public required string Action { get; set; }
+    public TicketHistoryAction Action { get; set; }
 
     /// <summary>
     /// The value before the change (e.g. previous status, previous assignee name, previous

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SupportTicketSystem.Domain.Entities;
+using SupportTicketSystem.Domain.Enums;
 
 namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
 {
@@ -18,7 +19,8 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
 
             builder.Property(h => h.Action)
                 .IsRequired()
-                .HasMaxLength(50);
+                .HasConversion<string>()
+                .HasMaxLength(30);
 
             builder.Property(h => h.OldValue)
                 .HasMaxLength(255);
@@ -80,7 +82,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-000000000001"),
                     TicketId = ticket1,
-                    Action = "TicketCreated",
+                    Action = TicketHistoryAction.TicketCreated,
                     Note = "Ticket created by Admin User.",
                     ChangedBy = adminId,
                     Timestamp = seedDate,
@@ -90,7 +92,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-000000000002"),
                     TicketId = ticket1,
-                    Action = "AssigneeChanged",
+                    Action = TicketHistoryAction.AssigneeChanged,
                     OldValue = "Unassigned",
                     NewValue = "Andi Pratama",
                     ChangedBy = adminId,
@@ -103,7 +105,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-000000000003"),
                     TicketId = ticket2,
-                    Action = "TicketCreated",
+                    Action = TicketHistoryAction.TicketCreated,
                     Note = "Ticket created by Admin User.",
                     ChangedBy = adminId,
                     Timestamp = seedDate.AddDays(-1),
@@ -113,7 +115,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-000000000004"),
                     TicketId = ticket2,
-                    Action = "PriorityChanged",
+                    Action = TicketHistoryAction.PriorityChanged,
                     OldValue = "Low",
                     NewValue = "Medium",
                     ChangedBy = sitiId,
@@ -124,7 +126,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-000000000005"),
                     TicketId = ticket2,
-                    Action = "StatusChanged",
+                    Action = TicketHistoryAction.StatusChanged,
                     OldValue = "Open",
                     NewValue = "InProgress",
                     ChangedBy = sitiId,
@@ -135,7 +137,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-000000000006"),
                     TicketId = ticket2,
-                    Action = "CommentAdded",
+                    Action = TicketHistoryAction.CommentAdded,
                     Note = "User sudah mencoba solusi tetapi masih gagal.",
                     ChangedBy = sitiId,
                     Timestamp = seedDate.AddDays(-1).AddHours(3),
@@ -147,7 +149,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-000000000007"),
                     TicketId = ticket4,
-                    Action = "TicketCreated",
+                    Action = TicketHistoryAction.TicketCreated,
                     Note = "Ticket created by Admin User.",
                     ChangedBy = adminId,
                     Timestamp = seedDate.AddDays(-5),
@@ -157,7 +159,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-000000000008"),
                     TicketId = ticket4,
-                    Action = "StatusChanged",
+                    Action = TicketHistoryAction.StatusChanged,
                     OldValue = "Open",
                     NewValue = "InProgress",
                     ChangedBy = budiId,
@@ -168,7 +170,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-000000000009"),
                     TicketId = ticket4,
-                    Action = "StatusChanged",
+                    Action = TicketHistoryAction.StatusChanged,
                     OldValue = "InProgress",
                     NewValue = "Resolved",
                     ChangedBy = budiId,
@@ -179,7 +181,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-00000000000a"),
                     TicketId = ticket4,
-                    Action = "StatusChanged",
+                    Action = TicketHistoryAction.StatusChanged,
                     OldValue = "Resolved",
                     NewValue = "Closed",
                     ChangedBy = budiId,
@@ -192,7 +194,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-00000000000b"),
                     TicketId = ticket5,
-                    Action = "TicketCreated",
+                    Action = TicketHistoryAction.TicketCreated,
                     Note = "Ticket created by Admin User.",
                     ChangedBy = adminId,
                     Timestamp = seedDate.AddDays(-6),
@@ -202,7 +204,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-00000000000c"),
                     TicketId = ticket5,
-                    Action = "StatusChanged",
+                    Action = TicketHistoryAction.StatusChanged,
                     OldValue = "Open",
                     NewValue = "Closed",
                     ChangedBy = rizkyId,
@@ -215,7 +217,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-00000000000d"),
                     TicketId = ticket6,
-                    Action = "TicketCreated",
+                    Action = TicketHistoryAction.TicketCreated,
                     Note = "Ticket created by Admin User.",
                     ChangedBy = adminId,
                     Timestamp = seedDate.AddDays(-4),
@@ -225,7 +227,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-00000000000e"),
                     TicketId = ticket6,
-                    Action = "AssigneeChanged",
+                    Action = TicketHistoryAction.AssigneeChanged,
                     OldValue = "Unassigned",
                     NewValue = "Andi Pratama",
                     ChangedBy = adminId,
@@ -236,7 +238,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-00000000000f"),
                     TicketId = ticket6,
-                    Action = "StatusChanged",
+                    Action = TicketHistoryAction.StatusChanged,
                     OldValue = "Open",
                     NewValue = "InProgress",
                     ChangedBy = andiId,
@@ -249,7 +251,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-000000000010"),
                     TicketId = ticket8,
-                    Action = "TicketCreated",
+                    Action = TicketHistoryAction.TicketCreated,
                     Note = "Ticket created by Admin User.",
                     ChangedBy = adminId,
                     Timestamp = seedDate.AddDays(-7),
@@ -259,7 +261,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
                 {
                     Id = Guid.Parse("b0000000-0000-0000-0000-000000000011"),
                     TicketId = ticket8,
-                    Action = "StatusChanged",
+                    Action = TicketHistoryAction.StatusChanged,
                     OldValue = "Open",
                     NewValue = "Closed",
                     ChangedBy = budiId,
