@@ -1,5 +1,7 @@
 using SupportTicketSystem.Application;
+using SupportTicketSystem.Application.Interfaces.Repositories;
 using SupportTicketSystem.Infrastructure;
+using SupportTicketSystem.Infrastructure.Persistence.Repositories;
 using SupportTicketSystem.WebApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,7 +16,10 @@ builder.Services.AddControllers()
 
 builder.Services.AddControllers();
 
+
 builder.Services.AddSwaggerDocumentation();
+
+builder.Services.AddScoped<ITicketHistoryRepository, TicketHistoryRepository>();
 
 var app = builder.Build();
 

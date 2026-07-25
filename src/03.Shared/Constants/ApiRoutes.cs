@@ -28,7 +28,10 @@
 
             // Route segments for controller usage
             public const string ReportSegment = "report";
+            public const string HistorySegment = "history";
             public const string AssignSegment = "{id}/assign";
+            public const string History = Base + "/" + HistorySegment;
+
         }
 
         public static class Dashboard

@@ -1,4 +1,5 @@
 ﻿using SupportTicketSystem.Shared.DTOs;
+using SupportTicketSystem.Shared.DTOs.TicketHistories;
 using SupportTicketSystem.Shared.DTOs.Tickets;
 using SupportTicketSystem.Shared.Models;
 
@@ -13,4 +14,5 @@ public interface ITicketClient
     Task<ApiResponse<object>> UpdateTicketAsync(Guid id, UpdateTicketDto dto);
     Task<ApiResponse<object>> DeleteTicketAsync(Guid id);
     Task<ApiResponse<object>> AssignTicketAsync(Guid ticketId, Guid userId);
+    Task<PagedResult<TicketHistoryDto>> GetTicketHistoriesAsync(PagedRequest request);
 }

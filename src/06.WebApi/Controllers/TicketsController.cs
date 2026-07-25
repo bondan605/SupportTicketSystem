@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using SupportTicketSystem.Application.Abstractions.Services;
 using SupportTicketSystem.Shared.Constants;
 using SupportTicketSystem.Shared.DTOs;
+using SupportTicketSystem.Shared.DTOs.TicketHistories;
 using SupportTicketSystem.Shared.DTOs.Tickets;
 using SupportTicketSystem.Shared.Models;
 using SupportTicketSystem.WebApi.Extensions;
@@ -84,6 +85,20 @@ namespace SupportTicketSystem.WebApi.Controllers
         {
             var result = await _ticketService.GetFilteredTicketsAsync(status, assignedTo, request);
             return Ok(ApiResponse<PagedResult<TicketDto>>.SuccessResponse(result, "Filtered tickets retrieved successfully."));
+        }
+
+        /// <summary>
+        /// Retrieves ticket history.
+        /// </summary>
+        [HttpGet(ApiRoutes.Tickets.HistorySegment)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetHistory([FromQuery] PagedRequest request)
+        {
+            var result = await _ticketService.GetTicketHistoriesAsync(request);
+
+            return Ok(
+                ApiResponse<PagedResult<TicketHistoryDto>>
+                    .SuccessResponse(result, "Ticket history retrieved successfully."));
         }
 
         /// <summary>

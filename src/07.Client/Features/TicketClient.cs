@@ -1,6 +1,7 @@
 ﻿using SupportTicketSystem.Client.Features.Interfaces;
 using SupportTicketSystem.Shared.Constants;
 using SupportTicketSystem.Shared.DTOs;
+using SupportTicketSystem.Shared.DTOs.TicketHistories;
 using SupportTicketSystem.Shared.DTOs.Tickets;
 using SupportTicketSystem.Shared.Models;
 using System.Net.Http.Headers;
@@ -89,5 +90,14 @@ public class TicketClient : ITicketClient
         await AttachTokenAsync();
         var response = await _httpClient.PutAsJsonAsync(ApiRoutes.Tickets.Assign.Replace("{id}", ticketId.ToString()), userId);
         return await response.Content.ReadFromJsonAsync<ApiResponse<object>>() ?? new ApiResponse<object> { Success = false };
+    }
+
+    public async Task<PagedResult<TicketHistoryDto>> GetTicketHistoriesAsync(PagedRequest request)
+    {
+        var url = $"{ApiRoutes.Tickets.History}?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
+
+        var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<TicketHistoryDto>>>(url);
+
+        return response?.Data ?? new PagedResult<TicketHistoryDto>();
     }
 }

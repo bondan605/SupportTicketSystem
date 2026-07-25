@@ -1,0 +1,289 @@
+﻿@page "/ticket-history"
+@using SupportTicketSystem.Shared.DTOs.TicketHistories
+@* @attribute [Authorize(Roles = "Manager")] *@
+
+@inject ITicketClient TicketClient
+@inject IUserClient UserClient
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6">
+
+    <div class="mb-6">
+        <MudText Typo="Typo.h4" Color="Color.Primary"><b>Ticket History</b></MudText>
+        <MudText Typo="Typo.body1" Color="Color.Secondary">Comprehensive view of all customer support tickets.</MudText>
+    </div>
+
+    <MudTable ServerData="ServerReloadAsync"
+              @ref="_table"
+              Dense="true"
+              Hover="true"
+              Outlined="true"
+              Elevation="0"
+              Loading="@_isLoading">
+
+        <ToolBarContent>
+            <MudGrid Spacing="2" Class="mb-2 align-center w-100">
+
+                <MudItem xs="12" md="4">
+                    <MudTextField T="string"
+                                  ValueChanged="@(s => OnSearch(s))"
+                                  Placeholder="Search Ticket Number"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Clearable="true" />
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudSelect T="TicketStatus?"
+                               Value="_selectedStatus"
+                               ValueChanged="OnStatusChanged"
+                               Label="Filter by Status"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Clearable="true">
+
+                        @foreach (TicketStatus status in Enum.GetValues(typeof(TicketStatus)))
+                        {
+                            <MudSelectItem T="TicketStatus?" Value="@status">
+                                @status
+                            </MudSelectItem>
+                        }
+
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="3">
+                    <MudSelect T="Guid?"
+                               Value="_selectedUserId"
+                               ValueChanged="OnUserChanged"
+                               Label="Filter by User"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                               Clearable="true">
+
+                        @foreach (var user in _userList)
+                        {
+                            <MudSelectItem T="Guid?" Value="@user.Id">
+                                @user.Name
+                            </MudSelectItem>
+                        }
+
+                    </MudSelect>
+                </MudItem>
+
+                <MudItem xs="12" md="2" Class="d-flex justify-end">
+                    <MudButton Variant="Variant.Outlined"
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               Color="Color.Primary"
+                               OnClick="@(() => _table.ReloadServerData())">
+                        Refresh
+                    </MudButton>
+                </MudItem>
+
+            </MudGrid>
+        </ToolBarContent>
+
+        <HeaderContent>
+            <MudTh>Ticket No.</MudTh>
+            <MudTh>Customer</MudTh>
+            <MudTh>Previous Status</MudTh>
+            <MudTh>New Status</MudTh>
+            <MudTh>Changed By</MudTh>
+            <MudTh>Timestamp</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+
+            <MudTd DataLabel="Ticket No.">
+                <b>@context.TicketNumber</b>
+            </MudTd>
+
+            <MudTd DataLabel="Customer">
+                <div>@context.CustomerName</div>
+                <MudText Typo="Typo.caption"
+                         Color="Color.Secondary">
+                    @context.CustomerEmail
+                </MudText>
+            </MudTd>
+
+            <MudTd DataLabel="Previous Status">
+                @if (context.PreviousStatus.HasValue)
+                {
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Color="@GetStatusColor(context.PreviousStatus.Value)">
+                        @context.PreviousStatus
+                    </MudChip>
+                }
+                else
+                {
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Color="Color.Default"
+                             Variant="Variant.Outlined">
+                        -
+                    </MudChip>
+                }
+            </MudTd>
+
+            <MudTd DataLabel="New Status">
+                @if (context.NewStatus.HasValue)
+                {
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Color="@GetStatusColor(context.NewStatus.Value)">
+                        @context.NewStatus
+                    </MudChip>
+                }
+                else
+                {
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Color="Color.Default"
+                             Variant="Variant.Outlined">
+                        -
+                    </MudChip>
+                }
+            </MudTd>
+
+            <MudTd DataLabel="Changed By">
+                @context.ChangedByName
+            </MudTd>
+
+            <MudTd DataLabel="Timestamp">
+                @context.Timestamp.ToString("MMM dd, yyyy HH:mm")
+            </MudTd>
+
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudText Align="Align.Center" Class="py-4">No tickets found matching your criteria.</MudText>
+        </NoRecordsContent>
+
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+
+</MudContainer>
+
+@code {
+    private MudTable<TicketHistoryDto> _table = null!;
+    private bool _isLoading;
+
+    private string? _searchString;
+    private TicketStatus? _selectedStatus;
+    private Guid? _selectedUserId;
+
+    private List<UserDto> _userList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAgentsAsync();
+    }
+
+    private async Task LoadAgentsAsync()
+    {
+        try
+        {
+            var response = await UserClient.GetAllAgentsAsync();
+            if (response != null && response.Success && response.Data != null)
+            {
+                _userList = response.Data.ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load agents: {ex.Message}", MudBlazor.Severity.Warning);
+        }
+    }
+
+    /// <summary>
+    /// This method bridges MudBlazor's TableState with your custom PagedRequest and ITicketClient.
+    /// </summary>
+    private async Task<TableData<TicketHistoryDto>> ServerReloadAsync(
+    TableState state,
+    CancellationToken token)
+    {
+        _isLoading = true;
+
+        try
+        {
+            var request = new PagedRequest
+            {
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize
+            };
+
+            var response = await TicketClient.GetTicketHistoriesAsync(request);
+
+            IEnumerable<TicketHistoryDto> data = response.Items;
+
+            if (!string.IsNullOrWhiteSpace(_searchString))
+            {
+                data = data.Where(x =>
+                    x.TicketNumber.Contains(_searchString, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return new TableData<TicketHistoryDto>
+            {
+                TotalItems = response.TotalCount,
+                Items = data
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, MudBlazor.Severity.Error);
+
+            return new TableData<TicketHistoryDto>
+            {
+                TotalItems = 0,
+                Items = Array.Empty<TicketHistoryDto>()
+            };
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    // --- Filter Event Handlers ---
+
+    private void OnSearch(string text)
+    {
+        _searchString = text;
+        _table.ReloadServerData();
+    }
+
+    private void OnStatusChanged(TicketStatus? status)
+    {
+        _selectedStatus = status;
+        _table.ReloadServerData();
+    }
+
+    private void OnUserChanged(Guid? userId)
+    {
+        _selectedUserId = userId;
+        _table.ReloadServerData();
+    }
+
+    
+
+    // --- UI Helpers ---
+
+    private Color GetStatusColor(TicketStatus status)
+    {
+        return status switch
+        {
+            TicketStatus.Open => Color.Info,
+            TicketStatus.InProgress => Color.Warning,
+            TicketStatus.Resolved => Color.Success,
+            TicketStatus.Closed => Color.Dark,
+            _ => Color.Default
+        };
+    }
+}

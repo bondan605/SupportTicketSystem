@@ -1,12 +1,14 @@
-﻿using SupportTicketSystem.Application.Abstractions.Services;
-using SupportTicketSystem.Shared.DTOs.Tickets;
+﻿using AutoMapper;
+using FluentValidation;
+using SupportTicketSystem.Application.Abstractions.Services;
+using SupportTicketSystem.Application.Common;
 using SupportTicketSystem.Application.Interfaces.Repositories;
 using SupportTicketSystem.Domain.Entities;
 using SupportTicketSystem.Domain.Enums;
+using SupportTicketSystem.Shared.DTOs.TicketHistories;
+using SupportTicketSystem.Shared.DTOs.Tickets;
 using SupportTicketSystem.Shared.Exceptions;
-using AutoMapper;
 using SupportTicketSystem.Shared.Models;
-using FluentValidation;
 
 namespace SupportTicketSystem.Application.Services
 {
@@ -16,13 +18,15 @@ namespace SupportTicketSystem.Application.Services
         private readonly IMapper _mapper;
         private readonly IValidator<CreateTicketDto> _createTicketValidator;
         private readonly IValidator<UpdateTicketDto> _updateTicketValidator;
+        private readonly ITicketHistoryRepository _historyRepository;
 
-        public TicketService(IUnitOfWork unitOfWork, IMapper mapper, IValidator<CreateTicketDto> createTicketValidator, IValidator<UpdateTicketDto> updateTicketValidator)
+        public TicketService(IUnitOfWork unitOfWork, IMapper mapper, IValidator<CreateTicketDto> createTicketValidator, IValidator<UpdateTicketDto> updateTicketValidator, ITicketHistoryRepository historyRepository)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _createTicketValidator = createTicketValidator;
             _updateTicketValidator = updateTicketValidator;
+            _historyRepository = historyRepository;
         }
 
         public async Task<TicketDto> GetTicketByIdAsync(Guid id)
@@ -84,6 +88,17 @@ namespace SupportTicketSystem.Application.Services
             ticket.TicketNumber = $"TKT-{sequence:D5}";
 
             await _unitOfWork.Tickets.AddAsync(ticket);
+            await _historyRepository.AddAsync(new TicketHistory
+            {
+                TicketId = ticket.Id,
+                Action = "Created",
+                PreviousStatus = null,
+                NewStatus = ticket.Status,
+                CreatedBy = CurrentUser.UserId,
+                ChangedBy = CurrentUser.UserId,
+                Timestamp = DateTime.UtcNow
+            });
+
             await _unitOfWork.SaveChangesAsync();
 
             return _mapper.Map<TicketDto>(ticket);
@@ -97,6 +112,7 @@ namespace SupportTicketSystem.Application.Services
 
             // Business Rule: Closed tickets cannot be modified
             EnsureTicketNotClosed(ticket);
+            var previousStatus = ticket.Status;
 
             if (userRole != "Manager" && ticket.CreatedBy != userId && ticket.AssignedTo != userId)
             {
@@ -108,7 +124,19 @@ namespace SupportTicketSystem.Application.Services
             ticket.Status = dto.Status;
             ticket.UpdatedAt = DateTime.UtcNow;
 
+
             _unitOfWork.Tickets.Update(ticket);
+
+            await _historyRepository.AddAsync(new TicketHistory
+            {
+                TicketId = ticket.Id,
+                Action = "StatusChanged",
+                PreviousStatus = previousStatus,
+                NewStatus = ticket.Status,
+                ChangedBy = CurrentUser.UserId,
+                Timestamp = DateTime.UtcNow
+            });
+
             await _unitOfWork.SaveChangesAsync();
         }
 
@@ -136,6 +164,16 @@ namespace SupportTicketSystem.Application.Services
             ticket.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.Tickets.Update(ticket);
+            await _historyRepository.AddAsync(new TicketHistory
+            {
+                TicketId = ticket.Id,
+                Action = "Assigned",
+                PreviousStatus = ticket.Status,
+                NewStatus = ticket.Status,
+                ChangedBy = CurrentUser.UserId,
+                Timestamp = DateTime.UtcNow
+            });
+
             await _unitOfWork.SaveChangesAsync();
         }
 
@@ -151,6 +189,11 @@ namespace SupportTicketSystem.Application.Services
         {
             if (ticket.Status == TicketStatus.Closed)
                 throw new BusinessException("Closed tickets cannot be modified or deleted.");
+        }
+
+        public async Task<PagedResult<TicketHistoryDto>> GetTicketHistoriesAsync(PagedRequest request)
+        {
+            return await _historyRepository.GetAllAsync(request);
         }
     }
 }
