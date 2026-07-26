@@ -30,15 +30,25 @@
     </MudNavLink>
 
     <MudSpacer />
-    
-    <MudNavLink OnClick="Logout" Icon="@Icons.Material.Outlined.Logout" Class="sidebar-logout">
-        Logout
-    </MudNavLink>
+
+    <form method="post" action="Account/Logout">
+        <AntiforgeryToken />
+        <button type="submit" class="mud-nav-link sidebar-logout">
+            <MudIcon Icon="@Icons.Material.Outlined.Logout" Class="mud-nav-link-icon mr-2" />
+            Logout
+        </button>
+    </form>
 </MudNavMenu>
 
-@code {
-    private void Logout()
-    {
-        // TODO: implement logout logic
+<style>
+    .sidebar-logout {
+        background: none;
+        border: none;
+        width: 100%;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        font: inherit;
     }
-}
+</style>

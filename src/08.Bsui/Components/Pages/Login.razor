@@ -1,11 +1,6 @@
 @page "/login"
 @layout Layout.AuthLayout
 
-@inject IAuthClient AuthClient
-@inject NavigationManager NavigationManager
-@inject ISnackbar Snackbar
-@inject AuthenticationStateProvider AuthStateProvider
-
 <MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center mud-width-full" Style="height: 100vh;">
     <MudCard Elevation="4" Class="pa-6" Width="100%">
         <MudCardHeader Class="d-flex justify-center pb-0">
@@ -19,126 +14,55 @@
             </CardHeaderContent>
         </MudCardHeader>
 
-        <MudCardContent>
-            <MudForm Model="@_model" @ref="_form" Validation="@(_loginValidator.ValidateValue)" ValidationDelay="0">
-                <MudTextField @bind-Value="_model.Email"
-                              For="@(() => _model.Email)"
+        <form method="post" action="Account/Login">
+            <AntiforgeryToken />
+            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+            <MudCardContent>
+                @if (HasError)
+                {
+                    <MudAlert Severity="MudBlazor.Severity.Error" Class="mb-4">Invalid credentials. Please try again.</MudAlert>
+                }
+
+                <MudTextField T="string"
                               Label="Email Address"
                               Variant="Variant.Outlined"
                               Margin="Margin.Dense"
                               Class="mb-4"
                               Adornment="Adornment.End"
-                              AdornmentIcon="@Icons.Material.Filled.Email" />
+                              AdornmentIcon="@Icons.Material.Filled.Email"
+                              UserAttributes="@(new Dictionary<string, object?> { ["name"] = "email", ["required"] = true })" />
 
-                <MudTextField @bind-Value="_model.Password"
-                              For="@(() => _model.Password)"
+                <MudTextField T="string"
                               Label="Password"
                               Variant="Variant.Outlined"
                               InputType="InputType.Password"
                               Margin="Margin.Dense"
                               Class="mb-4"
                               Adornment="Adornment.End"
-                              AdornmentIcon="@Icons.Material.Filled.Lock" />
-            </MudForm>
-        </MudCardContent>
+                              AdornmentIcon="@Icons.Material.Filled.Lock"
+                              UserAttributes="@(new Dictionary<string, object?> { ["name"] = "password", ["required"] = true })" />
+            </MudCardContent>
 
-        <MudCardActions Class="d-flex flex-column px-4 pb-4">
-            <MudButton OnClick="HandleLoginAsync"
-                       Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       Size="Size.Large"
-                       FullWidth="true"
-                       Disabled="@_isLoading">
-                @if (_isLoading)
-                {
-                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
-                    <MudText Class="ms-2">Authenticating...</MudText>
-                }
-                else
-                {
-                    <MudText>Sign In</MudText>
-                }
-            </MudButton>
-        </MudCardActions>
+            <MudCardActions Class="d-flex flex-column px-4 pb-4">
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           FullWidth="true">
+                    Sign In
+                </MudButton>
+            </MudCardActions>
+        </form>
     </MudCard>
 </MudContainer>
 
 @code {
-    private MudForm _form = null!;
-    private readonly LoginRequestDto _model = new();
-    private readonly LoginRequestDtoValidator _loginValidator = new();
-    private bool _isLoading = false;
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
 
-    private async Task HandleLoginAsync()
-    {
-        await _form.ValidateAsync();
-        if (!_form.IsValid)
-        {
-            return;
-        }
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
 
-        _isLoading = true;
-
-        try
-        {
-            var response = await AuthClient.LoginAsync(_model);
-            var data = response?.Data;
-
-            if (data != null && !string.IsNullOrEmpty(data.Token))
-            {
-                // Simpan token & update auth state di seluruh app
-                var customAuthProvider = (CustomAuthStateProvider)AuthStateProvider;
-                await customAuthProvider.MarkUserAsAuthenticated(data.Token);
-
-                Snackbar.Add("Login successful", MudBlazor.Severity.Success);
-
-                if (data.Role == UserRole.Manager)
-                {
-                    NavigationManager.NavigateTo("/dashboard");
-                }
-                else
-                {
-                    NavigationManager.NavigateTo("/support-agent");
-                }
-            }
-            else
-            {
-                Snackbar.Add("Invalid credentials. Please try again.", MudBlazor.Severity.Error);
-            }
-        }
-        catch (BusinessException ex)
-        {
-            // Ini exception dari backend untuk "Invalid email or password"
-            Snackbar.Add(ex.Message, MudBlazor.Severity.Error);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Authentication failed: {ex.Message}", MudBlazor.Severity.Error);
-        }
-        finally
-        {
-            _isLoading = false;
-        }
-    }
-
-    public class LoginRequestDtoValidator : AbstractValidator<LoginRequestDto>
-    {
-        public LoginRequestDtoValidator()
-        {
-            RuleFor(x => x.Email)
-                .NotEmpty().WithMessage("Email is required.")
-                .EmailAddress().WithMessage("Please enter a valid email format.");
-
-            RuleFor(x => x.Password)
-                .NotEmpty().WithMessage("Password is required.");
-        }
-
-        public Func<object, string, Task<IEnumerable<string>>> ValidateValue => async (model, propertyName) =>
-        {
-            var result = await ValidateAsync(ValidationContext<LoginRequestDto>.CreateWithOptions((LoginRequestDto)model, x => x.IncludeProperties(propertyName)));
-            if (result.IsValid)
-                return Array.Empty<string>();
-            return result.Errors.Select(e => e.ErrorMessage);
-        };
-    }
+    private bool HasError => Error is not null;
 }

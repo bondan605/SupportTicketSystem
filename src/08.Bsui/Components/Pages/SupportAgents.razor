@@ -1,5 +1,5 @@
 ﻿@page "/support-agent"
-@* @attribute [Authorize(Roles = "Agent, SupportAgent")] *@
+@attribute [Authorize(Roles = "SupportAgent")]
 
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
@@ -214,7 +214,7 @@
                 PageSize = state.PageSize
             };
 
-            var response = await TicketClient.GetFilteredTicketsAsync(null, null, request);
+            var response = await TicketClient.GetAllTicketsAsync(request);
             IEnumerable<TicketDto> data = response?.Items ?? Array.Empty<TicketDto>();
 
             return new TableData<TicketDto> { TotalItems = response?.TotalCount ?? 0, Items = data };
