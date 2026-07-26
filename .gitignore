@@ -482,3 +482,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# ASP.NET Core Data Protection keys (sensitive - used to encrypt/decrypt auth cookies)
+src/08.Bsui/keys/
