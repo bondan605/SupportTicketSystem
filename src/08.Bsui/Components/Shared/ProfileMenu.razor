@@ -1,0 +1,95 @@
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+<div style="position:relative;">
+    <div @onclick="ToggleMenu" style="cursor:pointer; display:flex; align-items:center; gap:8px;">
+        <MudAvatar Color="Color.Primary" Variant="Variant.Filled" Style="background-color:#dbeafe;">
+            <MudIcon Icon="@Icons.Material.Filled.Person" Style="color:#1e3a8a;" />
+        </MudAvatar>
+
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.body2" Class="font-weight-bold" Style="color:#1e293b;">@_userName</MudText>
+            <MudText Typo="Typo.caption" Style="color:#64748b;">@_userRole</MudText>
+        </MudStack>
+
+        <MudIcon Icon="@(_isOpen ? Icons.Material.Filled.KeyboardArrowUp : Icons.Material.Filled.KeyboardArrowDown)" Size="Size.Small" Style="color:#94a3b8;" />
+    </div>
+
+    @if (_isOpen)
+    {
+        <MudPaper Elevation="8" Class="pa-1 mt-1 profile-menu" Style="position:absolute; top:100%; right:0; min-width:180px; z-index:1300;">
+            <MudButton FullWidth="true" StartIcon="@Icons.Material.Outlined.Person" Style="justify-content:flex-start;" OnClick="GoToProfile">
+                Profile
+            </MudButton>
+            <MudButton FullWidth="true" StartIcon="@Icons.Material.Outlined.Settings" Style="justify-content:flex-start;" OnClick="GoToSettings">
+                Settings
+            </MudButton>
+            <MudDivider Class="my-1" />
+            @* Sign-out must be a native form post to Account/Logout - SignOutAsync can't be
+               called from an interactive component under this app's global InteractiveServer render mode. *@
+            <form method="post" action="Account/Logout">
+                <AntiforgeryToken />
+                <MudButton ButtonType="ButtonType.Submit" FullWidth="true" StartIcon="@Icons.Material.Outlined.Logout" Style="justify-content:flex-start;">
+                    Logout
+                </MudButton>
+            </form>
+        </MudPaper>
+    }
+</div>
+
+<style>
+    /* Match the profile dropdown to the sidebar's navy theme so they feel like one system */
+    .profile-menu {
+        background-color: #0f1c3f !important;
+        border-radius: 8px !important;
+    }
+
+    .profile-menu .mud-button-root {
+        color: rgba(255, 255, 255, 0.7) !important;
+        border-radius: 6px !important;
+        margin: 2px 4px;
+        text-transform: none;
+    }
+
+    .profile-menu .mud-button-root:hover {
+        color: white !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .profile-menu .mud-divider {
+        background-color: rgba(255, 255, 255, 0.12) !important;
+    }
+</style>
+
+@code {
+    private string _userName = string.Empty;
+    private string _userRole = string.Empty;
+    private bool _isOpen;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _userName = user.Identity?.Name ?? string.Empty;
+        _userRole = user.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+    }
+
+    private void ToggleMenu()
+    {
+        _isOpen = !_isOpen;
+    }
+
+    private void GoToProfile()
+    {
+        _isOpen = false;
+        NavigationManager.NavigateTo(AppRoutes.Profile);
+    }
+
+    private void GoToSettings()
+    {
+        _isOpen = false;
+        // TODO: navigate to /settings
+    }
+}
