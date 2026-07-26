@@ -1,0 +1,744 @@
+﻿@page "/ticket-list"
+
+@inject ITicketClient TicketClient
+@inject IUserClient UserClient
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Ticket List</PageTitle>
+
+@* Header mengikuti referensi Home.razor *@
+<MudStack Row="true"
+          Justify="Justify.SpaceBetween"
+          AlignItems="AlignItems.Center"
+          Class="pa-4 pl-6 pr-6">
+
+    @* Bagian kiri *@
+    <MudStack Spacing="0">
+        <MudText Typo="Typo.h5"
+                 Class="font-weight-bold"
+                 Style="color:#1e293b;">
+            Ticket List
+        </MudText>
+
+        <MudText Typo="Typo.body2"
+                 Style="color:#64748b;">
+            Kelola dan pantau semua tiket
+        </MudText>
+    </MudStack>
+
+    @* Bagian kanan *@
+    <MudStack Row="true"
+              AlignItems="AlignItems.Center"
+              Spacing="4">
+
+        <MudButton Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="CreateTicket"
+                   Style="
+                    height:40px;
+                    padding:0 16px;
+                    border-radius:6px;
+                    background-color:#1677ff;
+                    color:#ffffff;
+                    text-transform:none;
+                    font-weight:600;">
+            Buat Tiket Baru
+        </MudButton>
+
+        <MudBadge Content="3"
+                  Color="Color.Error"
+                  Overlap="true">
+
+            <MudIconButton Icon="@Icons.Material.Outlined.Notifications"
+                           Size="Size.Small"
+                           Style="color:#64748b;" />
+        </MudBadge>
+
+        @* Profile menu disalin dari Home.razor *@
+        <MudMenu AnchorOrigin="Origin.BottomRight"
+                 TransformOrigin="Origin.TopRight">
+
+            <ActivatorContent>
+                <MudStack Row="true"
+                          AlignItems="AlignItems.Center"
+                          Spacing="2"
+                          Style="cursor:pointer;">
+
+                    <MudAvatar Color="Color.Primary"
+                               Variant="Variant.Filled"
+                               Style="background-color:#dbeafe;">
+
+                        <MudIcon Icon="@Icons.Material.Filled.Person"
+                                 Style="color:#1e3a8a;" />
+                    </MudAvatar>
+
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.body2"
+                                 Class="font-weight-bold"
+                                 Style="color:#1e293b;">
+                            Admin User
+                        </MudText>
+
+                        <MudText Typo="Typo.caption"
+                                 Style="color:#64748b;">
+                            Administrator
+                        </MudText>
+                    </MudStack>
+
+                    <MudIcon Icon="@Icons.Material.Filled.KeyboardArrowDown"
+                             Size="Size.Small"
+                             Style="color:#94a3b8;" />
+                </MudStack>
+            </ActivatorContent>
+
+            <ChildContent>
+                <MudMenuItem Icon="@Icons.Material.Outlined.Person"
+                             OnClick="GoToProfile">
+                    Profile
+                </MudMenuItem>
+
+                <MudMenuItem Icon="@Icons.Material.Outlined.Settings"
+                             OnClick="GoToSettings">
+                    Settings
+                </MudMenuItem>
+
+                <MudDivider />
+
+                <MudMenuItem Icon="@Icons.Material.Outlined.Logout"
+                             OnClick="Logout">
+                    Logout
+                </MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+
+    </MudStack>
+</MudStack>
+
+<MudDivider />
+
+<MudContainer MaxWidth="MaxWidth.False"
+              Class="px-3 pt-3 pb-2">
+
+    @* =========================
+   SUMMARY CARDS
+   ========================= *@
+    <MudStack Row="true"
+              Spacing="2"
+              Wrap="Wrap.NoWrap"
+              Class="mb-3"
+              Style="width:100%; box-sizing:border-box;">
+
+        @* Total Tickets *@
+        <MudPaper Elevation="0"
+                  Class="pa-4"
+                  Style="flex:1 1 0;
+                    min-width:0;
+                    height:110px;
+                    box-sizing:border-box;
+                    border:1px solid #e8edf4;
+                    border-radius:10px;
+                    background:#ffffff;
+                    box-shadow:0 2px 8px rgba(15, 23, 42, 0.06);">
+
+            <MudStack Row="true"
+                      Spacing="3"
+                      AlignItems="AlignItems.Center"
+                      Style="height:100%;">
+
+                <MudAvatar Color="Color.Default"
+                           Rounded="true"
+                           Style="width:40px;
+                            height:40px;
+                            min-width:40px;
+                            border-radius:8px;
+                            background-color:#1677ff !important;
+                            color:#ffffff !important;">
+
+                    <MudIcon Icon="@Icons.Material.Filled.ConfirmationNumber"
+                             Size="Size.Small" />
+                </MudAvatar>
+
+                <MudStack Spacing="0">
+                    <MudText Style="font-size:11px;
+                        line-height:1.2;
+                        font-weight:600;
+                        color:#42526e;">
+                        Total Tickets
+                    </MudText>
+
+                    <MudText Style="margin-top:4px;
+                        font-size:24px;
+                        line-height:1.1;
+                        font-weight:700;
+                        color:#102544;">
+                        @TotalTicketCount.ToString("N0")
+                    </MudText>
+
+                    <MudText Style="margin-top:7px;
+                        font-size:11px;
+                        line-height:1.2;
+                        color:#60708a;
+                        white-space:nowrap;">
+                        Semua tiket
+                    </MudText>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+
+        @* Open *@
+        <MudPaper Elevation="0"
+                  Class="pa-4"
+                  Style="flex:1 1 0;
+                    min-width:0;
+                    height:110px;
+                    box-sizing:border-box;
+                    border:1px solid #e8edf4;
+                    border-radius:10px;
+                    background:#ffffff;
+                    box-shadow:0 2px 8px rgba(15, 23, 42, 0.06);">
+
+            <MudStack Row="true"
+                      Spacing="3"
+                      AlignItems="AlignItems.Center"
+                      Style="height:100%;">
+
+                <MudAvatar Color="Color.Default"
+                           Rounded="true"
+                           Style="width:40px;
+                            height:40px;
+                            min-width:40px;
+                            border-radius:8px;
+                            background-color:#00c853 !important;
+                            color:#ffffff !important;">
+
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline"
+                             Size="Size.Small" />
+                </MudAvatar>
+
+                <MudStack Spacing="0">
+                    <MudText Style="font-size:11px;
+                        line-height:1.2;
+                        font-weight:600;
+                        color:#42526e;">
+                        Open
+                    </MudText>
+
+                    <MudText Style="margin-top:4px;
+                        font-size:24px;
+                        line-height:1.1;
+                        font-weight:700;
+                        color:#102544;">
+                        @OpenTicketCount.ToString("N0")
+                    </MudText>
+
+                    <MudText Style="margin-top:7px;
+                        font-size:11px;
+                        line-height:1.2;
+                        color:#60708a;
+                        white-space:nowrap;">
+                        @GetPercentage(OpenTicketCount) dari total
+                    </MudText>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+
+        @* In Progress *@
+        <MudPaper Elevation="0"
+                  Class="pa-4"
+                  Style="flex:1 1 0;
+                        min-width:0;
+                        height:110px;
+                        box-sizing:border-box;
+                        border:1px solid #e8edf4;
+                        border-radius:10px;
+                        background:#ffffff;
+                        box-shadow:0 2px 8px rgba(15, 23, 42, 0.06);">
+
+            <MudStack Row="true"
+                      Spacing="3"
+                      AlignItems="AlignItems.Center"
+                      Style="height:100%;">
+
+                <MudAvatar Color="Color.Default"
+                           Rounded="true"
+                           Style="width:40px;
+                            height:40px;
+                            min-width:40px;
+                            border-radius:8px;
+                            background-color:#ffb300 !important;
+                            color:#ffffff !important;">
+
+                    <MudIcon Icon="@Icons.Material.Filled.HourglassEmpty"
+                             Size="Size.Small" />
+                </MudAvatar>
+
+                <MudStack Spacing="0">
+                    <MudText Style="font-size:11px;
+                        line-height:1.2;
+                        font-weight:600;
+                        color:#42526e;">
+                        In Progress
+                    </MudText>
+
+                    <MudText Style="margin-top:4px;
+                        font-size:24px;
+                        line-height:1.1;
+                        font-weight:700;
+                        color:#102544;">
+                        @InProgressTicketCount.ToString("N0")
+                    </MudText>
+
+                    <MudText Style="margin-top:7px;
+                        font-size:11px;
+                        line-height:1.2;
+                        color:#60708a;
+                        white-space:nowrap;">
+                        @GetPercentage(InProgressTicketCount) dari total
+                    </MudText>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+
+        @* Closed *@
+        <MudPaper Elevation="0"
+                  Class="pa-4"
+                  Style="flex:1 1 0;
+                    min-width:0;
+                    height:110px;
+                    box-sizing:border-box;
+                    border:1px solid #e8edf4;
+                    border-radius:10px;
+                    background:#ffffff;
+                    box-shadow:0 2px 8px rgba(15, 23, 42, 0.06);">
+
+            <MudStack Row="true"
+                      Spacing="3"
+                      AlignItems="AlignItems.Center"
+                      Style="height:100%;">
+
+                <MudAvatar Color="Color.Default"
+                           Rounded="true"
+                           Style="width:40px;
+                            height:40px;
+                            min-width:40px;
+                            border-radius:8px;
+                            background-color:#5b5fe9 !important;
+                            color:#ffffff !important;">
+
+                    <MudIcon Icon="@Icons.Material.Filled.MoreHoriz"
+                             Size="Size.Small" />
+                </MudAvatar>
+
+                <MudStack Spacing="0">
+                    <MudText Style="font-size:11px;
+                        line-height:1.2;
+                        font-weight:600;
+                        color:#42526e;">
+                        Closed
+                    </MudText>
+
+                    <MudText Style="margin-top:4px;
+                        font-size:24px;
+                        line-height:1.1;
+                        font-weight:700;
+                        color:#102544;">
+                        @ClosedTicketCount.ToString("N0")
+                    </MudText>
+
+                    <MudText Style="margin-top:7px;
+                        font-size:11px;
+                        line-height:1.2;
+                        color:#60708a;
+                        white-space:nowrap;">
+                        @GetPercentage(ClosedTicketCount) dari total
+                    </MudText>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+
+        @* Cancelled *@
+        @* <MudPaper Elevation="0"
+                  Class="pa-4"
+                  Style="flex:1 1 0;
+                    min-width:0;
+                    height:110px;
+                    box-sizing:border-box;
+                    border:1px solid #e8edf4;
+                    border-radius:10px;
+                    background:#ffffff;
+                    box-shadow:0 2px 8px rgba(15, 23, 42, 0.06);">
+
+            <MudStack Row="true"
+                      Spacing="3"
+                      AlignItems="AlignItems.Center"
+                      Style="height:100%;">
+
+                <MudAvatar Color="Color.Default"
+                           Rounded="true"
+                           Style="width:40px;
+                            height:40px;
+                            min-width:40px;
+                            border-radius:8px;
+                            background-color:#ff3b30 !important;
+                            color:#ffffff !important;">
+
+                    <MudIcon Icon="@Icons.Material.Filled.Close"
+                             Size="Size.Small" />
+                </MudAvatar>
+
+                <MudStack Spacing="0">
+                    <MudText Style="font-size:11px;
+                        line-height:1.2;
+                        font-weight:600;
+                        color:#42526e;">
+                        Cancelled
+                    </MudText>
+
+                    <MudText Style="margin-top:4px;
+                        font-size:24px;
+                        line-height:1.1;
+                        font-weight:700;
+                        color:#102544;">
+                        @CancelledTicketCount.ToString("N0")
+                    </MudText>
+
+                    <MudText Style="margin-top:7px;
+                        font-size:11px;
+                        line-height:1.2;
+                        color:#60708a;
+                        white-space:nowrap;">
+                        @GetPercentage(CancelledTicketCount) dari total
+                    </MudText>
+                </MudStack>
+            </MudStack>
+        </MudPaper> *@
+
+    </MudStack>
+
+    @* =========================
+   FILTER PANEL
+   ========================= *@
+    <MudPaper Elevation="1"
+              Class="pa-2 mb-2"
+              Style="border-radius:10px;">
+        <MudStack Row="true"
+                  AlignItems="AlignItems.Center"
+                  Spacing="2"
+                  Wrap="Wrap.NoWrap">
+
+            @* Search dibuat lebih lebar daripada dropdown *@
+            <MudTextField T="string"
+                          Value="_searchText"
+                          ValueChanged="OnSearchChanged"
+                          Immediate="true"
+                          DebounceInterval="300"
+                          Placeholder="Cari nomor tiket, judul, customer..."
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Clearable="true"
+                          Style="flex:2 1 0; min-width:250px;" />
+
+            <MudSelect T="TicketStatus?"
+                       Value="_selectedStatus"
+                       ValueChanged="OnStatusChanged"
+                       Placeholder="Semua Status"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Clearable="true"
+                       Style="flex: 1 1 0; min-width: 140px;">
+                @foreach (var status in Enum.GetValues<TicketStatus>())
+                {
+                    <MudSelectItem T="TicketStatus?" Value="@status">
+                        @GetStatusText(status)
+                    </MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudSelect T="Guid?"
+                       Value="_selectedAgentId"
+                       ValueChanged="OnAssigneeChanged"
+                       Placeholder="Semua Assignee"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Clearable="true"
+                       Style="flex:1.2 1 0; min-width:155px;">
+
+                @foreach (var agent in _agentList)
+                {
+                    <MudSelectItem T="Guid?" Value="@agent.Id">
+                        @agent.Name
+                    </MudSelectItem>
+                }
+            </MudSelect>
+
+          @*   <MudSelect T="TicketPriority?"
+                       Value="_selectedPriority"
+                       ValueChanged="OnPriorityChanged"
+                       Placeholder="Semua Prioritas"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Clearable="true"
+                       Style="flex: 1 1 0; min-width: 140px;">
+                @foreach (var priority in Enum.GetValues<TicketPriority>())
+                {
+                    <MudSelectItem T="TicketPriority?" Value="@priority">
+                        @priority
+                    </MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudSelect T="string"
+                       Value="_selectedCategory"
+                       ValueChanged="OnCategoryChanged"
+                       Placeholder="Semua Kategori"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Clearable="true"
+                       Style="flex: 1 1 0; min-width: 140px;">
+                @foreach (var category in Categories)
+                {
+                    <MudSelectItem T="string" Value="@category">
+                        @category
+                    </MudSelectItem>
+                }
+            </MudSelect> *@
+
+            <MudButton Variant="Variant.Outlined"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.FilterAlt"
+                       OnClick="ApplyFilter"
+                       Style="height:40px;
+                        min-width:76px;
+                        white-space:nowrap;
+                        border-color:#d8e0eb;
+                        color:#43546e;
+                        text-transform:none;">
+                    Filter
+            </MudButton>
+
+            <MudButton Variant="Variant.Outlined"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       OnClick="ResetFilter"
+                       Style="height:40px;
+                        min-width:76px;
+                        white-space:nowrap;
+                        border-color:#d8e0eb;
+                        color:#43546e;
+                        text-transform:none;">
+                Reset
+            </MudButton>
+
+        </MudStack>
+    </MudPaper>
+
+    @* =========================
+       TICKET TABLE
+       ========================= *@
+    <MudTable T="TicketDto"
+              @ref="_table"
+              ServerData="ServerReloadAsync"
+              Loading="_isLoading"
+              Hover="true"
+              Outlined="true"
+              Elevation="0"
+              Dense="true"
+              RowsPerPage="10"
+              Style="min-width:1120px;">
+
+        <HeaderContent>
+            <MudTh Style="width:44px;">
+                <MudCheckBox T="bool"
+                             Value="@AreAllCurrentPageTicketsSelected"
+                             ValueChanged="OnSelectAllChanged" />
+            </MudTh>
+
+            <MudTh Style="width:120px; white-space:nowrap;">
+                Ticket Number
+            </MudTh>
+
+            <MudTh Style="min-width:170px; white-space:nowrap;">
+                Title
+            </MudTh>
+
+            <MudTh Style="min-width:125px; white-space:nowrap;">
+                Customer
+            </MudTh>
+
+            <MudTh Style="width:100px; white-space:nowrap;">
+                Status
+            </MudTh>
+
+            <MudTh Style="width:90px; white-space:nowrap;">
+                Prioritas
+            </MudTh>
+
+            <MudTh Style="min-width:145px; white-space:nowrap;">
+                Assignee
+            </MudTh>
+
+            <MudTh Style="min-width:145px; white-space:nowrap;">
+                Created At
+            </MudTh>
+
+            <MudTh Style="min-width:145px; white-space:nowrap;">
+                Updated At
+            </MudTh>
+
+            <MudTh Style="width:55px; white-space:nowrap;">
+                Aksi
+            </MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="Pilih">
+                <MudCheckBox T="bool"
+                             Value="@IsTicketSelected(context.Id)"
+                             ValueChanged="@(value =>
+                                 OnTicketSelectionChanged(context.Id, value))" />
+            </MudTd>
+
+            <MudTd DataLabel="Ticket Number"
+                   Style="white-space:nowrap;">
+
+                <MudLink Color="Color.Info"
+                         Underline="Underline.None"
+                         Style="font-weight:600; white-space:nowrap;">
+                    @context.TicketNumber
+                </MudLink>
+
+            </MudTd>
+
+            <MudTd DataLabel="Title"
+                   Style="white-space:nowrap;">
+                @context.Title
+            </MudTd>
+            <MudTd DataLabel="Customer"
+                   Style="white-space:nowrap;">
+                @context.CustomerName
+            </MudTd>
+
+            <MudTd DataLabel="Status"
+                   Style="white-space:nowrap;">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Variant="Variant.Filled"
+                         Color="Color.Default"
+                         Style="@GetStatusStyle(context.Status)">
+                    @GetStatusText(context.Status)
+                </MudChip>
+            </MudTd>
+
+            <MudTd DataLabel="Prioritas"
+                   Style="white-space:nowrap;">
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Variant="Variant.Filled"
+                         Color="Color.Default"
+                         Style="@GetPriorityStyle(context.Priority)">
+                    @context.Priority
+                </MudChip>
+            </MudTd>
+
+            <MudTd DataLabel="Assignee"
+                   Style="white-space:nowrap;">
+
+                @{
+                    var assigneeName = GetAgentName(context.AssignedTo);
+                }
+
+                <MudStack Row="true"
+                          Spacing="1"
+                          AlignItems="AlignItems.Center"
+                          Style="gap:6px;">
+
+                    <MudAvatar Size="Size.Small"
+                               Color="Color.Default"
+                               Style="@GetAssigneeAvatarStyle(assigneeName)">
+                        @GetInitials(assigneeName)
+                    </MudAvatar>
+
+                    <MudText Typo="Typo.caption"
+                             Style="font-size:11px;
+                        line-height:1;
+                        color:#42526e;
+                        white-space:nowrap;">
+                        @assigneeName
+                    </MudText>
+
+                </MudStack>
+            </MudTd>
+
+            <MudTd DataLabel="Created At"
+                   Style="white-space:nowrap;">
+                @context.CreatedAt.ToString("dd MMM yyyy HH:mm")
+            </MudTd>
+
+            <MudTd DataLabel="Updated At"
+                   Style="white-space:nowrap;">
+                @context.UpdatedAt?.ToString("dd MMM yyyy HH:mm")
+            </MudTd>
+
+            <MudTd DataLabel="Aksi"
+                   Style="width:64px;
+                    min-width:64px;
+                    max-width:64px;
+                    padding:0;
+                    border-bottom:1px solid #edf1f6;
+                    text-align:center;
+                    vertical-align:middle;">
+
+                <div style="width:100%;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;">
+
+                    <MudMenu Icon="@Icons.Material.Filled.MoreHoriz"
+                             AnchorOrigin="Origin.BottomRight"
+                             TransformOrigin="Origin.TopRight">
+
+                        <MudMenuItem Icon="@Icons.Material.Filled.Visibility"
+                                     OnClick="@(() => ViewTicket(context))">
+                            Lihat Detail
+                        </MudMenuItem>
+
+                        <MudMenuItem Icon="@Icons.Material.Filled.Edit"
+                                     OnClick="@(() => EditTicket(context))">
+                            Edit
+                        </MudMenuItem>
+
+                        <MudMenuItem Icon="@Icons.Material.Filled.PersonAdd"
+                                     OnClick="@(() => AssignTicket(context))">
+                            Assign
+                        </MudMenuItem>
+
+                    </MudMenu>
+
+                </div>
+
+            </MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudStack AlignItems="AlignItems.Center" Class="py-8">
+                <MudIcon Icon="@Icons.Material.Filled.SearchOff"
+                         Size="Size.Large"
+                         Color="Color.Secondary" />
+                <MudText Typo="Typo.h6">Tiket tidak ditemukan</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    Coba ubah kata pencarian atau filter yang digunakan.
+                </MudText>
+            </MudStack>
+        </NoRecordsContent>
+
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[] { 10, 20, 50 }"
+                           RowsPerPageString="per halaman"
+                           InfoFormat="Menampilkan {first_item}-{last_item} dari {all_items} tiket" />
+        </PagerContent>
+    </MudTable>
+
+</MudContainer>

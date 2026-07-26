@@ -14,6 +14,10 @@ namespace SupportTicketSystem.Shared.DTOs.Tickets
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public TicketStatus Status { get; set; } = TicketStatus.Open;
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public TicketPriority Priority { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public TicketCategory Category { get; set; }
         public Guid? AssignedTo { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
