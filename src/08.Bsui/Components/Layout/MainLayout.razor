@@ -23,7 +23,7 @@
 
     @* Main Content *@
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-6 mb-6">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pt-6 pb-6">
             @Body
         </MudContainer>
     </MudMainContent>
@@ -59,6 +59,10 @@
 }
 
 <style>
+    .mud-layout {
+        --mud-appbar-height: 0px;
+    }
+
     .mud-drawer.sidebar {
         background-color: #0f1c3f !important;
     }
