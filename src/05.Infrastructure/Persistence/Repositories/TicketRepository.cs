@@ -105,7 +105,18 @@ namespace SupportTicketSystem.Infrastructure.Repositories
 
         public async Task<int> GetNextTicketSequenceAsync()
         {
-            return await _context.Tickets.CountAsync() + 1;
+            var lastTicketNumber = await _context.Tickets
+                .OrderByDescending(t => t.TicketNumber)
+                .Select(t => t.TicketNumber)
+                .FirstOrDefaultAsync();
+                
+            if (string.IsNullOrEmpty(lastTicketNumber))
+            {
+                return 1;
+            }
+
+            var numericPart = lastTicketNumber.Split('-').LastOrDefault();
+            return int.TryParse(numericPart, out var parsed) ? parsed + 1 : 1;
         }
     }
 }
