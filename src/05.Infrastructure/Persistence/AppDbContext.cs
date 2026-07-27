@@ -11,6 +11,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence
     /// </summary>
     public class AppDbContext : DbContext
     {
+        public bool IsSeeding { get; set; }
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AppDbContext(DbContextOptions<AppDbContext> options, IHttpContextAccessor httpContextAccessor) : base(options) 
@@ -35,6 +36,11 @@ namespace SupportTicketSystem.Infrastructure.Persistence
         /// </summary>
         private void ApplyAuditInformation()
         {
+            if (IsSeeding)
+            {
+                return;
+            }
+
             var currentUserId = GetCurrentUserId();
             var entries = ChangeTracker.Entries<BaseEntity>();
 
