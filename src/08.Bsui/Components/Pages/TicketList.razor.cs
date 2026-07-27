@@ -145,7 +145,7 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             {
                 Snackbar.Add(
                     $"Gagal mengambil tiket: {ex.Message}",
-                    Severity.Error);
+                    MudBlazor.Severity.Error);
 
                 _currentPageTickets.Clear();
 
@@ -437,17 +437,6 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             return string.Concat(
                 words.Take(2)
                      .Select(word => char.ToUpperInvariant(word[0])));
-        }
-
-        private void CreateTicket()
-        {
-            // TODO: Ganti dengan NavigationManager.NavigateTo("/tickets/create")
-            // setelah halaman create ticket tersedia.
-        }
-
-        private void EditTicket(TicketDto ticket)
-        {
-            // TODO: Buka halaman/dialog edit.
         }
 
         private async Task OpenDetailsDialogAsync(TicketDto ticket)

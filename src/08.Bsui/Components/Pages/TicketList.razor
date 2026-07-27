@@ -1,6 +1,8 @@
 @page "/ticket-list"
-@inject NavigationManager NavigationManager
 
+@using SupportTicketSystem.Bsui.Constants
+
+@inject NavigationManager NavigationManager
 @inject ITicketClient TicketClient
 @inject IUserClient UserClient
 @inject IDialogService DialogService
@@ -35,7 +37,7 @@
 
         <MudButton Variant="Variant.Filled"
                    StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="CreateTicket"
+                   OnClick="@(() => NavigationManager.NavigateTo(AppRoutes.TicketCreate))"
                    Style="
                     height:40px;
                     padding:0 16px;
@@ -720,7 +722,7 @@
                         <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                        Color="Color.Primary"
                                        Size="Size.Small"
-                                       OnClick="@(() => EditTicket(context))" />
+                                       OnClick="@(() => NavigationManager.NavigateTo(AppRoutes.TicketUpdate))" />
                     </MudTooltip>
                     @if (context.Status == TicketStatus.Open)
                     {

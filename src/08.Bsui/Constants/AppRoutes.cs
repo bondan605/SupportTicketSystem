@@ -4,6 +4,8 @@
     {
         public const string Home = "/";
         public const string TicketList = "/ticket-list";
+        public const string TicketCreate = "/tickets/create";
+        public const string TicketUpdate = "/tickets/update";
         public const string TicketHistories = "/ticket-histories";
         public const string Users = "/user";
         public const string Report = "/report";
