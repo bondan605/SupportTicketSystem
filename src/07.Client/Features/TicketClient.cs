@@ -56,7 +56,18 @@ public class TicketClient : ITicketClient
     public async Task<ApiResponse<object>> UpdateTicketAsync(Guid id, UpdateTicketDto dto)
     {
         var response = await _httpClient.PutAsJsonAsync($"{ApiRoutes.Tickets.Base}/{id}", dto);
-        return await response.Content.ReadFromJsonAsync<ApiResponse<object>>() ?? new ApiResponse<object> { Success = false };
+        var body = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return body ?? new ApiResponse<object>
+            {
+                Success = false,
+                Message = $"Request failed with status {(int)response.StatusCode} ({response.StatusCode})."
+            };
+        }
+
+        return body ?? new ApiResponse<object> { Success = false, Message = "Empty response from server." };
     }
 
     public async Task<ApiResponse<object>> DeleteTicketAsync(Guid id)
