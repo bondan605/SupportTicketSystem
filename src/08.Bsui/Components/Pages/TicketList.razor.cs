@@ -27,6 +27,7 @@ namespace SupportTicketSystem.Bsui.Components.Pages
         private int OpenTicketCount { get; set; }
         private int InProgressTicketCount { get; set; }
         private int ClosedTicketCount { get; set; }
+        private int ResolvedTicketCount { get; set; }
         //private int CancelledTicketCount { get; set; }
 
         protected override async Task OnInitializedAsync()
@@ -44,7 +45,9 @@ namespace SupportTicketSystem.Bsui.Components.Pages
 
                 if (response?.Success == true && response.Data is not null)
                 {
-                    _agentList = response.Data.ToList();
+                    _agentList = response.Data
+                        .OrderBy(agent => agent.Id)
+                        .ToList();
                 }
             }
             catch (Exception ex)
@@ -63,17 +66,20 @@ namespace SupportTicketSystem.Bsui.Components.Pages
                 var openTask = GetTicketCountAsync(TicketStatus.Open);
                 var inProgressTask = GetTicketCountAsync(TicketStatus.InProgress);
                 var closedTask = GetTicketCountAsync(TicketStatus.Closed);
+                var resolvedTask = GetTicketCountAsync(TicketStatus.Resolved);
 
                 await Task.WhenAll(
                     totalTask,
                     openTask,
                     inProgressTask,
-                    closedTask);
+                    closedTask,
+                    resolvedTask);
 
                 TotalTicketCount = totalTask.Result;
                 OpenTicketCount = openTask.Result;
                 InProgressTicketCount = inProgressTask.Result;
                 ClosedTicketCount = closedTask.Result;
+                ResolvedTicketCount = resolvedTask.Result;
             }
             catch (Exception ex)
             {
@@ -105,10 +111,15 @@ namespace SupportTicketSystem.Bsui.Components.Pages
 
             try
             {
+                var pageNumber = Math.Max(1, state.Page + 1);
+                var pageSize = state.PageSize > 0
+                    ? state.PageSize
+                    : 10;
+
                 var request = new PagedRequest
                 {
-                    PageNumber = state.Page + 1,
-                    PageSize = state.PageSize
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
                 };
 
                 var response = await TicketClient.GetTicketListAsync(
@@ -233,7 +244,12 @@ namespace SupportTicketSystem.Bsui.Components.Pages
                 return;
             }
 
-            _table.NavigateTo(0);
+            if (_table.CurrentPage != 0)
+            {
+                _table.NavigateTo(Page.First);
+                return;
+            }
+
             await _table.ReloadServerData();
         }
 
@@ -348,39 +364,45 @@ namespace SupportTicketSystem.Bsui.Components.Pages
                    "line-height:22px;";
         }
 
-        private static string GetAssigneeAvatarStyle(string assignee)
+        private static string GetAssigneeAvatarStyle(Guid? assigneeId)
         {
-            var backgroundColor = "#E9EEF5";
-            var textColor = "#64748B";
-
-            switch (assignee)
+            if (!assigneeId.HasValue)
             {
-                case "Andi Pratama":
-                    backgroundColor = "#E7E5FF";
-                    textColor = "#5B5FE9";
-                    break;
-
-                case "Siti Aisyah":
-                    backgroundColor = "#FFE5EA";
-                    textColor = "#FF4D67";
-                    break;
-
-                case "Budi Santoso":
-                    backgroundColor = "#E4F0FF";
-                    textColor = "#2F80ED";
-                    break;
-
-                case "Rizky Hidayat":
-                    backgroundColor = "#DFF5F3";
-                    textColor = "#299C98";
-                    break;
-
-                case "Unassigned":
-                    backgroundColor = "#E9EEF5";
-                    textColor = "#64748B";
-                    break;
+                return BuildAvatarStyle(
+                    backgroundColor: "#E9EEF5",
+                    textColor: "#64748B");
             }
 
+            var hue = GetStableHue(assigneeId.Value);
+
+            var backgroundColor = $"hsl({hue}, 75%, 92%)";
+            var textColor = $"hsl({hue}, 65%, 38%)";
+
+            return BuildAvatarStyle(
+                backgroundColor,
+                textColor);
+        }
+
+        private static int GetStableHue(Guid assigneeId)
+        {
+            const uint offsetBasis = 2166136261;
+            const uint prime = 16777619;
+
+            var hash = offsetBasis;
+
+            foreach (var value in assigneeId.ToByteArray())
+            {
+                hash ^= value;
+                hash *= prime;
+            }
+
+            return (int)(hash % 360);
+        }
+
+        private static string BuildAvatarStyle(
+            string backgroundColor,
+            string textColor)
+        {
             return "width:24px;" +
                    "height:24px;" +
                    "min-width:24px;" +

@@ -54,6 +54,10 @@ namespace SupportTicketSystem.Infrastructure.Repositories
 
         public async Task<PagedResult<Ticket>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search)
         {
+            var pageNumber = Math.Max(1, request.PageNumber);
+            var pageSize = Math.Clamp(request.PageSize, 1, 100);
+            var skip = (pageNumber - 1) * pageSize;
+
             var query = _context.Tickets
                 .AsNoTracking()
                 .AsQueryable();
@@ -95,15 +99,15 @@ namespace SupportTicketSystem.Infrastructure.Repositories
             var items = await query
                 .OrderByDescending(ticket =>
                     ticket.UpdatedAt ?? ticket.CreatedAt)
-                .Skip((request.PageNumber - 1) * request.PageSize)
-                .Take(request.PageSize)
+                .Skip(skip)
+                .Take(pageSize)
                 .ToListAsync();
 
             return new PagedResult<Ticket>
             {
                 Items = items,
-                PageNumber = request.PageNumber,
-                PageSize = request.PageSize,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
                 TotalCount = totalCount
             };
         }

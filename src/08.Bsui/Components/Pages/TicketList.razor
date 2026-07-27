@@ -46,71 +46,17 @@
             Buat Tiket Baru
         </MudButton>
 
-        <MudBadge Content="3"
+        @* <MudBadge Content="3"
                   Color="Color.Error"
                   Overlap="true">
 
             <MudIconButton Icon="@Icons.Material.Outlined.Notifications"
                            Size="Size.Small"
                            Style="color:#64748b;" />
-        </MudBadge>
+        </MudBadge> *@
 
         @* Profile menu disalin dari Home.razor *@
-        <MudMenu AnchorOrigin="Origin.BottomRight"
-                 TransformOrigin="Origin.TopRight">
-
-            <ActivatorContent>
-                <MudStack Row="true"
-                          AlignItems="AlignItems.Center"
-                          Spacing="2"
-                          Style="cursor:pointer;">
-
-                    <MudAvatar Color="Color.Primary"
-                               Variant="Variant.Filled"
-                               Style="background-color:#dbeafe;">
-
-                        <MudIcon Icon="@Icons.Material.Filled.Person"
-                                 Style="color:#1e3a8a;" />
-                    </MudAvatar>
-
-                    <MudStack Spacing="0">
-                        <MudText Typo="Typo.body2"
-                                 Class="font-weight-bold"
-                                 Style="color:#1e293b;">
-                            Admin User
-                        </MudText>
-
-                        <MudText Typo="Typo.caption"
-                                 Style="color:#64748b;">
-                            Administrator
-                        </MudText>
-                    </MudStack>
-
-                    <MudIcon Icon="@Icons.Material.Filled.KeyboardArrowDown"
-                             Size="Size.Small"
-                             Style="color:#94a3b8;" />
-                </MudStack>
-            </ActivatorContent>
-
-            <ChildContent>
-                <MudMenuItem Icon="@Icons.Material.Outlined.Person"
-                             OnClick="GoToProfile">
-                    Profile
-                </MudMenuItem>
-
-                <MudMenuItem Icon="@Icons.Material.Outlined.Settings"
-                             OnClick="GoToSettings">
-                    Settings
-                </MudMenuItem>
-
-                <MudDivider />
-
-                <MudMenuItem Icon="@Icons.Material.Outlined.Logout"
-                             OnClick="Logout">
-                    Logout
-                </MudMenuItem>
-            </ChildContent>
-        </MudMenu>
+        <ProfileMenu />
 
     </MudStack>
 </MudStack>
@@ -414,6 +360,63 @@
             </MudStack>
         </MudPaper> *@
 
+        @* Resolved *@
+        <MudPaper Elevation="0"
+                  Class="pa-4"
+                  Style="flex:1 1 0;
+            min-width:0;
+            height:110px;
+            box-sizing:border-box;
+            border:1px solid #e8edf4;
+            border-radius:10px;
+            background:#ffffff;
+            box-shadow:0 2px 8px rgba(15, 23, 42, 0.06);">
+
+            <MudStack Row="true"
+                      Spacing="3"
+                      AlignItems="AlignItems.Center"
+                      Style="height:100%;">
+
+                <MudAvatar Color="Color.Default"
+                           Rounded="true"
+                           Style="width:40px;
+                    height:40px;
+                    min-width:40px;
+                    border-radius:8px;
+                    background-color:#14b8a6 !important;
+                    color:#ffffff !important;">
+
+                    <MudIcon Icon="@Icons.Material.Filled.DoneAll"
+                             Size="Size.Small" />
+                </MudAvatar>
+
+                <MudStack Spacing="0">
+                    <MudText Style="font-size:11px;
+                        line-height:1.2;
+                        font-weight:600;
+                        color:#42526e;">
+                        Resolved
+                    </MudText>
+
+                    <MudText Style="margin-top:4px;
+                        font-size:24px;
+                        line-height:1.1;
+                        font-weight:700;
+                        color:#102544;">
+                        @ResolvedTicketCount.ToString("N0")
+                    </MudText>
+
+                    <MudText Style="margin-top:7px;
+                        font-size:11px;
+                        line-height:1.2;
+                        color:#60708a;
+                        white-space:nowrap;">
+                        @GetPercentage(ResolvedTicketCount) dari total
+                    </MudText>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+
     </MudStack>
 
     @* =========================
@@ -551,7 +554,7 @@
               Elevation="0"
               Dense="true"
               RowsPerPage="10"
-              Style="min-width:1240px;">
+              Style="min-width:1120px;">
 
         <HeaderContent>
             <MudTh Style="width:44px;">
@@ -671,7 +674,7 @@
 
                     <MudAvatar Size="Size.Small"
                                Color="Color.Default"
-                               Style="@GetAssigneeAvatarStyle(assigneeName)">
+                               Style="@GetAssigneeAvatarStyle(context.AssignedTo)">
                         @GetInitials(assigneeName)
                     </MudAvatar>
 
