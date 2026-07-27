@@ -88,7 +88,29 @@ deployment, but won't stay consistent across multiple app instances behind a loa
 Would need `IDistributedCache` (e.g. Redis) for that scenario. Report data may lag up to 5
 minutes behind the latest ticket changes; this is an accepted trade-off, not a bug.
 
-## 6. DevDataController — Purpose & Endpoints
+## 6. Ticket Lifecycle Rules Used by the Seeder (per Role & Scenario document)
+
+The seeder was updated to follow `Role_Scenario_Ticket_Management_EN.md` rather than an
+arbitrary lifecycle, so generated demo data reflects real permission/flow rules:
+
+- **A ticket is created by a Support Agent** (based on a customer complaint), not by an
+  admin/manager. `Ticket.CreatedBy` = the creating agent's Id.
+- **Assignment is a Manager action that auto-transitions the status.** When a Manager
+  assigns an agent to an `Open` ticket, two history entries are recorded together
+  (`AssigneeChanged` then `StatusChanged` Open→InProgress), both `ChangedBy` = the Manager —
+  because the status change is a *side effect* of the Manager's assignment action, not a
+  separate agent action.
+- **Reassignment only happens while `InProgress`**, and only by a Manager.
+- **Only the agent currently assigned** at that point in time can move the ticket to
+  `Resolved` or `Closed` (directly, or Resolved → Closed).
+- **`Ticket.UpdatedAt` / `UpdatedBy` are set on every subsequent change** (assignment,
+  reassignment, resolve, close) — not just once at creation. A ticket that never leaves
+  `Open` has `UpdatedAt`/`UpdatedBy` left `null`, since it was never modified after creation.
+- **`TicketHistory.CreatedBy`** is also populated (same value as `ChangedBy`) for every
+  history entry, consistent with the same audit-preservation principle (`IsSeeding` bypass)
+  applied to `Ticket`.
+
+## 7. DevDataController — Purpose, Endpoints & Configuration
 
 A development-only utility controller for generating/clearing demo ticket data, since real
 production data doesn't exist yet and the report needs volume to be meaningful (trends, SLA
@@ -96,36 +118,69 @@ production data doesn't exist yet and the report needs volume to be meaningful (
 
 **Why a separate bulk seeder instead of EF Core `HasData`:** `HasData` (used for `Users`)
 requires fully static values baked into migrations, which doesn't work for hundreds of
-randomly-distributed rows spanning 45 days. `ReportDemoDataSeeder` generates that volume
-programmatically instead, called on-demand via these endpoints rather than at startup.
+randomly-distributed rows spanning a configurable date range. `ReportDemoDataSeeder`
+generates that volume programmatically instead, called on-demand via these endpoints rather
+than at startup.
 
 | Method | Endpoint | Description |
 |--------|----------|--------------|
-| POST | `/api/dev/report-data/seed` | Generates ~45 days of demo Tickets + TicketHistories. Skipped (no-op) if the DB already has more than 20 tickets — call `/clear` first to force a fresh reseed. |
+| POST | `/api/dev/report-data/seed` | Generates demo Tickets + TicketHistories, following the lifecycle rules in Section 6. Accepts optional query parameters (see below). Skipped (no-op) if the DB already has more than 20 tickets — call `/clear` first to force a fresh reseed. |
 | DELETE | `/api/dev/report-data/clear` | Deletes all `Tickets` and `TicketHistories`. **`Users` are never touched** — they're managed via migration seed data, and removing them would break `AssignedTo`/`ChangedBy` foreign keys on new tickets. |
-| POST | `/api/dev/report-data/reset` | Convenience wrapper: `clear` followed immediately by `seed`, in one call. |
+| POST | `/api/dev/report-data/reset` | Convenience wrapper: `clear` followed immediately by `seed`, in one call. Accepts the same optional query parameters as `/seed`. |
 
 **Safety:** every action in this controller checks `IWebHostEnvironment.IsDevelopment()`
 first and returns `403 Forbidden` otherwise — this must never be reachable in
 Staging/Production.
 
-**What the generated data looks like:** ~180 tickets over 45 days, with status distribution
-weighted by ticket age (older tickets skew toward `Closed`, newer ones skew toward
-`Open`/`InProgress`), full `TicketHistory` lifecycles (Created → InProgress → Resolved →
-Closed) with randomized realistic time gaps, and roughly 85% of closed tickets meeting their
-SLA target (the other 15% intentionally close late) — so SLA Compliance shows a realistic
-~85–90% instead of a meaningless flat 100%.
+### Configuring volume (`/seed` and `/reset` query parameters)
 
-## 7. Sample API Calls
+All parameters are optional — omitting them uses the defaults below (identical to the
+original hardcoded behavior).
 
-**Seed demo data:**
+| Parameter | Default | Description |
+|-----------|---------|--------------|
+| `daysToGenerate` | `45` | How many days back from today to generate tickets for. |
+| `minTicketsPerDay` | `2` | Minimum tickets created per day (ignored if `totalTickets` is set). |
+| `maxTicketsPerDay` | `6` | Maximum tickets created per day (ignored if `totalTickets` is set). |
+| `totalTickets` | *(none)* | If set, generates exactly this many tickets, randomly distributed across `daysToGenerate` — overrides `minTicketsPerDay`/`maxTicketsPerDay` entirely. |
+
+The response includes `estimatedTicketCount` (a preview estimate before insertion — exact
+when `totalTickets` is set, an average-based estimate otherwise) and
+`actualTicketsInserted` (the real count after generation), so you can sanity-check the
+volume without needing to query the database separately.
+
+**What the generated data looks like (with default settings):** ~180 tickets over 45 days,
+with status distribution weighted by ticket age (older tickets skew toward `Closed`, newer
+ones skew toward `Open`/`InProgress`), full `TicketHistory` lifecycles following the rules in
+Section 6, with randomized realistic time gaps, and roughly 85% of closed tickets meeting
+their SLA target (the other 15% intentionally close late) — so SLA Compliance shows a
+realistic ~85–90% instead of a meaningless flat 100%.
+
+## 8. Sample API Calls
+
+**Seed with default volume (45 days, 2-6 tickets/day):**
 ```bash
 curl -X POST https://localhost:5001/api/dev/report-data/seed
+```
+
+**Seed with a custom daily range:**
+```bash
+curl -X POST "https://localhost:5001/api/dev/report-data/seed?daysToGenerate=60&minTicketsPerDay=3&maxTicketsPerDay=8"
+```
+
+**Seed an exact total (e.g. 300 tickets spread across 60 days):**
+```bash
+curl -X POST "https://localhost:5001/api/dev/report-data/seed?daysToGenerate=60&totalTickets=300"
 ```
 
 **Clear demo data:**
 ```bash
 curl -X DELETE https://localhost:5001/api/dev/report-data/clear
+```
+
+**Clear + reseed with custom volume in one call:**
+```bash
+curl -X POST "https://localhost:5001/api/dev/report-data/reset?totalTickets=300"
 ```
 
 **Get report summary:**
@@ -134,7 +189,7 @@ curl -X GET "https://localhost:5001/api/reports/summary?startDate=2026-06-26&end
   -H "Authorization: Bearer {your_jwt_token}"
 ```
 
-## 8. Still Pending / Not Decided Yet
+## 9. Still Pending / Not Decided Yet
 
 - `ChangePercent` fields (previous-period comparison) in `TicketOverviewDto`,
   `AverageResponseTimeDto`, and `SlaComplianceDto` currently return `null` — implementation

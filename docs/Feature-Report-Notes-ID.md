@@ -90,7 +90,30 @@ single-instance, tapi tidak akan konsisten di banyak instance app di belakang lo
 Perlu `IDistributedCache` (misal Redis) untuk skenario itu. Data report bisa lag sampai 5
 menit dari perubahan ticket terbaru; ini trade-off yang disengaja, bukan bug.
 
-## 6. DevDataController — Tujuan & Endpoint
+## 6. Aturan Lifecycle Ticket yang Dipakai Seeder (mengikuti dokumen Role & Scenario)
+
+Seeder diperbarui supaya mengikuti `Role_Scenario_Ticket_Management_EN.md`, bukan lifecycle
+sembarangan, supaya data demo yang dihasilkan mencerminkan aturan permission/alur yang nyata:
+
+- **Ticket dibuat oleh Support Agent** (berdasarkan komplain pelanggan), bukan oleh
+  admin/manager. `Ticket.CreatedBy` = Id agent pembuat.
+- **Assignment adalah aksi Manager yang otomatis mengubah status.** Saat Manager meng-assign
+  agent ke ticket `Open`, tercatat 2 history entry sekaligus (`AssigneeChanged` lalu
+  `StatusChanged` Open→InProgress), keduanya `ChangedBy` = Manager tersebut — karena
+  perubahan status adalah *efek samping* dari aksi assignment Manager, bukan aksi terpisah
+  dari agent.
+- **Reassignment hanya terjadi saat status `InProgress`**, dan hanya oleh Manager.
+- **Hanya agent yang sedang assigned** saat itu yang bisa mengubah ticket ke `Resolved` atau
+  `Closed` (langsung, atau Resolved → Closed).
+- **`Ticket.UpdatedAt`/`UpdatedBy` di-set di setiap perubahan berikutnya** (assignment,
+  reassignment, resolve, close) — bukan cuma sekali saat dibuat. Ticket yang tidak pernah
+  keluar dari `Open` punya `UpdatedAt`/`UpdatedBy` tetap `null`, karena memang tidak pernah
+  diubah setelah dibuat.
+- **`TicketHistory.CreatedBy`** juga diisi (sama dengan `ChangedBy`) untuk tiap history
+  entry, konsisten dengan prinsip audit-preservation yang sama (`IsSeeding` bypass) yang
+  diterapkan ke `Ticket`.
+
+## 7. DevDataController — Tujuan, Endpoint & Konfigurasi
 
 Controller utilitas khusus development untuk generate/hapus data ticket demo, karena data
 produksi sungguhan belum ada dan report butuh volume data supaya bermakna (tren, SLA %,
@@ -98,36 +121,69 @@ distribusi per-assignee, dll. terlihat tidak berarti kalau cuma ada segelintir t
 
 **Kenapa bulk seeder terpisah, bukan pakai EF Core `HasData`:** `HasData` (dipakai untuk
 `Users`) butuh nilai statis penuh yang di-bake ke migration, yang tidak praktis untuk ratusan
-baris dengan distribusi acak sepanjang 45 hari. `ReportDemoDataSeeder` men-generate volume
-itu secara programatik, dipanggil on-demand lewat endpoint ini, bukan saat startup.
+baris dengan distribusi acak sepanjang rentang tanggal yang bisa dikonfigurasi.
+`ReportDemoDataSeeder` men-generate volume itu secara programatik, dipanggil on-demand lewat
+endpoint ini, bukan saat startup.
 
 | Method | Endpoint | Deskripsi |
 |--------|----------|--------------|
-| POST | `/api/dev/report-data/seed` | Generate ~45 hari data demo Tickets + TicketHistories. Di-skip (no-op) kalau DB sudah punya lebih dari 20 ticket — panggil `/clear` dulu untuk memaksa reseed baru. |
+| POST | `/api/dev/report-data/seed` | Generate data demo Tickets + TicketHistories, mengikuti aturan lifecycle di Section 6. Menerima query parameter opsional (lihat di bawah). Di-skip (no-op) kalau DB sudah punya lebih dari 20 ticket — panggil `/clear` dulu untuk memaksa reseed baru. |
 | DELETE | `/api/dev/report-data/clear` | Hapus semua `Tickets` dan `TicketHistories`. **`Users` tidak pernah disentuh** — dikelola lewat migration seed data, dan kalau ikut terhapus akan merusak foreign key `AssignedTo`/`ChangedBy` di ticket baru. |
-| POST | `/api/dev/report-data/reset` | Wrapper praktis: `clear` langsung diikuti `seed`, dalam satu panggilan. |
+| POST | `/api/dev/report-data/reset` | Wrapper praktis: `clear` langsung diikuti `seed`, dalam satu panggilan. Menerima query parameter opsional yang sama seperti `/seed`. |
 
 **Keamanan:** setiap action di controller ini mengecek `IWebHostEnvironment.IsDevelopment()`
 dulu dan mengembalikan `403 Forbidden` kalau tidak — ini wajib tidak bisa diakses di
 Staging/Production.
 
-**Seperti apa data yang dihasilkan:** ±180 ticket sepanjang 45 hari, distribusi status
-dibobotkan berdasarkan umur ticket (ticket lama cenderung `Closed`, ticket baru cenderung
-`Open`/`InProgress`), siklus `TicketHistory` lengkap (Created → InProgress → Resolved →
-Closed) dengan jeda waktu acak yang realistis, dan sekitar 85% ticket closed memenuhi target
-SLA-nya (15% sisanya sengaja closed telat) — supaya SLA Compliance menampilkan angka
+### Mengatur volume (`/seed` dan `/reset` query parameter)
+
+Semua parameter opsional — kalau tidak diisi, pakai default di bawah (sama seperti perilaku
+hardcoded sebelumnya).
+
+| Parameter | Default | Deskripsi |
+|-----------|---------|--------------|
+| `daysToGenerate` | `45` | Berapa hari ke belakang dari hari ini untuk generate ticket. |
+| `minTicketsPerDay` | `2` | Minimum ticket dibuat per hari (diabaikan kalau `totalTickets` diisi). |
+| `maxTicketsPerDay` | `6` | Maksimum ticket dibuat per hari (diabaikan kalau `totalTickets` diisi). |
+| `totalTickets` | *(kosong)* | Kalau diisi, generate persis sejumlah ini, tersebar acak sepanjang `daysToGenerate` — meng-override `minTicketsPerDay`/`maxTicketsPerDay` sepenuhnya. |
+
+Response menyertakan `estimatedTicketCount` (perkiraan sebelum insert — persis kalau
+`totalTickets` diisi, perkiraan berbasis rata-rata kalau tidak) dan `actualTicketsInserted`
+(jumlah asli setelah generate), supaya kamu bisa cek volume tanpa perlu query database
+terpisah.
+
+**Seperti apa data yang dihasilkan (dengan setting default):** ±180 ticket sepanjang 45 hari,
+distribusi status dibobotkan berdasarkan umur ticket (ticket lama cenderung `Closed`, ticket
+baru cenderung `Open`/`InProgress`), siklus `TicketHistory` lengkap mengikuti aturan di
+Section 6, dengan jeda waktu acak yang realistis, dan sekitar 85% ticket closed memenuhi
+target SLA-nya (15% sisanya sengaja closed telat) — supaya SLA Compliance menampilkan angka
 realistis ~85–90%, bukan 100% terus-menerus yang tidak berguna.
 
-## 7. Contoh Pemanggilan API
+## 8. Contoh Pemanggilan API
 
-**Seed data demo:**
+**Seed dengan volume default (45 hari, 2-6 ticket/hari):**
 ```bash
 curl -X POST https://localhost:5001/api/dev/report-data/seed
+```
+
+**Seed dengan rentang harian custom:**
+```bash
+curl -X POST "https://localhost:5001/api/dev/report-data/seed?daysToGenerate=60&minTicketsPerDay=3&maxTicketsPerDay=8"
+```
+
+**Seed jumlah pasti (misal 300 ticket tersebar di 60 hari):**
+```bash
+curl -X POST "https://localhost:5001/api/dev/report-data/seed?daysToGenerate=60&totalTickets=300"
 ```
 
 **Hapus data demo:**
 ```bash
 curl -X DELETE https://localhost:5001/api/dev/report-data/clear
+```
+
+**Clear + reseed dengan volume custom dalam satu panggilan:**
+```bash
+curl -X POST "https://localhost:5001/api/dev/report-data/reset?totalTickets=300"
 ```
 
 **Ambil report summary:**
@@ -136,7 +192,7 @@ curl -X GET "https://localhost:5001/api/reports/summary?startDate=2026-06-26&end
   -H "Authorization: Bearer {your_jwt_token}"
 ```
 
-## 8. Masih Pending / Belum Diputuskan
+## 9. Masih Pending / Belum Diputuskan
 
 - Field `ChangePercent` (perbandingan periode sebelumnya) di `TicketOverviewDto`,
   `AverageResponseTimeDto`, dan `SlaComplianceDto` saat ini masih `null` — implementasinya
