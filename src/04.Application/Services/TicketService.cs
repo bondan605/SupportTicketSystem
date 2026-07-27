@@ -76,8 +76,6 @@ namespace SupportTicketSystem.Application.Services
             var ticket = _mapper.Map<Ticket>(dto);
             ticket.Id = Guid.NewGuid();
             ticket.Status = TicketStatus.Open;
-            ticket.CreatedAt = DateTime.UtcNow;
-            ticket.CreatedBy = CreatedBy; 
 
             // Business Rule: TKT-00001 format
             int sequence = await _unitOfWork.Tickets.GetNextTicketSequenceAsync();
@@ -103,10 +101,7 @@ namespace SupportTicketSystem.Application.Services
                 throw new UnauthorizedAccessException("You can only update tickets you created or are assigned to.");
             }
 
-            ticket.Title = dto.Title;
-            ticket.Description = dto.Description;
-            ticket.Status = dto.Status;
-            ticket.UpdatedAt = DateTime.UtcNow;
+            _mapper.Map(dto, ticket);
 
             _unitOfWork.Tickets.Update(ticket);
             await _unitOfWork.SaveChangesAsync();
@@ -133,7 +128,6 @@ namespace SupportTicketSystem.Application.Services
 
             ticket.AssignedTo = userId;
             ticket.Status = TicketStatus.InProgress;
-            ticket.UpdatedAt = DateTime.UtcNow;
 
             _unitOfWork.Tickets.Update(ticket);
             await _unitOfWork.SaveChangesAsync();
