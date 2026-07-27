@@ -24,10 +24,12 @@
             // Route segments for client usage
             public const string Base = $"{BaseApi}/tickets";
             public const string Report = $"{Base}/report";
+            public const string List = $"{Base}/list";
             public const string Assign = $"{Base}/{{id}}/assign";
 
             // Route segments for controller usage
             public const string ReportSegment = "report";
+            public const string ListSegment = "list";
             public const string AssignSegment = "{id}/assign";
         }
 

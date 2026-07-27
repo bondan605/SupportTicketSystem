@@ -9,6 +9,7 @@ public interface ITicketClient
     Task<ApiResponse<TicketDto>> GetTicketByIdAsync(Guid id);
     Task<PagedResult<TicketDto>> GetAllTicketsAsync(PagedRequest request);
     Task<PagedResult<TicketDto>> GetFilteredTicketsAsync(string? status, Guid? assignedTo, PagedRequest request);
+    Task<PagedResult<TicketDto>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search);
     Task<ApiResponse<object>> CreateTicketAsync(CreateTicketDto dto);
     Task<ApiResponse<object>> UpdateTicketAsync(Guid id, UpdateTicketDto dto);
     Task<ApiResponse<object>> DeleteTicketAsync(Guid id);

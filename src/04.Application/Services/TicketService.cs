@@ -56,6 +56,20 @@ namespace SupportTicketSystem.Application.Services
             };
         }
 
+        public async Task<PagedResult<TicketDto>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search)
+        {
+            var pagedTickets =
+                await _unitOfWork.Tickets.GetTicketListAsync(status,assignedTo, request, priority, category, search);
+
+            return new PagedResult<TicketDto>
+            {
+                Items = _mapper.Map<IEnumerable<TicketDto>>(pagedTickets.Items),
+                PageNumber = pagedTickets.PageNumber,
+                PageSize = pagedTickets.PageSize,
+                TotalCount = pagedTickets.TotalCount
+            };
+        }
+
         public async Task<PagedResult<TicketDto>> GetTicketsForAgentAsync(Guid userId, PagedRequest request)
         {
             var pagedTickets = await _unitOfWork.Tickets.GetTicketsForUserAsync(userId, request);
