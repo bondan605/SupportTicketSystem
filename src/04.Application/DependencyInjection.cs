@@ -1,9 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using FluentValidation;
+﻿using FluentValidation;
+using Microsoft.Extensions.DependencyInjection;
 using SupportTicketSystem.Application.Abstractions.Services;
+using SupportTicketSystem.Application.Interfaces;
 using SupportTicketSystem.Application.Services;
 using System.Reflection;
-using SupportTicketSystem.Application.Interfaces;
 
 namespace SupportTicketSystem.Application
 {
@@ -16,6 +16,7 @@ namespace SupportTicketSystem.Application
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<ITicketHistoryService, TicketHistoryService>();
 
             // Register AutoMapper
             services.AddAutoMapper(Assembly.GetExecutingAssembly());

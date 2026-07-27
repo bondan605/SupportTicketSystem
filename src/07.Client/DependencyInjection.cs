@@ -21,6 +21,11 @@ public static class DependencyInjection
             client.BaseAddress = new Uri(apiBaseUrl);
         }).AddHttpMessageHandler<JwtForwardingHandler>();
 
+        services.AddHttpClient<ITicketHistoryClient, TicketHistoryClient>(client =>
+        {
+            client.BaseAddress = new Uri(apiBaseUrl);
+        }).AddHttpMessageHandler<JwtForwardingHandler>();
+
         services.AddHttpClient<IDashboardClient, DashboardClient>(client =>
         {
             client.BaseAddress = new Uri(apiBaseUrl);
@@ -30,6 +35,11 @@ public static class DependencyInjection
         {
             client.BaseAddress = new Uri(apiBaseUrl);
         }).AddHttpMessageHandler<JwtForwardingHandler>();
+
+        services.AddHttpClient<ITicketHistoryExportService, TicketHistoryExportService>(client =>
+        {
+            client.BaseAddress = new Uri(apiBaseUrl);
+        });
 
         return services;
     }

@@ -95,7 +95,17 @@ namespace SupportTicketSystem.Application.Services
             int sequence = await _unitOfWork.Tickets.GetNextTicketSequenceAsync();
             ticket.TicketNumber = $"TKT-{sequence:D5}";
 
+            // LOGIC TICKET HISTORY: Sesuai format permintaan
+            var history = new TicketHistory
+            {
+                TicketId = ticket.Id,
+                Action = TicketHistoryAction.TicketCreated,
+                ChangedBy = CreatedBy,
+                Timestamp = DateTime.UtcNow
+            };
+
             await _unitOfWork.Tickets.AddAsync(ticket);
+            await _unitOfWork.TicketHistories.AddAsync(history);
             await _unitOfWork.SaveChangesAsync();
 
             return _mapper.Map<TicketDto>(ticket);
@@ -106,8 +116,6 @@ namespace SupportTicketSystem.Application.Services
             await _updateTicketValidator.ValidateAndThrowAsync(dto);
 
             var ticket = await GetAndValidateTicket(id);
-
-            // Business Rule: Closed tickets cannot be modified
             EnsureTicketNotClosed(ticket);
 
             if (userRole != "Manager" && ticket.CreatedBy != userId && ticket.AssignedTo != userId)
@@ -115,35 +123,68 @@ namespace SupportTicketSystem.Application.Services
                 throw new UnauthorizedAccessException("You can only update tickets you created or are assigned to.");
             }
 
+            // LOGIC TICKET HISTORY: Pengecekan Perubahan Status
+            if (ticket.Status != dto.Status)
+            {
+                var history = new TicketHistory
+                {
+                    TicketId = ticket.Id,
+                    Action = TicketHistoryAction.StatusChanged,
+                    OldValue = ticket.Status.ToString(),
+                    NewValue = dto.Status.ToString(),
+                    ChangedBy = userId,
+                    Timestamp = DateTime.UtcNow
+                };
+                await _unitOfWork.TicketHistories.AddAsync(history);
+            }
+
+            // (Opsional) Anda bisa tambahkan pengecekan spesifik lainnya 
+            // seperti judul/deskripsi jika berubah, buat riwayat "TicketUpdated".
+
+            //ticket.Title = dto.Title;
+            //ticket.Description = dto.Description;
+            //ticket.Status = dto.Status;
+            //ticket.UpdatedAt = DateTime.UtcNow;
             _mapper.Map(dto, ticket);
 
             _unitOfWork.Tickets.Update(ticket);
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task DeleteTicketAsync(Guid id)
-        {
-            var ticket = await GetAndValidateTicket(id);
-            EnsureTicketNotClosed(ticket);
-
-            _unitOfWork.Tickets.Delete(ticket);
-            await _unitOfWork.SaveChangesAsync();
-        }
-
-        public async Task AssignTicketAsync(Guid ticketId, Guid userId)
+        public async Task AssignTicketAsync(Guid ticketId, Guid userId, Guid assignedByAdminId)
         {
             var ticket = await GetAndValidateTicket(ticketId);
             EnsureTicketNotClosed(ticket);
 
-            // Business Rule: Tickets can only be assigned to existing users
             bool userExists = await _unitOfWork.Users.ExistsAsync(userId);
             if (!userExists)
                 throw new BusinessException("Target user does not exist.");
 
+            var oldAssigneeId = ticket.AssignedTo;
             ticket.AssignedTo = userId;
             ticket.Status = TicketStatus.InProgress;
 
+            // LOGIC TICKET HISTORY: Perubahan Assignee
+            var history = new TicketHistory
+            {
+                TicketId = ticket.Id,
+                Action = TicketHistoryAction.AssigneeChanged,
+                OldValue = oldAssigneeId?.ToString() ?? "Unassigned",
+                NewValue = userId.ToString(),
+                ChangedBy = assignedByAdminId,
+                Timestamp = DateTime.UtcNow
+            };
+            await _unitOfWork.TicketHistories.AddAsync(history);
+
             _unitOfWork.Tickets.Update(ticket);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task DeleteTicketAsync(Guid id, Guid deletedByUserId)
+        {
+            var ticket = await GetAndValidateTicket(id);
+            EnsureTicketNotClosed(ticket);
+            _unitOfWork.Tickets.Delete(ticket);
             await _unitOfWork.SaveChangesAsync();
         }
 

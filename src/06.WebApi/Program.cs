@@ -1,6 +1,8 @@
 using SupportTicketSystem.Application;
 using SupportTicketSystem.Infrastructure;
 using SupportTicketSystem.WebApi.Extensions;
+using QuestPDF.Infrastructure;
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
