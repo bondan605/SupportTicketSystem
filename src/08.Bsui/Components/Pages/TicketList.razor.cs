@@ -1,4 +1,5 @@
 using MudBlazor;
+using SupportTicketSystem.Bsui.Components.Dialogs;
 using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Shared.DTOs.Tickets;
 using SupportTicketSystem.Shared.DTOs.Users;
@@ -159,15 +160,15 @@ namespace SupportTicketSystem.Bsui.Components.Pages
                 _isLoading = false;
             }
         }
-        private bool AreAllCurrentPageTicketsSelected =>
-            _currentPageTickets.Count > 0 &&
-            _currentPageTickets.All(ticket =>
-                _selectedTicketIds.Contains(ticket.Id));
+        //private bool AreAllCurrentPageTicketsSelected =>
+        //    _currentPageTickets.Count > 0 &&
+        //    _currentPageTickets.All(ticket =>
+        //        _selectedTicketIds.Contains(ticket.Id));
 
-        private bool IsTicketSelected(Guid ticketId)
-        {
-            return _selectedTicketIds.Contains(ticketId);
-        }
+        //private bool IsTicketSelected(Guid ticketId)
+        //{
+        //    return _selectedTicketIds.Contains(ticketId);
+        //}
 
         private void OnTicketSelectionChanged(
             Guid ticketId,
@@ -182,13 +183,13 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             _selectedTicketIds.Remove(ticketId);
         }
 
-        private void OnSelectAllChanged(bool isSelected)
-        {
-            foreach (var ticket in _currentPageTickets)
-            {
-                OnTicketSelectionChanged(ticket.Id, isSelected);
-            }
-        }
+        //private void OnSelectAllChanged(bool isSelected)
+        //{
+        //    foreach (var ticket in _currentPageTickets)
+        //    {
+        //        OnTicketSelectionChanged(ticket.Id, isSelected);
+        //    }
+        //}
 
         private async Task OnSearchChanged(string? value)
         {
@@ -221,10 +222,10 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             await ReloadFirstPageAsync();
         }
 
-        private async Task ApplyFilter()
-        {
-            await ReloadFirstPageAsync();
-        }
+        //private async Task ApplyFilter()
+        //{
+        //    await ReloadFirstPageAsync();
+        //}
 
         private async Task ResetFilter()
         {
@@ -444,34 +445,53 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             // setelah halaman create ticket tersedia.
         }
 
-        private void GoToProfile()
-        {
-            // TODO: NavigationManager.NavigateTo("/profile");
-        }
-
-        private void GoToSettings()
-        {
-            // TODO: NavigationManager.NavigateTo("/settings");
-        }
-
-        private void Logout()
-        {
-            // TODO: Jalankan proses logout.
-        }
-
-        private void ViewTicket(TicketDto ticket)
-        {
-            // TODO: Navigasi ke detail berdasarkan ticket.Id.
-        }
-
         private void EditTicket(TicketDto ticket)
         {
             // TODO: Buka halaman/dialog edit.
         }
 
-        private void AssignTicket(TicketDto ticket)
+        private async Task OpenDetailsDialogAsync(TicketDto ticket)
         {
-            // TODO: Buka dialog assign agent.
+            var parameters = new DialogParameters { ["Ticket"] = ticket, ["Description"] = ticket.Description };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+            await DialogService.ShowAsync<DescriptionDialog>("Ticket Detail", parameters, options);
+        }
+
+        private async Task OpenAssignDialogAsync(TicketDto ticket, string title = "Assign Agent")
+        {
+            var parameters = new DialogParameters { ["TicketId"] = ticket.Id, ["Agents"] = _agentList };
+            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+            var dialog = await DialogService.ShowAsync<AssignAgentDialog>(title, parameters, options);
+
+            var result = await dialog.Result;
+
+            if (result is null || result.Canceled)
+            {
+                return;
+            }
+
+            if (result.Data is not Guid agentId)
+            {
+                Snackbar.Add("Please select an agent before saving.", MudBlazor.Severity.Warning);
+                return;
+            }
+
+            var assignResponse = await TicketClient.AssignTicketAsync(ticket.Id, agentId);
+
+            if (assignResponse != null && assignResponse.Success)
+            {
+                Snackbar.Add("Agent assigned successfully.", MudBlazor.Severity.Success);
+                if (_table is not null)
+                {
+                    await _table.ReloadServerData();
+                }
+            }
+            else
+            {
+                Snackbar.Add($"Failed to assign agent: {assignResponse?.Message}", MudBlazor.Severity.Error);
+            }
         }
     }
 }

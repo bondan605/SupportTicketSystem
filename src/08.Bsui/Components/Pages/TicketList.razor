@@ -557,11 +557,11 @@
               Style="min-width:1120px;">
 
         <HeaderContent>
-            <MudTh Style="width:44px;">
+            @* <MudTh Style="width:44px;">
                 <MudCheckBox T="bool"
                              Value="@AreAllCurrentPageTicketsSelected"
                              ValueChanged="OnSelectAllChanged" />
-            </MudTh>
+            </MudTh> *@
 
             <MudTh Style="width:120px; white-space:nowrap;">
                 Ticket Number
@@ -605,12 +605,12 @@
         </HeaderContent>
 
         <RowTemplate>
-            <MudTd DataLabel="Pilih">
+            @* <MudTd DataLabel="Pilih">
                 <MudCheckBox T="bool"
                              Value="@IsTicketSelected(context.Id)"
                              ValueChanged="@(value =>
                                  OnTicketSelectionChanged(context.Id, value))" />
-            </MudTd>
+            </MudTd> *@
 
             <MudTd DataLabel="Ticket Number"
                    Style="white-space:nowrap;">
@@ -719,24 +719,35 @@
                              TransformOrigin="Origin.TopRight">
 
                         <MudMenuItem Icon="@Icons.Material.Filled.Visibility"
-                                     OnClick="@(() => ViewTicket(context))">
+                                     IconColor="Color.Info"
+                                     OnClick="@(() => OpenDetailsDialogAsync(context))">
                             Lihat Detail
                         </MudMenuItem>
 
                         <MudMenuItem Icon="@Icons.Material.Filled.Edit"
+                                     IconColor="Color.Secondary"
                                      OnClick="@(() => EditTicket(context))">
                             Edit
                         </MudMenuItem>
 
-                        <MudMenuItem Icon="@Icons.Material.Filled.PersonAdd"
-                                     OnClick="@(() => AssignTicket(context))">
-                            Assign
-                        </MudMenuItem>
-
+                        @if (context.Status == TicketStatus.Open)
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Filled.PersonSearch"
+                                         IconColor="Color.Primary"
+                                         OnClick="@(() => OpenAssignDialogAsync(context, "Assign Agent"))">
+                                Assign Agent
+                            </MudMenuItem>
+                        }
+                        @if (context.Status == TicketStatus.InProgress)
+                        {
+                            <MudMenuItem Icon="@Icons.Material.Filled.PersonAdd"
+                                         IconColor="Color.Warning"
+                                         OnClick="@(() => OpenAssignDialogAsync(context, "Edit Agent"))">
+                                Edit Agent
+                            </MudMenuItem>
+                        }
                     </MudMenu>
-
                 </div>
-
             </MudTd>
         </RowTemplate>
 
