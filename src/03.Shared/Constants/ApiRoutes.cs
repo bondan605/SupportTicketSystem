@@ -37,5 +37,10 @@
         {
             public const string Summary = $"{BaseApi}/dashboard/summary";
         }
+
+        public static class Report
+        {
+            public const string Reports = $"{BaseApi}/reports";
+        }
     }
 }

@@ -1,7 +1,8 @@
+using QuestPDF.Infrastructure;
 using SupportTicketSystem.Application;
 using SupportTicketSystem.Infrastructure;
+using SupportTicketSystem.Infrastructure.Persistence.Seeding;
 using SupportTicketSystem.WebApi.Extensions;
-using QuestPDF.Infrastructure;
 QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,8 @@ builder.Services.AddControllers()
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 builder.Services.AddSwaggerDocumentation();
+
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
