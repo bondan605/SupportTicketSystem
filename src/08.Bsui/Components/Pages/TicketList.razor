@@ -599,7 +599,7 @@
                 Updated At
             </MudTh>
 
-            <MudTh Style="width:55px; white-space:nowrap;">
+            <MudTh Style="width:120px; min-width:120px; text-align:center; white-space:nowrap;">
                 Aksi
             </MudTh>
         </HeaderContent>
@@ -701,52 +701,50 @@
             </MudTd>
 
             <MudTd DataLabel="Aksi"
-                   Style="width:64px;
-                    min-width:64px;
-                    max-width:64px;
-                    padding:0;
+                   Style="width:120px;
+                    min-width:120px;
+                    max-width:120px;
+                    padding:0 8px;
                     border-bottom:1px solid #edf1f6;
                     text-align:center;
                     vertical-align:middle;">
 
-                <div style="width:100%;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;">
-
-                    <MudMenu Icon="@Icons.Material.Filled.MoreHoriz"
-                             AnchorOrigin="Origin.BottomRight"
-                             TransformOrigin="Origin.TopRight">
-
-                        <MudMenuItem Icon="@Icons.Material.Filled.Visibility"
-                                     IconColor="Color.Info"
-                                     OnClick="@(() => OpenDetailsDialogAsync(context))">
-                            Lihat Detail
-                        </MudMenuItem>
-
-                        <MudMenuItem Icon="@Icons.Material.Filled.Edit"
-                                     IconColor="Color.Secondary"
-                                     OnClick="@(() => EditTicket(context))">
-                            Edit
-                        </MudMenuItem>
-
-                        @if (context.Status == TicketStatus.Open)
-                        {
-                            <MudMenuItem Icon="@Icons.Material.Filled.PersonSearch"
-                                         IconColor="Color.Primary"
-                                         OnClick="@(() => OpenAssignDialogAsync(context, "Assign Agent"))">
-                                Assign Agent
-                            </MudMenuItem>
-                        }
-                        @if (context.Status == TicketStatus.InProgress)
-                        {
-                            <MudMenuItem Icon="@Icons.Material.Filled.PersonAdd"
-                                         IconColor="Color.Warning"
-                                         OnClick="@(() => OpenAssignDialogAsync(context, "Edit Agent"))">
-                                Edit Agent
-                            </MudMenuItem>
-                        }
-                    </MudMenu>
+                <div style="display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        gap:2px;
+                        white-space:nowrap;">
+                    
+                    <MudTooltip Text="Edit Ticket">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="@(() => EditTicket(context))" />
+                    </MudTooltip>
+                    @if (context.Status == TicketStatus.Open)
+                    {
+                        <MudTooltip Text="Assign Agent">
+                            <MudIconButton Icon="@Icons.Material.Filled.PersonSearch"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => OpenAssignDialogAsync(context, "Assign Agent"))" />
+                        </MudTooltip>
+                    }
+                    @if (context.Status == TicketStatus.InProgress)
+                    {
+                        <MudTooltip Text="Edit Agent">
+                            <MudIconButton Icon="@Icons.Material.Filled.PersonAdd"
+                                           Color="Color.Warning"
+                                           Size="Size.Small"
+                                           OnClick="@(() => OpenAssignDialogAsync(context, "Edit Agent"))" />
+                        </MudTooltip>
+                    }
+                    <MudTooltip Text="View Details">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility"
+                                       Color="Color.Info"
+                                       Size="Size.Small"
+                                       OnClick="@(() => OpenDetailsDialogAsync(context))" />
+                    </MudTooltip>
                 </div>
             </MudTd>
         </RowTemplate>
