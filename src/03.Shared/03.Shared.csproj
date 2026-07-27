@@ -12,4 +12,8 @@
     <ProjectReference Include="..\02.Domain\02.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="DTOs\Reports\" />
+  </ItemGroup>
+
 </Project>
