@@ -1,0 +1,18 @@
+@page "/ticket-list"
+@inject NavigationManager NavigationManager
+
+<PageTitle>Tickets</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="pa-4 d-flex justify-center align-center" Style="min-height: 60vh;">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="@(() => NavigationManager.NavigateTo("/tickets/create"))">
+        Create Ticket
+    </MudButton>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+               StartIcon="@Icons.Material.Filled.Add"
+               OnClick="@(() => NavigationManager.NavigateTo("/tickets/update"))">
+        Update Ticket
+    </MudButton>
+</MudContainer>

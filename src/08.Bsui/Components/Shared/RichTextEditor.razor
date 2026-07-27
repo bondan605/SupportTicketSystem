@@ -1,0 +1,168 @@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<MudPaper Outlined="true" Elevation="0">
+    <MudToolBar Dense="true" WrapContent="true" Class="pa-3">
+        <MudMenu Dense="true" EndIcon="@Icons.Material.Filled.ArrowDropDown">
+            <ActivatorContent>
+                <MudText Typo="Typo.body2">@_currentBlockLabel</MudText>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem OnClick="@(() => FormatBlockAsync("P", "Normal"))">Normal</MudMenuItem>
+                <MudMenuItem OnClick="@(() => FormatBlockAsync("H3", "Heading"))">Heading</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-1" />
+        <MudIconButton Icon="@Icons.Material.Outlined.FormatBold" Size="Size.Small" OnClick='@(() => ExecCommandAsync("bold"))' />
+        <MudIconButton Icon="@Icons.Material.Outlined.FormatItalic" Size="Size.Small" OnClick='@(() => ExecCommandAsync("italic"))' />
+        <MudIconButton Icon="@Icons.Material.Outlined.FormatUnderlined" Size="Size.Small" OnClick='@(() => ExecCommandAsync("underline"))' />
+        <MudIconButton Icon="@Icons.Material.Outlined.FormatListBulleted" Size="Size.Small" OnClick='@(() => ExecCommandAsync("insertUnorderedList"))' />
+        <MudIconButton Icon="@Icons.Material.Outlined.FormatListNumbered" Size="Size.Small" OnClick='@(() => ExecCommandAsync("insertOrderedList"))' />
+        <MudIconButton Icon="@Icons.Material.Outlined.FormatAlignLeft" Size="Size.Small" OnClick='@(() => ExecCommandAsync("justifyLeft"))' />
+        <MudIconButton Icon="@Icons.Material.Outlined.FormatAlignRight" Size="Size.Small" OnClick='@(() => ExecCommandAsync("justifyRight"))' />
+        <MudIconButton Icon="@Icons.Material.Outlined.Link" Size="Size.Small" OnClick="InsertLinkAsync" />
+        <MudIconButton Icon="@Icons.Material.Outlined.Image" Size="Size.Small" OnClick="InsertImageAsync" />
+        <MudIconButton Icon="@Icons.Material.Outlined.Code" Size="Size.Small" OnClick='@(() => FormatBlockAsync("PRE", "Normal"))' />
+    </MudToolBar>
+    <MudDivider />
+
+    <div @ref="_editorRef" class="rte-surface pa-2" contenteditable="true"
+         data-placeholder="@Placeholder"></div>
+
+    <MudDivider />
+    <div class="d-flex justify-space-between align-center px-2 py-1">
+        @if (_charCount > MaxLength)
+        {
+            <MudText Typo="Typo.caption" Color="Color.Error">Melebihi batas karakter</MudText>
+        }
+        else
+        {
+            <span></span>
+        }
+        <MudText Typo="Typo.caption" Color="@(_charCount > MaxLength ? Color.Error : Color.Secondary)">
+            @_charCount / @MaxLength karakter
+        </MudText>
+    </div>
+</MudPaper>
+
+@* contenteditable has no native placeholder attribute, so this is the one thing CSS has to do here. *@
+<style>
+    .rte-surface {
+        min-height: 140px;
+        outline: none;
+    }
+
+    .rte-surface:empty::before {
+        content: attr(data-placeholder);
+        color: var(--mud-palette-text-secondary);
+    }
+</style>
+
+@code {
+    /// <summary>The editor's HTML content (two-way bindable via @bind-Value).</summary>
+    [Parameter]
+    public string? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> ValueChanged { get; set; }
+
+    [Parameter]
+    public string Placeholder { get; set; } = string.Empty;
+
+    [Parameter]
+    public int MaxLength { get; set; } = 5000;
+
+    private ElementReference _editorRef;
+    private DotNetObjectReference<RichTextEditor>? _dotNetRef;
+    private int _charCount;
+    private string _currentBlockLabel = "Normal";
+    private bool _initialized;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        _dotNetRef = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("richTextEditor.init", _editorRef, _dotNetRef);
+
+        if (!string.IsNullOrEmpty(Value))
+        {
+            await JS.InvokeVoidAsync("richTextEditor.setContent", _editorRef, Value);
+            _charCount = await JS.InvokeAsync<int>("richTextEditor.getPlainTextLength", _editorRef);
+            StateHasChanged();
+        }
+
+        _initialized = true;
+    }
+
+    /// <summary>Called from JS whenever the user types, pastes, or the field loses focus.</summary>
+    [JSInvokable]
+    public async Task OnContentChanged(string html, int plainTextLength)
+    {
+        _charCount = plainTextLength;
+        Value = html;
+        await ValueChanged.InvokeAsync(html);
+        StateHasChanged();
+    }
+
+    private async Task ExecCommandAsync(string command, string? value = null)
+    {
+        if (!_initialized)
+        {
+            return;
+        }
+
+        await JS.InvokeVoidAsync("richTextEditor.execCommand", _editorRef, command, value);
+        await RefreshCountAsync();
+    }
+
+    private async Task FormatBlockAsync(string tag, string label)
+    {
+        _currentBlockLabel = label;
+        await ExecCommandAsync("formatBlock", tag);
+    }
+
+    private async Task InsertLinkAsync()
+    {
+        var url = await JS.InvokeAsync<string?>("prompt", "Masukkan URL tautan:");
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return;
+        }
+
+        await JS.InvokeVoidAsync("richTextEditor.insertLink", _editorRef, url);
+        await RefreshCountAsync();
+    }
+
+    private async Task InsertImageAsync()
+    {
+        var url = await JS.InvokeAsync<string?>("prompt", "Masukkan URL gambar:");
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return;
+        }
+
+        await JS.InvokeVoidAsync("richTextEditor.insertImage", _editorRef, url);
+        await RefreshCountAsync();
+    }
+
+    // After a toolbar command runs, pull the updated HTML + character count back from the DOM.
+    // execCommand mutates the DOM directly, so it doesn't go through our 'input' listener - we
+    // have to re-read the element's state ourselves right after calling it.
+    private async Task RefreshCountAsync()
+    {
+        Value = await JS.InvokeAsync<string>("richTextEditor.getHtml", _editorRef);
+        _charCount = await JS.InvokeAsync<int>("richTextEditor.getPlainTextLength", _editorRef);
+        await ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

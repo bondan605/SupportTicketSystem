@@ -1,0 +1,46 @@
+<MudFileUpload T="IReadOnlyList<IBrowserFile>" @bind-Files="Files" MaximumFileCount="MaximumFileCount">
+    <CustomContent Context="fileUpload">
+        <MudPaper Outlined="true" Elevation="0" Class="pa-8 d-flex flex-column align-center justify-center dropzone"
+                  Style="border-style:dashed; cursor:pointer;"
+                  @onclick="@(() => fileUpload.OpenFilePickerAsync())">
+            <MudIcon Icon="@Icons.Material.Outlined.CloudUpload" Size="Size.Large" Color="Color.Secondary" />
+            <MudText Typo="Typo.body2" Color="Color.Primary" Class="mt-2 font-weight-medium">
+                Klik atau drag &amp; drop file di sini
+            </MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Maks. @MaxFileSizeLabel per file (@AcceptedFileTypesLabel)
+            </MudText>
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" Class="mt-3" @onclick="@(() => fileUpload.OpenFilePickerAsync())">
+                Pilih File
+            </MudButton>
+        </MudPaper>
+    </CustomContent>
+</MudFileUpload>
+
+<style>
+    .dropzone:hover {
+        border-color: var(--mud-palette-primary);
+        background-color: var(--mud-palette-primary-hover);
+    }
+</style>
+
+@code {
+    /// <summary>Currently selected files (two-way bindable from the parent via @bind-Files).</summary>
+    [Parameter]
+    public IReadOnlyList<IBrowserFile>? Files { get; set; }
+
+    [Parameter]
+    public EventCallback<IReadOnlyList<IBrowserFile>?> FilesChanged { get; set; }
+
+    /// <summary>Maximum number of files the user may attach at once.</summary>
+    [Parameter]
+    public int MaximumFileCount { get; set; } = 10;
+
+    /// <summary>Display-only label describing the max size per file (validation happens server-side).</summary>
+    [Parameter]
+    public string MaxFileSizeLabel { get; set; } = "10 MB";
+
+    /// <summary>Display-only label describing accepted file types (validation happens server-side).</summary>
+    [Parameter]
+    public string AcceptedFileTypesLabel { get; set; } = "PNG, JPG, PDF, DOC, DOCX, XLS, XLSX, ZIP";
+}

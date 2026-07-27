@@ -1,0 +1,455 @@
+@page "/tickets/update"
+@inject ITicketClient TicketClient
+@inject IUserClient UserClient
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<TicketUpdate> Logger
+
+<PageTitle>Update Ticket</PageTitle>
+
+@if (_isLoading)
+{
+    <MudContainer MaxWidth="MaxWidth.False" Class="pa-4 d-flex justify-center" Style="min-height: 60vh;">
+        <MudProgressCircular Indeterminate="true" Size="Size.Large" Color="Color.Primary" />
+    </MudContainer>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.False" Class="pa-4 pb-16">
+
+        <MudBreadcrumbs Items="_breadcrumbs" Class="pl-0 mb-2" />
+        <MudText Typo="Typo.h5" Class="font-weight-bold">Update Tiket</MudText>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+            Perbarui informasi dan status tiket.
+        </MudText>
+
+        <MudForm @ref="_form" Model="_model">
+        <MudGrid Spacing="4">
+
+            <!-- Left column: ticket details -->
+            <MudItem xs="12" md="8">
+                <MudPaper Outlined="true" Elevation="0" Class="pa-4 pa-sm-6">
+                    <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-4">Informasi Tiket</MudText>
+
+                    <MudGrid Spacing="4">
+                        <MudItem xs="12" sm="4">
+                            <MudTextField T="string" Value="_model.TicketNumber" Label="Nomor Tiket"
+                                          Variant="Variant.Outlined" Disabled="true" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <MudTextField T="string" Value="@_model.CreatedAt.ToString("dd MMM yyyy HH:mm")" Label="Tanggal Dibuat"
+                                          Variant="Variant.Outlined" Disabled="true" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="4">
+                            <MudTextField T="string" Value="_model.CreatedByDisplay" Label="Dibuat Oleh"
+                                          Variant="Variant.Outlined" Disabled="true" />
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudSelect T="TicketType" @bind-Value="_model.TicketType" Label="Tipe Tiket" Required="true"
+                                       Variant="Variant.Outlined" ToStringFunc="@(t => t.ToDisplayText())">
+                                @foreach (var type in Enum.GetValues<TicketType>())
+                                {
+                                    <MudSelectItem Value="@type">@type.ToDisplayText()</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudSelect T="TicketImpact?" @bind-Value="_model.Impact" Label="Dampak" Required="true"
+                                       Placeholder="-- Pilih Dampak --" Variant="Variant.Outlined"
+                                       Adornment="@(_model.Impact.HasValue ? Adornment.Start : Adornment.None)"
+                                       AdornmentIcon="@(_model.Impact.HasValue ? ImpactIcon(_model.Impact.Value) : null)"
+                                       AdornmentColor="@(_model.Impact.HasValue ? ImpactColor(_model.Impact.Value) : Color.Default)"
+                                       ToStringFunc="@(i => i.HasValue ? i.Value.ToDisplayText() : null)">
+                                @foreach (var impact in Enum.GetValues<TicketImpact>())
+                                {
+                                    <MudSelectItem Value="@((TicketImpact?)impact)">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@ImpactIcon(impact)" Size="Size.Small" Color="@ImpactColor(impact)" />
+                                            <MudText>@impact.ToDisplayText()</MudText>
+                                        </MudStack>
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudSelect T="TicketCategory?" @bind-Value="_model.Category" @bind-Value:after="OnCategoryChanged"
+                                       Label="Kategori" Required="true"
+                                       Placeholder="-- Pilih Kategori --" Variant="Variant.Outlined"
+                                       ToStringFunc="@(c => c.HasValue ? c.Value.ToDisplayText() : null)">
+                                @foreach (var category in Enum.GetValues<TicketCategory>())
+                                {
+                                    <MudSelectItem Value="@((TicketCategory?)category)">@category.ToDisplayText()</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudSelect T="TicketApplication?" @bind-Value="_model.Application" Label="Aplikasi / Sistem" Required="true"
+                                       Placeholder="-- Pilih Aplikasi / Sistem --" Variant="Variant.Outlined"
+                                       Disabled="@(_model.Category == TicketCategory.Hardware)"
+                                       ToStringFunc="@(a => a.HasValue ? a.Value.ToDisplayText() : null)">
+                                @foreach (var app in Enum.GetValues<TicketApplication>())
+                                {
+                                    <MudSelectItem Value="@((TicketApplication?)app)">@app.ToDisplayText()</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudSelect T="TicketPriority" @bind-Value="_model.Priority" Label="Prioritas" Required="true"
+                                       Variant="Variant.Outlined" ToStringFunc="@(p => p.ToDisplayText())"
+                                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Flag" AdornmentColor="@PriorityColor(_model.Priority)">
+                                @foreach (var priority in Enum.GetValues<TicketPriority>())
+                                {
+                                    <MudSelectItem Value="@priority">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.Flag" Size="Size.Small" Color="@PriorityColor(priority)" />
+                                            <MudText>@priority.ToDisplayText()</MudText>
+                                        </MudStack>
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudSelect T="TicketStatus" @bind-Value="_model.Status" Label="Status" Required="true"
+                                       Variant="Variant.Outlined" ToStringFunc="@(s => s.ToDisplayText())"
+                                       Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Circle" AdornmentColor="@StatusColor(_model.Status)">
+                                @foreach (var status in Enum.GetValues<TicketStatus>())
+                                {
+                                    <MudSelectItem Value="@status">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                            <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Color="@StatusColor(status)" />
+                                            <MudText>@status.ToDisplayText()</MudText>
+                                        </MudStack>
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+
+                        <MudItem xs="12" sm="6">
+                            <MudDatePicker @bind-Date="_model.EstimatedDueDate" Label="Perkiraan Selesai"
+                                           Placeholder="Pilih tanggal (opsional)" Variant="Variant.Outlined"
+                                           Editable="true" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudTextField T="string" @bind-Value="_model.Title" Label="Judul" Required="true"
+                                          Placeholder="Masukkan judul tiket" Variant="Variant.Outlined"
+                                          Counter="255" MaxLength="255" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.body2" Class="mb-1">
+                                Deskripsi <MudText Inline="true" Color="Color.Error" Typo="Typo.body2">*</MudText>
+                            </MudText>
+
+                            <RichTextEditor @bind-Value="_model.Description"
+                                            Placeholder="Jelaskan masalah atau permintaan Anda secara detail..."
+                                            MaxLength="5000" />
+                        </MudItem>
+
+                        <MudItem xs="12">
+                            <MudText Typo="Typo.body2" Class="mb-1">Lampiran</MudText>
+                            <FileDropzone @bind-Files="_attachments" MaximumFileCount="10" />
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Right column: contact info, assignment, status change -->
+            <MudItem xs="12" md="4">
+                <MudPaper Outlined="true" Elevation="0" Class="pa-4 pa-sm-6 mb-4">
+                    <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-4">Informasi Kontak</MudText>
+
+                    <MudStack Spacing="4">
+                        <MudTextField T="string" Value="_model.CustomerName" Label="Nama Pelapor"
+                                      Variant="Variant.Outlined" Disabled="true" />
+                        <MudTextField T="string" Value="_model.CustomerEmail" Label="Email"
+                                      Variant="Variant.Outlined" Disabled="true" />
+                        <MudTextField T="string" Value="_model.CustomerPhone" Label="Nomor Telepon"
+                                      Variant="Variant.Outlined" Disabled="true" />
+                    </MudStack>
+                </MudPaper>
+
+                <MudPaper Outlined="true" Elevation="0" Class="pa-4 pa-sm-6 mb-4">
+                    <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-4">Penugasan</MudText>
+
+                    <MudStack Spacing="4">
+                        <MudAutocomplete T="UserDto" @bind-Value="_model.AssignedAgent" Label="Assign To"
+                                         Placeholder= "Cari user atau tim..." Variant="Variant.Outlined"
+                                         Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person"
+                                         ToStringFunc="@(u => u?.Name)" SearchFunc="SearchAgentsAsync" Clearable="true" />
+
+                        <MudAutocomplete T="UserDto" @bind-Value="_model.CcAgent" Label="CC (Opsional)"
+                                         Placeholder="Cari user atau email..." Variant="Variant.Outlined"
+                                         AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End"
+                                         ToStringFunc="@(u => u?.Name)" SearchFunc="SearchAgentsAsync" Clearable="true" />
+                    </MudStack>
+                </MudPaper>
+
+                <MudPaper Outlined="true" Elevation="0" Class="pa-4 pa-sm-6">
+                    <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-4">Perubahan Status</MudText>
+
+                    <MudStack Spacing="3">
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Status Sebelumnya</MudText>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mt-1">
+                                <MudChip T="string" Size="Size.Medium" Color="@StatusColor(_model.PreviousStatus)" Variant="Variant.Text" Class="rounded">
+                                        <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Color="@StatusColor(_model.PreviousStatus)" Class="mr-2" />
+                                        <MudText>@_model.PreviousStatus.ToDisplayText()</MudText>
+                                </MudChip>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @_model.PreviousStatusChangedAt.ToString("dd MMM yyyy HH:mm")
+                                </MudText>
+                            </MudStack>
+                        </div>
+
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Status Sekarang</MudText>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mt-1">
+                                <MudChip T="string" Size="Size.Medium" Color="@StatusColor(_model.Status)" Variant="Variant.Text" Class="rounded">
+                                        <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Color="@StatusColor(_model.Status)" Class="mr-2" />
+                                        <MudText>@_model.Status.ToDisplayText()</MudText>
+                                </MudChip>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @(_model.Status == _model.PreviousStatus ? "Belum berubah" : "Akan disimpan")
+                                </MudText>
+                            </MudStack>
+                        </div>
+
+                        <MudTextField T="string" @bind-Value="_model.StatusChangeNote" Label="Catatan (Opsional)"
+                                      Placeholder="Tambahkan catatan perubahan status..." Variant="Variant.Outlined"
+                                      Lines="3" MaxLength="1000" Counter="1000" />
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+
+        </MudGrid>
+        </MudForm>
+    </MudContainer>
+
+    <!-- Sticky footer action bar -->
+    <MudPaper Outlined="true" Elevation="4" Square="true" Class="d-flex align-center pa-4"
+              Style="position:sticky; bottom:0; z-index:10;">
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            <MudText Inline="true" Color="Color.Error" Typo="Typo.caption">*</MudText> Wajib diisi
+        </MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined" Color="Color.Default" Class="mr-2" OnClick="Cancel">
+            Batal
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mr-2" OnClick="@(() => SaveAsync(closeAfter: false))" Disabled="_isSubmitting">
+            Simpan
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => SaveAsync(closeAfter: true))" Disabled="_isSubmitting">
+            @if (_isSubmitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+            }
+            Simpan & Tutup
+        </MudButton>
+    </MudPaper>
+}
+
+@code {
+    private readonly Guid Id = Guid.Parse("4CCA1FED-8253-4725-BD2F-0BEE3BFC01FB");
+
+    private List<BreadcrumbItem> _breadcrumbs = new();
+    private UpdateTicketModel _model = new();
+    private MudForm? _form;
+    private IReadOnlyList<IBrowserFile>? _attachments;
+    private bool _isLoading = true;
+    private bool _isSubmitting;
+
+    private List<UserDto> _agents = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await UserClient.GetAllAgentsAsync();
+        if (response.Success && response.Data is not null)
+        {
+            _agents = response.Data.ToList();
+        }
+
+        await LoadTicketAsync();
+        _isLoading = false;
+    }
+
+    private async Task LoadTicketAsync()
+    {
+        var response = await TicketClient.GetTicketByIdAsync(Id);
+
+        if (!response.Success || response.Data is null)
+        {
+            Snackbar.Add(response.Message ?? "Ticket not found.", MudBlazor.Severity.Error);
+            NavigationManager.NavigateTo("/ticket-list");
+            return;
+        }
+
+        var ticket = response.Data;
+
+        _model.TicketNumber = ticket.TicketNumber;
+        _model.CreatedAt = ticket.CreatedAt;
+        _model.CreatedByDisplay = GetAgentName(ticket.CreatedBy);
+        _model.Title = ticket.Title;
+        _model.Description = ticket.Description;
+        _model.Status = ticket.Status;
+        _model.PreviousStatus = ticket.Status;
+        _model.PreviousStatusChangedAt = ticket.UpdatedAt ?? ticket.CreatedAt;
+        _model.CustomerName = ticket.CustomerName;
+        _model.CustomerEmail = ticket.CustomerEmail;
+        _model.CustomerPhone = ticket.CustomerPhone ?? string.Empty;
+        _model.TicketType = ticket.Type;
+        _model.Category = ticket.Category;
+        _model.Impact = ticket.Impact;
+        _model.Priority = ticket.Priority;
+        _model.Application = ticket.Application;
+        _model.EstimatedDueDate = ticket.EstimatedDueDate;
+        _model.AssignedAgent = ticket.AssignedTo.HasValue
+            ? _agents.FirstOrDefault(a => a.Id == ticket.AssignedTo.Value)
+            : null;
+
+        _breadcrumbs = new List<BreadcrumbItem>
+        {
+            new BreadcrumbItem("Tickets", href: "/ticket-list"),
+            new BreadcrumbItem(_model.TicketNumber, href: null, disabled: true),
+            new BreadcrumbItem("Update Tiket", href: null, disabled: true)
+        };
+    }
+
+    private Task<IEnumerable<UserDto>> SearchAgentsAsync(string value, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Task.FromResult(_agents.AsEnumerable());
+        }
+
+        var matches = _agents.Where(u => u.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(matches);
+    }
+
+    private static Color PriorityColor(TicketPriority priority) => priority switch
+    {
+        TicketPriority.Low => Color.Success,
+        TicketPriority.Medium => Color.Warning,
+        TicketPriority.High => Color.Error,
+        _ => Color.Default
+    };
+
+    private static string ImpactIcon(TicketImpact impact) => impact switch
+    {
+        TicketImpact.SingleUser => Icons.Material.Filled.Person,
+        TicketImpact.SomeUsers => Icons.Material.Filled.Groups,
+        TicketImpact.AllUsers => Icons.Material.Filled.Public,
+        _ => Icons.Material.Filled.Person
+    };
+
+    private static Color ImpactColor(TicketImpact impact) => impact switch
+    {
+        TicketImpact.SingleUser => Color.Info,
+        TicketImpact.SomeUsers => Color.Warning,
+        TicketImpact.AllUsers => Color.Error,
+        _ => Color.Default
+    };
+
+    private static Color StatusColor(TicketStatus status) => status switch
+    {
+        TicketStatus.Open => Color.Primary,
+        TicketStatus.InProgress => Color.Warning,
+        TicketStatus.Resolved => Color.Success,
+        TicketStatus.Closed => Color.Default,
+        _ => Color.Default
+    };
+
+    // Same Hardware -> Application=None auto-lock as the Create page.
+    private void OnCategoryChanged()
+    {
+        if (_model.Category == TicketCategory.Hardware)
+        {
+            _model.Application = TicketApplication.None;
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/ticket-list");
+    }
+
+    private async Task SaveAsync(bool closeAfter)
+    {
+        await _form!.ValidateAsync();
+        if (!_form.IsValid)
+        {
+            Snackbar.Add("Please fill in all required fields.", MudBlazor.Severity.Warning);
+            return;
+        }
+
+        _isSubmitting = true;
+        try
+        {
+            var dto = new UpdateTicketDto
+            {
+                Title = _model.Title,
+                Description = _model.Description,
+                Status = _model.Status,
+                Priority = _model.Priority,
+                Type = _model.TicketType,
+                Category = _model.Category!.Value,
+                Impact = _model.Impact!.Value,
+                Application = _model.Application ?? TicketApplication.None,
+                EstimatedDueDate = _model.EstimatedDueDate,
+                AssignedTo = _model.AssignedAgent?.Id,
+                StatusChangeNote = string.IsNullOrWhiteSpace(_model.StatusChangeNote) ? null : _model.StatusChangeNote,
+            };
+
+            var response = await TicketClient.UpdateTicketAsync(Id, dto);
+
+            if (response.Success)
+            {
+                Snackbar.Add("Ticket updated successfully.", MudBlazor.Severity.Success);
+
+                if (closeAfter)
+                {
+                    NavigationManager.NavigateTo("/ticket-list");
+                }
+                else
+                {
+                    _model.PreviousStatus = _model.Status;
+                    _model.PreviousStatusChangedAt = DateTime.UtcNow;
+                    _model.StatusChangeNote = string.Empty;
+                }
+            }
+            else
+            {
+                var message = response.Errors is { Count: > 0 }
+                    ? string.Join(" ", response.Errors)
+                    : response.Message;
+
+                Snackbar.Add(string.IsNullOrWhiteSpace(message) ? "Failed to update ticket." : message, MudBlazor.Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unexpected error while updating ticket {TicketId}.", Id);
+            Snackbar.Add("Something went wrong while updating the ticket. Please try again.", MudBlazor.Severity.Error);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+
+    // --- UI Helpers ---
+    private string GetAgentName(Guid agentId)
+    {
+        var agent = _agents.FirstOrDefault(a => a.Id == agentId);
+        return agent?.Name ?? "Unknown Agent";
+    }
+}
