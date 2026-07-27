@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using SupportTicketSystem.Application.Abstractions.Services;
 using SupportTicketSystem.Application.Interfaces.Repositories;
+using SupportTicketSystem.Application.Services;
 using SupportTicketSystem.Infrastructure.Persistence;
 using SupportTicketSystem.Infrastructure.Persistence.Repositories;
 using SupportTicketSystem.Infrastructure.Repositories;
@@ -26,6 +28,7 @@ namespace SupportTicketSystem.Infrastructure
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IDashboardRepository, DashboardRepository>();
+            services.AddScoped<ITicketHistoryRepository, TicketHistoryRepository>();
 
 
             // JWT Authentication

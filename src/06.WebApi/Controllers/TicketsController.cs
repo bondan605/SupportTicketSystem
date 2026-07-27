@@ -143,7 +143,8 @@ namespace SupportTicketSystem.WebApi.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _ticketService.DeleteTicketAsync(id);
+            var userId = User.GetUserId();
+            await _ticketService.DeleteTicketAsync(id, userId);
             return Ok(ApiResponse.SuccessResponse(null, "Ticket deleted successfully."));
         }
 
@@ -164,8 +165,9 @@ namespace SupportTicketSystem.WebApi.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Assign(Guid id, [FromBody] Guid userId)
         {
+            var adminId = User.GetUserId();
             // Requirement: Managers assign tickets
-            await _ticketService.AssignTicketAsync(id, userId);
+            await _ticketService.AssignTicketAsync(id, userId, adminId);
             return Ok(ApiResponse.SuccessResponse(null, "Ticket assigned successfully."));
         }
     }

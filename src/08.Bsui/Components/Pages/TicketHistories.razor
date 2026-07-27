@@ -1,0 +1,591 @@
+﻿@page "/ticket-histories"
+@using MudBlazor
+@using SupportTicketSystem.Client.Features.Interfaces
+@using SupportTicketSystem.Shared.DTOs.Tickets
+@using SupportTicketSystem.Shared.Models
+@using SupportTicketSystem.Domain.Enums
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8 px-4" Style="@($"background-color:{Colors.Gray.Lighten5}; min-height: 100vh;")">
+    
+    <div class="d-flex justify-space-between align-center mb-6">
+        <div>
+            <MudText Typo="Typo.h5" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 700;")">Ticket Histories</MudText>
+            <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">Riwayat perubahan semua tiket</MudText>
+        </div>
+        <div class="d-flex gap-3 align-center">
+            <MudDateRangePicker DateRange="_dateRange" DateRangeChanged="OnDateRangeChanged" Margin="Margin.Dense" Variant="Variant.Outlined" Style="@($"background-color:{Colors.Shades.White};")" PlaceholderStart="Start Date" PlaceholderEnd="End Date" Clearable="true" />
+            
+            <MudMenu Label="Export" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Outlined" Margin="Margin.Dense">
+                <MudMenuItem OnClick="DownloadCsv">Export to CSV</MudMenuItem>
+                <MudMenuItem OnClick="DownloadPdf">Export to PDF</MudMenuItem>
+            </MudMenu>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-4 mb-6">
+        <MudPaper Elevation="0" Outlined="true" Class="pa-4 d-flex align-center gap-4 rounded-lg" Style="@($"background-color:{Colors.Shades.White}; border-color:{Colors.Gray.Lighten3}; flex: 1 1 220px;")">
+            <MudAvatar Size="Size.Large" Color="Color.Primary" Variant="Variant.Filled" Class="rounded-lg">
+                <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Size="Size.Medium" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1}; font-weight: 500;")">Total Histories</MudText>
+                <MudText Typo="Typo.h6" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 700; line-height: 1.2;")">@_globalTotalItems</MudText>
+                <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">Semua riwayat</MudText>
+            </div>
+        </MudPaper>
+
+        <MudPaper Elevation="0" Outlined="true" Class="pa-4 d-flex align-center gap-4 rounded-lg" Style="@($"background-color:{Colors.Shades.White}; border-color:{Colors.Gray.Lighten3}; flex: 1 1 220px;")">
+            <MudAvatar Size="Size.Large" Color="Color.Success" Variant="Variant.Filled" Class="rounded-lg">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline" Size="Size.Medium" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1}; font-weight: 500;")">Perubahan Status</MudText>
+                <MudText Typo="Typo.h6" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 700; line-height: 1.2;")">@_globalStatusCount</MudText>
+                <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">@GetGlobalPercentage(_globalStatusCount)% dari total</MudText>
+            </div>
+        </MudPaper>
+
+        <MudPaper Elevation="0" Outlined="true" Class="pa-4 d-flex align-center gap-4 rounded-lg" Style="@($"background-color:{Colors.Shades.White}; border-color:{Colors.Gray.Lighten3}; flex: 1 1 220px;")">
+            <MudAvatar Size="Size.Large" Color="Color.Warning" Variant="Variant.Filled" Class="rounded-lg">
+                <MudIcon Icon="@Icons.Material.Filled.PersonOutline" Size="Size.Medium" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1}; font-weight: 500;")">Perubahan Assignee</MudText>
+                <MudText Typo="Typo.h6" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 700; line-height: 1.2;")">@_globalAssigneeCount</MudText>
+                <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">@GetGlobalPercentage(_globalAssigneeCount)% dari total</MudText>
+            </div>
+        </MudPaper>
+
+        <MudPaper Elevation="0" Outlined="true" Class="pa-4 d-flex align-center gap-4 rounded-lg" Style="@($"background-color:{Colors.Shades.White}; border-color:{Colors.Gray.Lighten3}; flex: 1 1 220px;")">
+            <MudAvatar Size="Size.Large" Color="Color.Secondary" Variant="Variant.Filled" Class="rounded-lg">
+                <MudIcon Icon="@Icons.Material.Filled.ChatBubbleOutline" Size="Size.Medium" />
+            </MudAvatar>
+            <div>
+                <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1}; font-weight: 500;")">Komentar / Catatan</MudText>
+                <MudText Typo="Typo.h6" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 700; line-height: 1.2;")">@_globalCommentCount</MudText>
+                <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">@GetGlobalPercentage(_globalCommentCount)% dari total</MudText>
+            </div>
+        </MudPaper>
+    </div>
+
+    <MudPaper Class="pa-4 mb-6 rounded-lg" Elevation="0" Outlined="true" Style="@($"background-color:{Colors.Shades.White}; border-color:{Colors.Gray.Lighten3};")">
+        <div class="d-flex flex-wrap align-center gap-3">
+            <div class="flex-grow-1" style="flex-basis: 220px;">
+                <MudTextField T="string"
+                              Value="@searchString"
+                              ValueChanged="@(async (string val) => await OnSearchChanged(val))"
+                              Immediate="true"
+                              Placeholder="Cari nomor tiket, judul, user..."
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Clearable="true"
+                              Style="@($"background-color:{Colors.Shades.White};")" />
+            </div>
+
+            <div style="flex: 1 1 160px;">
+                <MudDatePicker Date="_singleFilterDate" DateChanged="@((DateTime? val) => OnSingleDateChanged(val))" Placeholder="Pilih Tanggal" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="@($"background-color:{Colors.Shades.White};")" />
+            </div>
+            
+            <div style="flex: 1 1 160px;">
+                <MudSelect T="string" Value="@selectedAction" ValueChanged="@((string? val) => OnActionChanged(val))" Placeholder="Semua Action" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="@($"background-color:{Colors.Shades.White};")">
+                    <MudSelectItem Value="@("")">Semua Action</MudSelectItem>
+                    <MudSelectItem Value="@("TicketCreated")">Ticket Created</MudSelectItem>
+                    <MudSelectItem Value="@("StatusChanged")">Status Changed</MudSelectItem>
+                    <MudSelectItem Value="@("AssigneeChanged")">Assignee Changed</MudSelectItem>
+                    <MudSelectItem Value="@("PriorityChanged")">Priority Changed</MudSelectItem>
+                    <MudSelectItem Value="@("CommentAdded")">Comment Added</MudSelectItem>
+                    <MudSelectItem Value="@("TicketUpdated")">Ticket Updated</MudSelectItem>
+                </MudSelect>
+            </div>
+
+            <div style="flex: 1 1 160px;">
+                <MudSelect T="Guid?" Value="@selectedUserId" ValueChanged="@((Guid? val) => OnUserChanged(val))" Placeholder="Semua User" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="@($"background-color:{Colors.Shades.White};")">
+                    <MudSelectItem Value="@((Guid?)null)">Semua User</MudSelectItem>
+                    @foreach (var user in availableUsers)
+                    {
+                        <MudSelectItem Value="@((Guid?)user.Key)">@user.Value</MudSelectItem>
+                    }
+                </MudSelect>
+            </div>
+
+            <div class="d-flex justify-end gap-2 ms-auto">
+                <MudButton Variant="Variant.Outlined" OnClick="ResetFilter" StartIcon="@Icons.Material.Filled.Refresh" Style="@($"color:{Colors.Gray.Darken2}; text-transform: none;")">Reset</MudButton>
+            </div>
+        </div>
+    </MudPaper>
+
+    <MudTable @ref="_table" Items="@histories" Loading="@_isLoading" Hover="true" Elevation="0" Outlined="true" Class="rounded-lg mb-6" Striped="true" Style="@($"background-color:{Colors.Shades.White}; border-color:{Colors.Gray.Lighten3};")" @bind-RowsPerPage="_pageSize">
+        <HeaderContent>
+            <MudTh Style="@($"color:{Colors.Gray.Darken2}; font-weight: 600;")">ID History</MudTh>
+            <MudTh Style="@($"color:{Colors.Gray.Darken2}; font-weight: 600;")">Ticket Number</MudTh>
+            <MudTh Style="@($"color:{Colors.Gray.Darken2}; font-weight: 600;")">Action</MudTh>
+            <MudTh Style="@($"color:{Colors.Gray.Darken2}; font-weight: 600;")">Detail Perubahan</MudTh>
+            <MudTh Style="@($"color:{Colors.Gray.Darken2}; font-weight: 600;")">Changed By</MudTh>
+            <MudTh Style="@($"color:{Colors.Gray.Darken2}; font-weight: 600;")">Timestamp</MudTh>
+            <MudTh Style="@($"color:{Colors.Gray.Darken2}; font-weight: 600; text-align: center;")">Aksi</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="ID History">
+                <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 500;">
+                    @GetFormattedHistoryNumber(context, histories.IndexOf(context))
+                </MudText>
+            </MudTd>
+            <MudTd DataLabel="Ticket Number">
+                <MudText Typo="Typo.body2" Style="@($"color:{Colors.Blue.Darken1}; font-weight: 500;")">@context.TicketNumber</MudText>
+            </MudTd>
+            <MudTd DataLabel="Action">
+                <MudChip T="string" Size="Size.Small" Color="@GetActionColor(context.Action)" Variant="Variant.Text" Icon="@GetActionIcon(context.Action)">
+                    @context.Action
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Detail Perubahan">
+                @if (context.Action == TicketHistoryAction.TicketCreated)
+                {
+                    <div class="d-flex align-center gap-1">
+                        <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">Ticket created by</MudText>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text">
+                            @(context.ChangedByName ?? "System User")
+                        </MudChip>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(context.OldValue) || !string.IsNullOrEmpty(context.NewValue))
+                {
+                    <div class="d-flex align-center gap-2">
+                        <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">Dari</MudText>
+            
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@GetValueColor(context.Action, context.OldValue)"
+                                 Variant="Variant.Text">
+                            @(context.OldValue ?? "-")
+                        </MudChip>
+            
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowRightAlt" Size="Size.Small" Style="@($"color:{Colors.Gray.Default};")" />
+            
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@GetValueColor(context.Action, context.NewValue)"
+                                 Variant="Variant.Text">
+                            @(context.NewValue ?? "-")
+                        </MudChip>
+                    </div>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.BlueGray.Darken3};")">@(context.Note ?? "-")</MudText>
+                }
+            </MudTd>
+            <MudTd DataLabel="Changed By">
+                <div class="d-flex align-center gap-2">
+                    <MudAvatar Size="Size.Small" Color="@GetAvatarColor(context.ChangedByName)" Variant="Variant.Filled">@GetInitials(context.ChangedByName)</MudAvatar>
+                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 500;")">@(context.ChangedByName ?? "System User")</MudText>
+                </div>
+            </MudTd>
+            <MudTd DataLabel="Timestamp">
+                <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">@context.Timestamp.ToLocalTime().ToString("dd MMM yyyy HH:mm")</MudText>
+            </MudTd>
+            <MudTd DataLabel="Aksi" Style="text-align: center;">
+                <MudTooltip Text="Lihat Detail">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Size="Size.Small" OnClick="@(() => OpenDetailDrawer(context))" />
+                </MudTooltip>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2" Align="Align.Center" Class="py-4">Tidak ada riwayat tiket ditemukan.</MudText>
+        </NoRecordsContent>
+        <PagerContent>
+            <div class="d-flex align-center justify-space-between px-4 py-3" Style="@($"border-top: 1px solid {Colors.Gray.Lighten3};")">
+                <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken2};")">
+                    Menampilkan @GetFirstItemIndex() - @GetLastItemIndex() dari @_totalItems riwayat
+                </MudText>
+
+                <div class="d-flex align-center gap-4">
+                    <MudPagination Count="@GetPageCount()" Selected="@(_currentPage + 1)" SelectedChanged="OnPageSelected" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" />
+
+                    <div style="width: 130px;">
+                        <MudSelect T="int" Value="@_pageSize" ValueChanged="OnPageSizeChanged" Margin="Margin.Dense" Variant="Variant.Outlined" Dense="true">
+                            <MudSelectItem Value="10">10 /halaman</MudSelectItem>
+                            <MudSelectItem Value="25">25 /halaman</MudSelectItem>
+                            <MudSelectItem Value="50">50 /halaman</MudSelectItem>
+                        </MudSelect>
+                    </div>
+                </div>
+            </div>
+        </PagerContent>
+    </MudTable>
+
+</MudContainer>
+<MudDrawer @bind-Open="_isDrawerOpen" Anchor="Anchor.End" Elevation="1" Variant="@DrawerVariant.Temporary" Width="450px" Style="@($"background-color:{Colors.Shades.White};")">
+    
+    <div class="d-flex align-center justify-space-between pa-4" style="@($"border-bottom: 1px solid {Colors.Gray.Lighten4}; position: sticky; top: 0; background-color: white; z-index: 10;")">
+        <div>
+            <MudText Typo="Typo.h6" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 700;")">Perjalanan Tiket</MudText>
+            <div class="d-flex align-center gap-2 mt-1">
+                <MudIcon Icon="@Icons.Material.Filled.ConfirmationNumber" Size="Size.Small" Color="Color.Primary" />
+                <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 600;">@_selectedHistory?.TicketNumber</MudText>
+            </div>
+        </div>
+        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="@(() => _isDrawerOpen = false)" />
+    </div>
+
+    <div class="pa-4">
+        @if (_isLoadingJourney)
+        {
+            <div class="d-flex justify-center align-center py-8">
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            </div>
+        }
+        else if (_ticketJourney.Any())
+        {
+            <MudTimeline TimelinePosition="TimelinePosition.Left" Class="pa-0">
+                @foreach (var item in _ticketJourney)
+                {
+                    <MudTimelineItem Color="@GetActionColor(item.Action)" Icon="@GetActionIcon(item.Action)" Size="Size.Small">
+                        <MudPaper Elevation="0" Outlined="true" Class="pa-3 rounded-lg" Style="@($"background-color:{Colors.Gray.Lighten5}; border-color:{Colors.Gray.Lighten3};")">
+                            
+                            <div class="d-flex justify-space-between align-start mb-2">
+                                <MudText Typo="Typo.subtitle2" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 600;")">@item.Action</MudText>
+                                <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">@item.Timestamp.ToLocalTime().ToString("dd MMM yy HH:mm")</MudText>
+                            </div>
+                            
+                            <div class="mb-3">
+                                @if (item.Action == TicketHistoryAction.TicketCreated)
+                                {
+                                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken2};")">Ticket created by @(item.ChangedByName ?? "System User")</MudText>
+                                }
+                                else if (!string.IsNullOrEmpty(item.OldValue) || !string.IsNullOrEmpty(item.NewValue))
+                                {
+                                    <div class="d-flex flex-wrap align-center gap-2">
+                                        <MudChip T="string" Size="Size.Small" Color="@GetValueColor(item.Action, item.OldValue)" Variant="Variant.Outlined">@(item.OldValue ?? "-")</MudChip>
+                                        <MudIcon Icon="@Icons.Material.Filled.ArrowRightAlt" Size="Size.Small" Style="@($"color:{Colors.Gray.Default};")" />
+                                        <MudChip T="string" Size="Size.Small" Color="@GetValueColor(item.Action, item.NewValue)" Variant="Variant.Filled">@(item.NewValue ?? "-")</MudChip>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken2};")">@(item.Note ?? "-")</MudText>
+                                }
+                            </div>
+
+                            <div class="d-flex align-center gap-2 pt-2" style="@($"border-top: 1px dashed {Colors.Gray.Lighten3};")">
+                                <MudAvatar Size="Size.Small" Color="@GetAvatarColor(item.ChangedByName)" Variant="Variant.Filled" Style="width: 24px; height: 24px; font-size: 10px;">@GetInitials(item.ChangedByName)</MudAvatar>
+                                <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken2}; font-weight: 500;")">Oleh: @(item.ChangedByName ?? "System User")</MudText>
+                            </div>
+                        </MudPaper>
+                    </MudTimelineItem>
+                }
+            </MudTimeline>
+        }
+    </div>
+</MudDrawer>
+@code {
+    [Inject] private ITicketHistoryClient HistoryClient { get; set; } = default!;
+    [Inject] private IUserClient UserClient { get; set; } = default!;
+    
+    private MudTable<TicketHistoryDto>? _table;
+    private string? searchString;
+    private string? selectedAction = "";
+    private Guid? selectedUserId = null;
+    private DateRange? _dateRange = null;
+    private DateTime? _singleFilterDate = null;
+    
+    private int _currentPage = 0;
+    private int _pageSize = 10;
+    private int _totalItems = 0;
+    private bool _isLoading = true;
+
+    private int _globalTotalItems = 0;
+    private int _globalStatusCount = 0;
+    private int _globalAssigneeCount = 0;
+    private int _globalCommentCount = 0;
+
+    // Variabel untuk Drawer & Journey
+    private bool _isDrawerOpen = false;
+    private bool _isLoadingJourney = false;
+    private TicketHistoryDto? _selectedHistory = null;
+    private List<TicketHistoryDto> _ticketJourney = new();
+
+    private async Task OpenDetailDrawer(TicketHistoryDto history)
+    {
+        _selectedHistory = history;
+        _isDrawerOpen = true;
+        _isLoadingJourney = true;
+        StateHasChanged();
+
+        // Ambil full history untuk satu Ticket Number ini (Panggil API dengan Search = TicketNumber)
+        var request = new PagedRequest { PageNumber = 1, PageSize = 100 }; // Asumsi maksimal 100 riwayat per tiket
+        var result = await HistoryClient.GetFilteredHistoriesAsync(
+            null, null, null, history.TicketNumber, null, null, request
+        );
+
+        var rawItems = result.Items?.ToList() ?? new List<TicketHistoryDto>();
+        
+        // Urutkan dari yang terlama ke terbaru (Ascending) untuk membuat Timeline yang runut!
+        _ticketJourney = rawItems.OrderBy(h => h.Timestamp).ToList();
+        
+        _isLoadingJourney = false;
+        StateHasChanged();
+    }
+
+    private List<TicketHistoryDto> histories = new();
+    
+    private Dictionary<Guid, string> availableUsers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAgentsAsync();
+        
+        await LoadGlobalSummaryAsync();
+        await LoadDataAsync();
+    }
+
+    private async Task LoadAgentsAsync()
+    {
+        try
+        {
+            var response = await UserClient.GetAllAgentsAsync();
+            
+            var agents = response?.Data;
+
+            if (agents != null)
+            {
+                availableUsers.Clear();
+                foreach (var agent in agents)
+                {
+                    availableUsers[agent.Id] = agent.Name;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saat mengambil data agents: {ex.Message}");
+        }
+    }
+
+    private async Task LoadGlobalSummaryAsync()
+    {
+        var globalRequest = new PagedRequest { PageNumber = 1, PageSize = int.MaxValue };
+        var globalResult = await HistoryClient.GetFilteredHistoriesAsync(null, null, null, null, null, null, globalRequest);
+        
+        var allItems = globalResult.Items?.ToList() ?? new List<TicketHistoryDto>();
+        _globalTotalItems = globalResult.TotalCount;
+        _globalStatusCount = allItems.Count(h => h.Action == TicketHistoryAction.StatusChanged);
+        _globalAssigneeCount = allItems.Count(h => h.Action == TicketHistoryAction.AssigneeChanged);
+        _globalCommentCount = allItems.Count(h => h.Action == TicketHistoryAction.CommentAdded);
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _isLoading = true;
+        StateHasChanged();
+
+        var request = new PagedRequest
+        {
+            PageNumber = _currentPage + 1,
+            PageSize = _pageSize
+        };
+
+        DateTime? filterStart = _dateRange?.Start ?? _singleFilterDate;
+        DateTime? filterEnd = _dateRange?.End ?? _singleFilterDate;
+
+        var result = await HistoryClient.GetFilteredHistoriesAsync(
+            null,
+            selectedAction,
+            selectedUserId,
+            searchString,
+            filterStart,
+            filterEnd,
+            request
+        );
+        
+        histories = result.Items?.ToList() ?? new List<TicketHistoryDto>();
+        _totalItems = result.TotalCount;
+        
+        _isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task OnSearchChanged(string? value)
+    {
+        searchString = value;
+        _currentPage = 0;
+        await LoadDataAsync();
+    }
+
+    private async Task OnSingleDateChanged(DateTime? value)
+    {
+        _singleFilterDate = value;
+        _currentPage = 0;
+        await LoadDataAsync();
+    }
+
+    private async Task OnDateRangeChanged(DateRange? value)
+    {
+        _dateRange = value;
+        _currentPage = 0;
+        await LoadDataAsync();
+    }
+
+    private async Task OnActionChanged(string? value)
+    {
+        selectedAction = value;
+        _currentPage = 0;
+        await LoadDataAsync();
+    }
+
+    private async Task OnUserChanged(Guid? value)
+    {
+        selectedUserId = value;
+        _currentPage = 0;
+        await LoadDataAsync();
+    }
+
+    private async Task ResetFilter()
+    {
+        searchString = "";
+        selectedAction = "";
+        selectedUserId = null;
+        _dateRange = null;
+        _singleFilterDate = null;
+        _currentPage = 0;
+        await LoadDataAsync();
+    }
+
+    private string GetGlobalPercentage(int count)
+    {
+        if (_globalTotalItems == 0) return "0";
+        double percentage = ((double)count / _globalTotalItems) * 100;
+        return percentage.ToString("0.#");
+    }
+
+    private string GetFormattedHistoryNumber(TicketHistoryDto context, int index)
+    {
+        int sequenceNumber = (_currentPage * _pageSize) + index + 1;
+        int year = context.Timestamp != default ? context.Timestamp.Year : DateTime.UtcNow.Year;
+        return $"HS-{year}-{sequenceNumber:D5}";
+    }
+
+    private void DownloadCsv()
+    {
+        DateTime? filterStart = _dateRange?.Start ?? _singleFilterDate;
+        DateTime? filterEnd = _dateRange?.End ?? _singleFilterDate;
+
+        var backendUrl = "https://localhost:7299";
+        var url = $"{backendUrl}/api/ticket-histories/export-csv?search={Uri.EscapeDataString(searchString ?? "")}&action={Uri.EscapeDataString(selectedAction ?? "")}";
+        if (selectedUserId.HasValue) url += $"&changedBy={selectedUserId.Value}";
+        if (filterStart.HasValue) url += $"&startDate={filterStart.Value:yyyy-MM-dd}";
+        if (filterEnd.HasValue) url += $"&endDate={filterEnd.Value:yyyy-MM-dd}";
+
+        Navigation.NavigateTo(url, forceLoad: true);
+    }
+
+    private void DownloadPdf()
+    {
+        DateTime? filterStart = _dateRange?.Start ?? _singleFilterDate;
+        DateTime? filterEnd = _dateRange?.End ?? _singleFilterDate;
+
+        var backendUrl = "https://localhost:7299";
+        var url = $"{backendUrl}/api/ticket-histories/export-pdf?search={Uri.EscapeDataString(searchString ?? "")}&action={Uri.EscapeDataString(selectedAction ?? "")}";
+        if (selectedUserId.HasValue) url += $"&changedBy={selectedUserId.Value}";
+        if (filterStart.HasValue) url += $"&startDate={filterStart.Value:yyyy-MM-dd}";
+        if (filterEnd.HasValue) url += $"&endDate={filterEnd.Value:yyyy-MM-dd}";
+
+        Navigation.NavigateTo(url, forceLoad: true);
+    }
+
+    private int GetFirstItemIndex() => _totalItems == 0 ? 0 : (_currentPage * _pageSize) + 1;
+    private int GetLastItemIndex() => Math.Min((_currentPage + 1) * _pageSize, _totalItems);
+    private int GetPageCount() => _totalItems == 0 ? 1 : (int)Math.Ceiling((double)_totalItems / _pageSize);
+
+    private async Task OnPageSelected(int pageNumber)
+    {
+        _currentPage = pageNumber - 1;
+        await LoadDataAsync();
+    }
+
+    private async Task OnPageSizeChanged(int newSize)
+    {
+        _pageSize = newSize;
+        _currentPage = 0;
+        await LoadDataAsync();
+    }
+
+    private Color GetActionColor(TicketHistoryAction action) => action switch
+    {
+        TicketHistoryAction.TicketCreated => Color.Primary,
+        TicketHistoryAction.StatusChanged => Color.Success,
+        TicketHistoryAction.AssigneeChanged => Color.Warning,
+        TicketHistoryAction.PriorityChanged => Color.Error,
+        TicketHistoryAction.CommentAdded => Color.Secondary,
+        TicketHistoryAction.TicketUpdated => Color.Info,
+        _ => Color.Default
+    };
+
+    private string GetActionIcon(TicketHistoryAction action) => action switch
+    {
+        TicketHistoryAction.TicketCreated => Icons.Material.Filled.AddCircle,
+        TicketHistoryAction.StatusChanged => Icons.Material.Filled.CheckCircle,
+        TicketHistoryAction.AssigneeChanged => Icons.Material.Filled.PersonOutline,
+        TicketHistoryAction.PriorityChanged => Icons.Material.Filled.Warning,
+        TicketHistoryAction.CommentAdded => Icons.Material.Filled.ChatBubbleOutline,
+        TicketHistoryAction.TicketUpdated => Icons.Material.Filled.Edit,
+        _ => Icons.Material.Filled.History
+    };
+
+    private Color GetAvatarColor(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return Color.Default;
+        var firstChar = name.ToUpper()[0];
+        return firstChar switch
+        {
+            >= 'A' and <= 'F' => Color.Info,
+            >= 'G' and <= 'L' => Color.Primary,
+            >= 'M' and <= 'R' => Color.Error,
+            >= 'S' and <= 'Z' => Color.Success,
+            _ => Color.Default
+        };
+    }
+
+    private Color GetValueColor(TicketHistoryAction action, string? value)
+    {
+    if (string.IsNullOrWhiteSpace(value)) 
+        return Color.Default;
+
+    // Normalisasi teks agar tidak sensitif huruf besar/kecil
+    var valLower = value.ToLower().Trim();
+
+    if (action == TicketHistoryAction.StatusChanged)
+    {
+        return valLower switch
+        {
+            "open" => Color.Info,           // Blue
+            "inprogress" => Color.Warning, // Orange
+            "closed" => Color.Success,      // Hijau
+            "cancelled" => Color.Error,     // Merah
+            _ => Color.Info
+        };
+    }
+    
+    if (action == TicketHistoryAction.PriorityChanged)
+    {
+        return valLower switch
+        {
+            "low" => Color.Success,         // Hijau
+            "medium" => Color.Warning,      // Orange
+            "high" => Color.Error,          // Merah
+            _ => Color.Info
+        };
+    }
+
+        // Kembalikan warna default (abu-abu) untuk perubahan Assignee atau text biasa
+        return Color.Info; 
+    }
+
+    private string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "US";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2 ? $"{parts[0][0]}{parts[1][0]}".ToUpper() : parts[0][0].ToString().ToUpper();
+    }
+}

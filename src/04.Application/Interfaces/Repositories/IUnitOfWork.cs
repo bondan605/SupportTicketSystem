@@ -4,6 +4,7 @@
     {
         IUserRepository Users { get; }
         ITicketRepository Tickets { get; }
+        ITicketHistoryRepository TicketHistories { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

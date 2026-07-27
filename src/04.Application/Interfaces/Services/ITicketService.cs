@@ -11,7 +11,7 @@ namespace SupportTicketSystem.Application.Abstractions.Services
         Task<PagedResult<TicketDto>> GetFilteredTicketsAsync(string? status, Guid? assignedTo, PagedRequest request);
         Task<TicketDto> CreateTicketAsync(CreateTicketDto dto, Guid createdBy);
         Task UpdateTicketAsync(Guid id, UpdateTicketDto dto, Guid userId, string userRole);
-        Task DeleteTicketAsync(Guid id);
-        Task AssignTicketAsync(Guid ticketId, Guid userId);
+        Task DeleteTicketAsync(Guid id, Guid deletedByUserId);
+        Task AssignTicketAsync(Guid ticketId, Guid userId, Guid assignedByAdminId);
     }
 }

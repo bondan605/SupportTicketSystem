@@ -13,11 +13,16 @@ namespace SupportTicketSystem.Application.Mappings
         {
             CreateMap<Ticket, TicketDto>();
 
-            CreateMap<User, LoginResponseDto>();
+            CreateMap<User, LoginResponseDto>()
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id));
 
             CreateMap<CreateTicketDto, Ticket>();
 
             CreateMap<User, UserDto>();
+
+            CreateMap<TicketHistory, TicketHistoryDto>()
+            .ForMember(dest => dest.TicketNumber, opt => opt.MapFrom(src => src.Ticket != null ? src.Ticket.TicketNumber : null))
+            .ForMember(dest => dest.ChangedByName, opt => opt.MapFrom(src => src.ChangedByUser != null ? src.ChangedByUser.Name : null));
         }
     }
 }

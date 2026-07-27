@@ -9,6 +9,7 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Repositories
 
         private IUserRepository? _users;
         private ITicketRepository? _tickets;
+        private ITicketHistoryRepository? _ticketHistories;
 
         public UnitOfWork(AppDbContext context)
         {
@@ -17,6 +18,9 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Repositories
 
         public IUserRepository Users => _users ??= new UserRepository(_context);
         public ITicketRepository Tickets => _tickets ??= new TicketRepository(_context);
+
+        public ITicketHistoryRepository TicketHistories => _ticketHistories ??= new TicketHistoryRepository(_context);
+
 
         public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => _context.SaveChangesAsync(cancellationToken);
         public void Dispose() => _context.Dispose();
