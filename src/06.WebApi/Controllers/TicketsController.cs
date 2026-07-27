@@ -1,14 +1,11 @@
-﻿using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using SupportTicketSystem.Application.Abstractions.Services;
 using SupportTicketSystem.Shared.Constants;
 using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Tickets;
 using SupportTicketSystem.Shared.Models;
-using SupportTicketSystem.WebApi.Extensions;
-using System.Linq;
+using SupportTicketSystem.Shared.Extensions;
 
 namespace SupportTicketSystem.WebApi.Controllers
 {

@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace SupportTicketSystem.WebApi.Extensions;
+namespace SupportTicketSystem.Shared.Extensions;
 
 public static class ClaimsPrincipalExtensions
 {

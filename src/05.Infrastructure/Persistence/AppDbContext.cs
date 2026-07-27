@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using SupportTicketSystem.Base.Entities;
 using SupportTicketSystem.Domain.Entities;
+using SupportTicketSystem.Shared.Extensions;
 
 namespace SupportTicketSystem.Infrastructure.Persistence
 {
@@ -9,17 +11,17 @@ namespace SupportTicketSystem.Infrastructure.Persistence
     /// </summary>
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public AppDbContext(DbContextOptions<AppDbContext> options, IHttpContextAccessor httpContextAccessor) : base(options) 
+        {
+            _httpContextAccessor = httpContextAccessor;
+        }
 
         public DbSet<User> Users => Set<User>();
         public DbSet<Ticket> Tickets => Set<Ticket>();
         public DbSet<TicketHistory> TicketHistories => Set<TicketHistory>();
 
-        /// <summary>
-        /// Builds the EF Core model. Entity configurations (schema constraints, indexes, relationships, and seed data) are defined separately per entity as
-        /// <see cref="Microsoft.EntityFrameworkCore.IEntityTypeConfiguration{TEntity}"/> classes (e.g. UserConfiguration, TicketConfiguration, TicketHistoryConfiguration)
-        /// and are discovered and applied automatically here via <see cref="ApplyConfigurationsFromAssembly"/>
-        /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -30,11 +32,10 @@ namespace SupportTicketSystem.Infrastructure.Persistence
 
         /// <summary>
         /// Populates audit fields for tracked entities before they are saved.
-        /// - Added entities get CreatedAt/CreatedBy filled in.
-        /// - Modified entities get UpdatedAt/UpdatedBy filled in.
         /// </summary>
         private void ApplyAuditInformation()
         {
+            var currentUserId = GetCurrentUserId();
             var entries = ChangeTracker.Entries<BaseEntity>();
 
             foreach (var entry in entries)
@@ -44,16 +45,25 @@ namespace SupportTicketSystem.Infrastructure.Persistence
                     // For newly added entities
                     case EntityState.Added:
                         entry.Entity.CreatedAt = DateTime.UtcNow;
-                        entry.Entity.CreatedBy ??= Guid.Empty;
+                        entry.Entity.CreatedBy = currentUserId;
                         break;
 
                     // For entities being updated
                     case EntityState.Modified:
                         entry.Entity.UpdatedAt = DateTime.UtcNow;
-                        entry.Entity.UpdatedBy ??= Guid.Empty;
+                        entry.Entity.UpdatedBy = currentUserId;
                         break;
                 }
             }
+        }
+
+        /// <summary>
+        /// Reads the current user's Id from the authenticated request's claims.
+        /// (e.g. a background job with no request at all).
+        /// </summary>
+        private Guid GetCurrentUserId()
+        {
+            return _httpContextAccessor.HttpContext?.User.GetUserId() ?? Guid.Empty;
         }
 
         /// <inheritdoc/>
