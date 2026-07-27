@@ -722,7 +722,7 @@
                         <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                        Color="Color.Primary"
                                        Size="Size.Small"
-                                       OnClick="@(() => NavigationManager.NavigateTo(AppRoutes.TicketUpdate))" />
+                                       OnClick="@(() => NavigationManager.NavigateTo($"{AppRoutes.TicketUpdate}/{context.Id}"))" />
                     </MudTooltip>
                     @if (context.Status == TicketStatus.Open)
                     {

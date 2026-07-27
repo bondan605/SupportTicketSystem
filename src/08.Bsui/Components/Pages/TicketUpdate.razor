@@ -1,4 +1,4 @@
-@page "/tickets/update"
+﻿@page "/tickets/update/{Id:guid}"
 @inject ITicketClient TicketClient
 @inject IUserClient UserClient
 @inject ISnackbar Snackbar
@@ -259,7 +259,8 @@ else
 }
 
 @code {
-    private readonly Guid Id = Guid.Parse("4CCA1FED-8253-4725-BD2F-0BEE3BFC01FB");
+    [Parameter]
+    public Guid Id { get; set; }
 
     private List<BreadcrumbItem> _breadcrumbs = new();
     private UpdateTicketModel _model = new();
@@ -289,7 +290,7 @@ else
         if (!response.Success || response.Data is null)
         {
             Snackbar.Add(response.Message ?? "Ticket not found.", MudBlazor.Severity.Error);
-            NavigationManager.NavigateTo("/ticket-list");
+            NavigationManager.NavigateTo(AppRoutes.TicketList);
             return;
         }
 
@@ -318,7 +319,7 @@ else
 
         _breadcrumbs = new List<BreadcrumbItem>
         {
-            new BreadcrumbItem("Tickets", href: "/ticket-list"),
+            new BreadcrumbItem("Tickets", href: AppRoutes.TicketList),
             new BreadcrumbItem(_model.TicketNumber, href: null, disabled: true),
             new BreadcrumbItem("Update Tiket", href: null, disabled: true)
         };
@@ -379,7 +380,7 @@ else
 
     private void Cancel()
     {
-        NavigationManager.NavigateTo("/ticket-list");
+        NavigationManager.NavigateTo(AppRoutes.TicketList);
     }
 
     private async Task SaveAsync(bool closeAfter)
@@ -417,7 +418,7 @@ else
 
                 if (closeAfter)
                 {
-                    NavigationManager.NavigateTo("/ticket-list");
+                    NavigationManager.NavigateTo(AppRoutes.TicketList);
                 }
                 else
                 {

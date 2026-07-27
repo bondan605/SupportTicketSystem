@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc;
 using MudBlazor.Services;
 using SupportTicketSystem.Bsui.Components;
+using SupportTicketSystem.Bsui.Constants;
 using SupportTicketSystem.Bsui.Services;
 using SupportTicketSystem.Client;
 using SupportTicketSystem.Client.Features.Interfaces;
-using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Shared.DTOs.Auth;
 using SupportTicketSystem.Shared.Exceptions;
 using System.Security.Claims;
@@ -27,8 +27,8 @@ builder.Services.AddScoped<Func<Task<string?>>>(sp => sp.GetRequiredService<Serv
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/login";
-        options.AccessDeniedPath = "/unauthorized";
+        options.LoginPath = AppRoutes.Login;
+        options.AccessDeniedPath = AppRoutes.Unauthorized;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
         options.Cookie.Name = "STS.Auth";
@@ -82,7 +82,7 @@ app.MapPost("/Account/Login", async (
 
         if (data is null || string.IsNullOrEmpty(data.Token))
         {
-            return Results.Redirect("/login?error=1");
+            return Results.Redirect($"{AppRoutes.Login}?error=1");
         }
 
         var claims = new List<Claim>
@@ -108,22 +108,23 @@ app.MapPost("/Account/Login", async (
 
         await httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
 
-        var redirectTo = !string.IsNullOrEmpty(returnUrl)
-            ? returnUrl
-            : data.Role == UserRole.Manager ? "/dashboard" : "/support-agent";
+        // Regardless of role, land the user on the universal dashboard (Home.razor, "/").
+        // Role-specific pages (e.g. /dashboard for Manager, /support-agent for SupportAgent)
+        // remain reachable from there via navigation.
+        var redirectTo = !string.IsNullOrEmpty(returnUrl) ? returnUrl : AppRoutes.Home;
 
         return Results.Redirect(redirectTo);
     }
     catch (BusinessException)
     {
-        return Results.Redirect("/login?error=1");
+        return Results.Redirect($"{AppRoutes.Login}?error=1");
     }
 });
 
 app.MapPost("/Account/Logout", async (HttpContext httpContext) =>
 {
     await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    return Results.Redirect("/login");
+    return Results.Redirect(AppRoutes.Login);
 });
 
 app.Run();
