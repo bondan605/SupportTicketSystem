@@ -87,6 +87,19 @@ namespace SupportTicketSystem.WebApi.Controllers
         }
 
         /// <summary>
+        /// Retrieves the ticket list with search and classification filters.
+        /// </summary>
+        [HttpGet(ApiRoutes.Tickets.ListSegment)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetTicketList([FromQuery] string? status, [FromQuery] Guid? assignedTo, [FromQuery] PagedRequest request, [FromQuery] string? priority, [FromQuery] string? category, [FromQuery] string? search)
+        {
+            var result = await _ticketService.GetTicketListAsync(status, assignedTo, request, priority, category, search);
+
+            return Ok(ApiResponse<PagedResult<TicketDto>>.SuccessResponse(result, "Ticket list retrieved successfully."));
+        }
+
+        /// <summary>
         /// Creates a new ticket.
         /// </summary>
         /// <param name="dto">The ticket creation data.</param>

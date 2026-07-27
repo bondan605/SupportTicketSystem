@@ -474,39 +474,43 @@
                 }
             </MudSelect>
 
-          @*   <MudSelect T="TicketPriority?"
+            <MudSelect T="TicketPriority?"
                        Value="_selectedPriority"
                        ValueChanged="OnPriorityChanged"
                        Placeholder="Semua Prioritas"
                        Variant="Variant.Outlined"
                        Margin="Margin.Dense"
                        Clearable="true"
-                       Style="flex: 1 1 0; min-width: 140px;">
+                       Style="flex:1 1 0; min-width:140px;">
+
                 @foreach (var priority in Enum.GetValues<TicketPriority>())
                 {
-                    <MudSelectItem T="TicketPriority?" Value="@priority">
+                    <MudSelectItem T="TicketPriority?"
+                                   Value="@priority">
                         @priority
                     </MudSelectItem>
                 }
             </MudSelect>
 
-            <MudSelect T="string"
+            <MudSelect T="TicketCategory?"
                        Value="_selectedCategory"
                        ValueChanged="OnCategoryChanged"
                        Placeholder="Semua Kategori"
                        Variant="Variant.Outlined"
                        Margin="Margin.Dense"
                        Clearable="true"
-                       Style="flex: 1 1 0; min-width: 140px;">
-                @foreach (var category in Categories)
+                       Style="flex:1 1 0; min-width:140px;">
+
+                @foreach (var category in Enum.GetValues<TicketCategory>())
                 {
-                    <MudSelectItem T="string" Value="@category">
+                    <MudSelectItem T="TicketCategory?"
+                                   Value="@category">
                         @category
                     </MudSelectItem>
                 }
-            </MudSelect> *@
+            </MudSelect>
 
-            <MudButton Variant="Variant.Outlined"
+            @* <MudButton Variant="Variant.Outlined"
                        Size="Size.Small"
                        StartIcon="@Icons.Material.Filled.FilterAlt"
                        OnClick="ApplyFilter"
@@ -517,7 +521,7 @@
                         color:#43546e;
                         text-transform:none;">
                     Filter
-            </MudButton>
+            </MudButton> *@
 
             <MudButton Variant="Variant.Outlined"
                        Size="Size.Small"
@@ -547,7 +551,7 @@
               Elevation="0"
               Dense="true"
               RowsPerPage="10"
-              Style="min-width:1120px;">
+              Style="min-width:1240px;">
 
         <HeaderContent>
             <MudTh Style="width:44px;">
@@ -562,6 +566,10 @@
 
             <MudTh Style="min-width:170px; white-space:nowrap;">
                 Title
+            </MudTh>
+
+            <MudTh Style="min-width:110px; white-space:nowrap;">
+                Category
             </MudTh>
 
             <MudTh Style="min-width:125px; white-space:nowrap;">
@@ -616,6 +624,12 @@
                    Style="white-space:nowrap;">
                 @context.Title
             </MudTd>
+
+            <MudTd DataLabel="Category"
+                   Style="white-space:nowrap;">
+                @context.Category
+            </MudTd>
+
             <MudTd DataLabel="Customer"
                    Style="white-space:nowrap;">
                 @context.CustomerName
@@ -679,7 +693,8 @@
 
             <MudTd DataLabel="Updated At"
                    Style="white-space:nowrap;">
-                @context.UpdatedAt?.ToString("dd MMM yyyy HH:mm")
+                @((context.UpdatedAt ?? context.CreatedAt)
+                    .ToString("dd MMM yyyy HH:mm"))
             </MudTd>
 
             <MudTd DataLabel="Aksi"

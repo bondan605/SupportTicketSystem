@@ -43,6 +43,29 @@ public class TicketClient : ITicketClient
         return response?.Data ?? new PagedResult<TicketDto>();
     }
 
+    public async Task<PagedResult<TicketDto>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search)
+    {
+        var url = $"{ApiRoutes.Tickets.List}?pageNumber={request.PageNumber}&pageSize={request.PageSize}";
+
+        if (!string.IsNullOrWhiteSpace(status))
+            url += $"&status={Uri.EscapeDataString(status)}";
+
+        if (assignedTo.HasValue)
+            url += $"&assignedTo={assignedTo.Value}";
+
+        if (!string.IsNullOrWhiteSpace(priority))
+            url += $"&priority={Uri.EscapeDataString(priority)}";
+
+        if (!string.IsNullOrWhiteSpace(category))
+            url += $"&category={Uri.EscapeDataString(category)}";
+
+        if (!string.IsNullOrWhiteSpace(search))
+            url += $"&search={Uri.EscapeDataString(search.Trim())}";
+
+        var response = await _httpClient.GetFromJsonAsync<ApiResponse<PagedResult<TicketDto>>>(url);
+        return response?.Data ?? new PagedResult<TicketDto>();
+    }
+
     public async Task<ApiResponse<object>> CreateTicketAsync(CreateTicketDto dto)
     {
         var response = await _httpClient.PostAsJsonAsync(ApiRoutes.Tickets.Base, dto);

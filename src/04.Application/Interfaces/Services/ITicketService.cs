@@ -9,6 +9,7 @@ namespace SupportTicketSystem.Application.Abstractions.Services
         Task<PagedResult<TicketDto>> GetAllTicketsAsync(PagedRequest request);
         Task<PagedResult<TicketDto>> GetTicketsForAgentAsync(Guid userId, PagedRequest request);
         Task<PagedResult<TicketDto>> GetFilteredTicketsAsync(string? status, Guid? assignedTo, PagedRequest request);
+        Task<PagedResult<TicketDto>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search);
         Task<TicketDto> CreateTicketAsync(CreateTicketDto dto, Guid createdBy);
         Task UpdateTicketAsync(Guid id, UpdateTicketDto dto, Guid userId, string userRole);
         Task DeleteTicketAsync(Guid id);

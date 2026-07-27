@@ -52,6 +52,62 @@ namespace SupportTicketSystem.Infrastructure.Repositories
             };
         }
 
+        public async Task<PagedResult<Ticket>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search)
+        {
+            var query = _context.Tickets
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<TicketStatus>(status, ignoreCase: true, out var statusEnum))
+            {
+                query = query.Where(ticket => ticket.Status == statusEnum);
+            }
+
+            if (assignedTo.HasValue)
+            {
+                query = query.Where(ticket => ticket.AssignedTo == assignedTo.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(priority) && Enum.TryParse<TicketPriority>(priority, ignoreCase: true, out var priorityEnum))
+            {
+                query = query.Where(ticket => ticket.Priority == priorityEnum);
+            }
+
+            if (!string.IsNullOrWhiteSpace(category) && Enum.TryParse<TicketCategory>(category, ignoreCase: true, out var categoryEnum))
+            {
+                query = query.Where(ticket => ticket.Category == categoryEnum);
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var keyword = search.Trim();
+
+                query = query.Where(ticket =>
+                    ticket.TicketNumber.Contains(keyword) ||
+                    ticket.Title.Contains(keyword) ||
+                    ticket.CustomerName.Contains(keyword) ||
+                    ticket.CustomerEmail.Contains(keyword) ||
+                    ticket.Description.Contains(keyword));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(ticket =>
+                    ticket.UpdatedAt ?? ticket.CreatedAt)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync();
+
+            return new PagedResult<Ticket>
+            {
+                Items = items,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                TotalCount = totalCount
+            };
+        }
+
         public async Task<Ticket?> GetByIdAsync(Guid id) => await _context.Tickets.FindAsync(id);
 
         public async Task<PagedResult<Ticket>> GetAllAsync(PagedRequest request) 

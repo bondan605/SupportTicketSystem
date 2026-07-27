@@ -15,6 +15,8 @@ namespace SupportTicketSystem.Bsui.Components.Pages
         private string? _searchText;
         private TicketStatus? _selectedStatus;
         private Guid? _selectedAgentId;
+        private TicketPriority? _selectedPriority;
+        private TicketCategory? _selectedCategory;
 
         private List<UserDto> _agentList = new();
         private List<TicketDto> _currentPageTickets = new();
@@ -109,28 +111,15 @@ namespace SupportTicketSystem.Bsui.Components.Pages
                     PageSize = state.PageSize
                 };
 
-                var response = await TicketClient.GetFilteredTicketsAsync(
+                var response = await TicketClient.GetTicketListAsync(
                     _selectedStatus?.ToString(),
                     _selectedAgentId,
-                    request);
+                    request,
+                    _selectedPriority?.ToString(),
+                    _selectedCategory?.ToString(),
+                    _searchText);
 
                 var tickets = response.Items?.ToList() ?? new List<TicketDto>();
-
-                if (!string.IsNullOrWhiteSpace(_searchText))
-                {
-                    tickets = tickets
-                        .Where(ticket =>
-                            ticket.TicketNumber.Contains(
-                                _searchText,
-                                StringComparison.OrdinalIgnoreCase) ||
-                            ticket.Title.Contains(
-                                _searchText,
-                                StringComparison.OrdinalIgnoreCase) ||
-                            ticket.CustomerName.Contains(
-                                _searchText,
-                                StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-                }
 
                 _currentPageTickets = tickets;
 
@@ -209,6 +198,18 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             await ReloadFirstPageAsync();
         }
 
+        private async Task OnPriorityChanged(TicketPriority? value)
+        {
+            _selectedPriority = value;
+            await ReloadFirstPageAsync();
+        }
+
+        private async Task OnCategoryChanged(TicketCategory? value)
+        {
+            _selectedCategory = value;
+            await ReloadFirstPageAsync();
+        }
+
         private async Task ApplyFilter()
         {
             await ReloadFirstPageAsync();
@@ -219,6 +220,8 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             _searchText = null;
             _selectedStatus = null;
             _selectedAgentId = null;
+            _selectedPriority = null;
+            _selectedCategory = null;
 
             await ReloadFirstPageAsync();
         }

@@ -14,6 +14,8 @@ namespace SupportTicketSystem.Application.Interfaces.Repositories
 
         Task<int> GetNextTicketSequenceAsync();
 
-        Task<PagedResult<Ticket>> GetFilteredTicketsAsync(string? status, Guid? assignedTo, PagedRequest paging);
+        Task<PagedResult<Ticket>> GetFilteredTicketsAsync(string? status, Guid? assignedTo, PagedRequest request);
+
+        Task<PagedResult<Ticket>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search);
     }
 }
