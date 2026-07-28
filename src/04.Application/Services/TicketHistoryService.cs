@@ -18,9 +18,9 @@ namespace SupportTicketSystem.Application.Services
         }
 
         public async Task<PagedResult<TicketHistoryDto>> GetFilteredHistoriesAsync(Guid? ticketId, string? action, Guid? changedBy,string? search, DateTime? startDate,
-    DateTime? endDate, PagedRequest request)
+    DateTime? endDate, PagedRequest request, Guid? scopedToUserId = null)
         {
-            var pagedHistories = await _unitOfWork.TicketHistories.GetFilteredHistoriesAsync(ticketId, action, changedBy,search, startDate, endDate, request);
+            var pagedHistories = await _unitOfWork.TicketHistories.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request, scopedToUserId);
 
             return new PagedResult<TicketHistoryDto>
             {

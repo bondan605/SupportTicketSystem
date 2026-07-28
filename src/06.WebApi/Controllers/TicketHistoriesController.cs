@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -6,6 +7,7 @@ using SupportTicketSystem.Application.Abstractions.Services;
 using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Tickets;
+using SupportTicketSystem.Shared.Extensions;
 using SupportTicketSystem.Shared.Models;
 using System.Text;
 
@@ -14,6 +16,7 @@ namespace SupportTicketSystem.WebApi.Controllers
     [ApiController]
     [Route("api/ticket-histories")]
     [Produces("application/json")]
+    [Authorize]
     public class TicketHistoriesController : ControllerBase
     {
         private readonly ITicketHistoryService _historyService;
@@ -22,6 +25,10 @@ namespace SupportTicketSystem.WebApi.Controllers
         {
             _historyService = historyService;
         }
+
+        // Managers see every ticket's history; any other role only sees history for tickets
+        // they created or are assigned to.
+        private Guid? GetScopedToUserId() => User.GetRole() == "Manager" ? null : User.GetUserId();
 
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<PagedResult<TicketHistoryDto>>), StatusCodes.Status200OK)]
@@ -34,7 +41,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         [FromQuery] DateTime? endDate,
         [FromQuery] PagedRequest request)
         {
-            var result = await _historyService.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request);
+            var result = await _historyService.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request, GetScopedToUserId());
             return Ok(ApiResponse<PagedResult<TicketHistoryDto>>.SuccessResponse(result, "Ticket histories retrieved successfully."));
         }
 
@@ -48,7 +55,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         [FromQuery] DateTime? endDate)
         {
             var request = new PagedRequest { PageNumber = 1, PageSize = int.MaxValue };
-            var result = await _historyService.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request);
+            var result = await _historyService.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request, GetScopedToUserId());
             var histories = result.Items ?? new List<TicketHistoryDto>();
 
             var csvBuilder = new StringBuilder();
@@ -86,7 +93,7 @@ namespace SupportTicketSystem.WebApi.Controllers
             [FromQuery] DateTime? endDate)
         {
             var request = new PagedRequest { PageNumber = 1, PageSize = int.MaxValue };
-            var result = await _historyService.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request);
+            var result = await _historyService.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request, GetScopedToUserId());
             var histories = result.Items ?? new List<TicketHistoryDto>();
 
             var pdfBytes = Document.Create(container =>

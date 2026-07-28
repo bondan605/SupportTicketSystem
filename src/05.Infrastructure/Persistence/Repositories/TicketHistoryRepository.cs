@@ -23,12 +23,20 @@ namespace SupportTicketSystem.Infrastructure.Repositories
     string? searchString,
     DateTime? startDate,
     DateTime? endDate,
-    PagedRequest request)
+    PagedRequest request,
+    Guid? scopedToUserId = null)
         {
             var query = _context.TicketHistories
                 .Include(th => th.Ticket)
                 .Include(th => th.ChangedByUser)
                 .AsNoTracking();
+
+            // Non-Manager callers only see history for tickets they created or are assigned to.
+            if (scopedToUserId.HasValue)
+            {
+                query = query.Where(h => h.Ticket != null
+                    && (h.Ticket.CreatedBy == scopedToUserId.Value || h.Ticket.AssignedTo == scopedToUserId.Value));
+            }
 
             if (ticketId.HasValue && ticketId.Value != Guid.Empty)
                 query = query.Where(h => h.TicketId == ticketId.Value);

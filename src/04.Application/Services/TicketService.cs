@@ -56,10 +56,10 @@ namespace SupportTicketSystem.Application.Services
             };
         }
 
-        public async Task<PagedResult<TicketDto>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search)
+        public async Task<PagedResult<TicketDto>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search, Guid? scopedToUserId = null)
         {
             var pagedTickets =
-                await _unitOfWork.Tickets.GetTicketListAsync(status,assignedTo, request, priority, category, search);
+                await _unitOfWork.Tickets.GetTicketListAsync(status, assignedTo, request, priority, category, search, scopedToUserId);
 
             return new PagedResult<TicketDto>
             {

@@ -52,7 +52,7 @@ namespace SupportTicketSystem.Infrastructure.Repositories
             };
         }
 
-        public async Task<PagedResult<Ticket>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search)
+        public async Task<PagedResult<Ticket>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search, Guid? scopedToUserId = null)
         {
             var pageNumber = Math.Max(1, request.PageNumber);
             var pageSize = Math.Clamp(request.PageSize, 1, 100);
@@ -61,6 +61,12 @@ namespace SupportTicketSystem.Infrastructure.Repositories
             var query = _context.Tickets
                 .AsNoTracking()
                 .AsQueryable();
+
+            // Non-Manager callers only see tickets they created or are assigned to.
+            if (scopedToUserId.HasValue)
+            {
+                query = query.Where(ticket => ticket.CreatedBy == scopedToUserId.Value || ticket.AssignedTo == scopedToUserId.Value);
+            }
 
             if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<TicketStatus>(status, ignoreCase: true, out var statusEnum))
             {

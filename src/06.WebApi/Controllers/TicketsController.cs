@@ -91,7 +91,11 @@ namespace SupportTicketSystem.WebApi.Controllers
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetTicketList([FromQuery] string? status, [FromQuery] Guid? assignedTo, [FromQuery] PagedRequest request, [FromQuery] string? priority, [FromQuery] string? category, [FromQuery] string? search)
         {
-            var result = await _ticketService.GetTicketListAsync(status, assignedTo, request, priority, category, search);
+            // Managers see every ticket; any other role only sees tickets they created or are assigned to.
+            var role = User.GetRole();
+            Guid? scopedToUserId = role == "Manager" ? null : User.GetUserId();
+
+            var result = await _ticketService.GetTicketListAsync(status, assignedTo, request, priority, category, search, scopedToUserId);
 
             return Ok(ApiResponse<PagedResult<TicketDto>>.SuccessResponse(result, "Ticket list retrieved successfully."));
         }

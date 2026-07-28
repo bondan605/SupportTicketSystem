@@ -16,6 +16,6 @@ namespace SupportTicketSystem.Application.Interfaces.Repositories
 
         Task<PagedResult<Ticket>> GetFilteredTicketsAsync(string? status, Guid? assignedTo, PagedRequest request);
 
-        Task<PagedResult<Ticket>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search);
+        Task<PagedResult<Ticket>> GetTicketListAsync(string? status, Guid? assignedTo, PagedRequest request, string? priority, string? category, string? search, Guid? scopedToUserId = null);
     }
 }
