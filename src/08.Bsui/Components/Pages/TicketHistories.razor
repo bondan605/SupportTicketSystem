@@ -142,38 +142,43 @@
                 </MudChip>
             </MudTd>
             <MudTd DataLabel="Detail Perubahan">
-                @if (context.Action == TicketHistoryAction.TicketCreated)
+                @if (context.Action is TicketHistoryAction.StatusChanged or TicketHistoryAction.PriorityChanged or TicketHistoryAction.AssigneeChanged)
                 {
-                    <div class="d-flex align-center gap-1">
-                        <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">Ticket created by</MudText>
-                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Text">
-                            @(context.ChangedByName ?? "System User")
+                    <div class="d-flex align-center flex-wrap gap-2">
+                        <MudIcon Icon="@GetActionIcon(context.Action)" Size="Size.Small" Color="@GetActionColor(context.Action)" />
+                        <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">@GetDetailChangeLabel(context.Action)</MudText>
+
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@GetChipColor(context.Action, context.OldValue)"
+                                 Variant="Variant.Text">
+                            @GetChipDisplayValue(context.Action, context.OldValue)
+                        </MudChip>
+
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowRightAlt" Size="Size.Small" Style="@($"color:{Colors.Gray.Default};")" />
+
+                        <MudChip T="string" Size="Size.Small"
+                                 Color="@GetChipColor(context.Action, context.NewValue)"
+                                 Variant="Variant.Filled">
+                            @GetChipDisplayValue(context.Action, context.NewValue)
                         </MudChip>
                     </div>
                 }
-                else if (!string.IsNullOrEmpty(context.OldValue) || !string.IsNullOrEmpty(context.NewValue))
+                else if (context.Action is TicketHistoryAction.TicketCreated or TicketHistoryAction.TicketUpdated)
                 {
-                    <div class="d-flex align-center gap-2">
-                        <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">Dari</MudText>
-            
-                        <MudChip T="string" Size="Size.Small"
-                                 Color="@GetValueColor(context.Action, context.OldValue)"
-                                 Variant="Variant.Text">
-                            @(context.OldValue ?? "-")
-                        </MudChip>
-            
-                        <MudIcon Icon="@Icons.Material.Filled.ArrowRightAlt" Size="Size.Small" Style="@($"color:{Colors.Gray.Default};")" />
-            
-                        <MudChip T="string" Size="Size.Small"
-                                 Color="@GetValueColor(context.Action, context.NewValue)"
-                                 Variant="Variant.Text">
-                            @(context.NewValue ?? "-")
+                    <div class="d-flex align-center gap-1">
+                        <MudIcon Icon="@GetActionIcon(context.Action)" Size="Size.Small" Color="@GetActionColor(context.Action)" />
+                        <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">@GetCreateUpdateLabel(context.Action)</MudText>
+                        <MudChip T="string" Size="Size.Small" Color="@GetAvatarColor(context.ChangedByName)" Variant="Variant.Filled">
+                            @(context.ChangedByName ?? "System User")
                         </MudChip>
                     </div>
                 }
                 else
                 {
-                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.BlueGray.Darken3};")">@(context.Note ?? "-")</MudText>
+                    <div class="d-flex align-center gap-1">
+                        <MudIcon Icon="@GetActionIcon(context.Action)" Size="Size.Small" Color="@GetActionColor(context.Action)" />
+                        <MudText Typo="Typo.body2" Style="@($"color:{Colors.BlueGray.Darken3};")">@BuildDetailText(context)</MudText>
+                    </div>
                 }
             </MudTd>
             <MudTd DataLabel="Changed By">
@@ -547,39 +552,98 @@
         };
     }
 
+    // Render 'Detail Perubahan' based on `Action`
+    private string BuildDetailText(TicketHistoryDto h) => h.Action switch
+    {
+        TicketHistoryAction.StatusChanged =>
+            $"Status changed from \"{h.OldValue}\" to \"{h.NewValue}\"",
+        TicketHistoryAction.PriorityChanged =>
+            $"Priority changed from \"{h.OldValue}\" to \"{h.NewValue}\"",
+        TicketHistoryAction.AssigneeChanged =>
+            $"Assignee changed from \"{GetAgentName(h.OldValue)}\" to \"{GetAgentName(h.NewValue)}\"",
+        TicketHistoryAction.CommentAdded =>
+            $"Added comment: \"{h.Note}\"",
+        TicketHistoryAction.TicketUpdated =>
+            "Ticket updated",
+        TicketHistoryAction.TicketCreated =>
+            "Ticket created",
+        _ => "Unknown change"
+    };
+
+    // Tranform Guid to Agent Name
+    private string GetAgentName(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "-";
+
+        if (Guid.TryParse(value, out var userId))
+        {
+            return availableUsers.TryGetValue(userId, out var name) ? name : "Unknown User";
+        }
+
+        return value;
+    }
+
+    // Short label shown before the old/new value chips in the "Detail Perubahan" column.
+    private static string GetDetailChangeLabel(TicketHistoryAction action) => action switch
+    {
+        TicketHistoryAction.StatusChanged => "Status changed",
+        TicketHistoryAction.PriorityChanged => "Priority changed",
+        TicketHistoryAction.AssigneeChanged => "Assignee changed",
+        _ => string.Empty
+    };
+
+    private string GetChipDisplayValue(TicketHistoryAction action, string? value) =>
+        action == TicketHistoryAction.AssigneeChanged
+            ? GetAgentName(value)
+            : (string.IsNullOrWhiteSpace(value) ? "-" : value);
+
+    private Color GetChipColor(TicketHistoryAction action, string? value) =>
+        action == TicketHistoryAction.AssigneeChanged
+            ? GetAvatarColor(GetAgentName(value))
+            : GetValueColor(action, value);
+
+    // Label shown before the "who did it" chip for TicketCreated/TicketUpdated.
+    private static string GetCreateUpdateLabel(TicketHistoryAction action) => action switch
+    {
+        TicketHistoryAction.TicketCreated => "Ticket Created by",
+        TicketHistoryAction.TicketUpdated => "Ticket Updated by",
+        _ => string.Empty
+    };
+
     private Color GetValueColor(TicketHistoryAction action, string? value)
     {
-    if (string.IsNullOrWhiteSpace(value)) 
-        return Color.Default;
+        if (string.IsNullOrWhiteSpace(value)) 
+            return Color.Default;
 
-    // Normalisasi teks agar tidak sensitif huruf besar/kecil
-    var valLower = value.ToLower().Trim();
+        // Normalisasi teks agar tidak sensitif huruf besar/kecil
+        var valLower = value.ToLower().Trim();
 
-    if (action == TicketHistoryAction.StatusChanged)
-    {
-        return valLower switch
+        if (action == TicketHistoryAction.StatusChanged)
         {
-            "open" => Color.Info,           // Blue
-            "inprogress" => Color.Warning, // Orange
-            "closed" => Color.Success,      // Hijau
-            "cancelled" => Color.Error,     // Merah
-            _ => Color.Info
-        };
-    }
+            return valLower switch
+            {
+                "open" => Color.Info,           // Blue
+                "inprogress" => Color.Warning, // Orange
+                "closed" => Color.Success,      // Hijau
+                "cancelled" => Color.Error,     // Merah
+                _ => Color.Info
+            };
+        }
     
-    if (action == TicketHistoryAction.PriorityChanged)
-    {
-        return valLower switch
+        if (action == TicketHistoryAction.PriorityChanged)
         {
-            "low" => Color.Success,         // Hijau
-            "medium" => Color.Warning,      // Orange
-            "high" => Color.Error,          // Merah
-            _ => Color.Info
-        };
-    }
+            return valLower switch
+            {
+                "low" => Color.Success,         // Hijau
+                "medium" => Color.Warning,      // Orange
+                "high" => Color.Error,          // Merah
+                _ => Color.Info
+            };
+        }
 
-        // Kembalikan warna default (abu-abu) untuk perubahan Assignee atau text biasa
-        return Color.Info; 
+            // Kembalikan warna default (abu-abu) untuk perubahan Assignee atau text biasa
+            return Color.Info; 
     }
 
     private string GetInitials(string? name)
