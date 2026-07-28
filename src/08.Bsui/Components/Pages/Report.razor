@@ -1,0 +1,149 @@
+﻿@page "/report"
+
+@using SupportTicketSystem.Bsui.Components.Shared
+@using SupportTicketSystem.Bsui.Components.Models.Reports
+
+<PageTitle>Reports</PageTitle>
+
+    @* Header *@
+    <MudStack Row="true"
+              Justify="Justify.SpaceBetween"
+              AlignItems="AlignItems.Center"
+              Class="pa-4 pl-6 pr-6">
+
+        <MudStack Spacing="0">
+            <MudText Typo="Typo.h5"
+                     Class="font-weight-bold"
+                     Style="color:#1e293b;">
+                <b>Reports</b>
+            </MudText>
+
+            <MudText Typo="Typo.body2"
+                     Style="color:#64748b;">
+                Laporan dan analisis data tiket
+            </MudText>
+        </MudStack>
+
+        <MudStack Row="true"
+                  AlignItems="AlignItems.Center"
+                  Spacing="4">
+
+            <MudButton Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Outlined.CalendarMonth"
+                       Color="Color.Default">
+                26 Jun 2026 - 24 Jul 2026
+            </MudButton>
+
+            <MudButton Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Outlined.FileDownload"
+                       Color="Color.Default">
+                Export
+            </MudButton>
+
+            <MudButton Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Outlined.FilterAlt"
+                       Color="Color.Default">
+                Filter
+            </MudButton>
+            <ProfileMenu />
+        </MudStack>
+    </MudStack>
+
+<MudDivider />
+
+    <MudContainer MaxWidth="MaxWidth.False"
+              Class="px-3 pt-3 pb-2">
+        @* Summary card *@
+        <MudStack Row="true"
+                  Spacing="2"
+                  Wrap="Wrap.NoWrap"
+                  Class="mb-3"
+                  Style="width:100%; box-sizing:border-box;">
+
+            <SummaryCard Title="Total Tickets"
+                         Value="1,245"
+                         Description="Semua tiket"
+                         Icon="@Icons.Material.Filled.ConfirmationNumber"
+                         IconBackgroundColor="#1677ff" />
+
+            <SummaryCard Title="Tickets Selesai"
+                         Value="842"
+                         Description="67.7% dari total"
+                         Icon="@Icons.Material.Filled.CheckCircleOutline"
+                         IconBackgroundColor="#00c853" />
+
+            <SummaryCard Title="Dalam Proses"
+                         Value="278"
+                         Description="22.3% dari total"
+                         Icon="@Icons.Material.Filled.HourglassEmpty"
+                         IconBackgroundColor="#ffb300" />
+
+            <SummaryCard Title="Closed"
+                         Value="125"
+                         Description="10.0% dari total"
+                         Icon="@Icons.Material.Filled.Close"
+                         IconBackgroundColor="#ff3b30" />
+
+            <SummaryCard Title="Total Users"
+                         Value="68"
+                         Description="Semua pengguna"
+                         Icon="@Icons.Material.Filled.People"
+                         IconBackgroundColor="#5b5fe9" />
+
+        </MudStack>
+
+        @* Bar chart dan average time *@
+        <MudGrid Spacing="2">
+
+            <MudItem xs="12" lg="5">
+                <AssigneeBarChart Title="Tickets per Assignee (Top 6)"
+                          Items="@_assigneeChartData"
+                          AxisMaximum="300"
+                          AxisStep="50"
+                          CardHeight="280"
+                          BarColor="#2F73F6" />
+            </MudItem>
+
+            <MudItem xs="12" lg="4">
+                <TicketsByCategoryTable Title="Tickets by Category"
+                               Items="@_categoryData"
+                               TotalTickets="1245"
+                               CardHeight="260"
+                               BarColor="#2F73F6" />
+            </MudItem>
+
+            <MudItem xs="12" lg="3">
+                <AverageResponseTimeCard Data="@_averageResponseTime"
+                                 CardHeight="260" />
+            </MudItem>
+
+        </MudGrid>
+    </MudContainer>
+
+@code {
+    private readonly IReadOnlyList<AssigneeChartItem> _assigneeChartData =
+    new List<AssigneeChartItem>
+    {
+        new("Andi Pratama", 245),
+        new("Siti Aisyah", 198),
+        new("Budi Santoso", 176),
+        new("Dewi Lestari", 142),
+        new("Rizky Hidayat", 98),
+        new("Unassigned", 234)
+    };
+
+    private readonly IReadOnlyList<CategoryReportItem> _categoryData =
+        new List<CategoryReportItem>
+        {
+        new("Aplikasi", 560),
+        new("Akses", 311),
+        new("Laporan", 187),
+        new("Lainnya", 187)
+        };
+
+    private readonly AverageResponseTimeModel _averageResponseTime =
+        new(
+            Duration: new TimeSpan(hours: 2, minutes: 45, seconds: 0),
+            ChangePercentage: 8.6m,
+            IsIncrease: true);
+}
