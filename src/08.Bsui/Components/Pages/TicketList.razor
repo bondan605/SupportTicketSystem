@@ -595,11 +595,7 @@
             </MudTh>
 
             <MudTh Style="min-width:145px; white-space:nowrap;">
-                Created At
-            </MudTh>
-
-            <MudTh Style="min-width:145px; white-space:nowrap;">
-                Updated At
+                Last Update
             </MudTh>
 
             <MudTh Style="width:120px; min-width:120px; text-align:center; white-space:nowrap;">
@@ -692,12 +688,7 @@
                 </MudStack>
             </MudTd>
 
-            <MudTd DataLabel="Created At"
-                   Style="white-space:nowrap;">
-                @context.CreatedAt.ToString("dd MMM yyyy HH:mm")
-            </MudTd>
-
-            <MudTd DataLabel="Updated At"
+            <MudTd DataLabel="Last Update"
                    Style="white-space:nowrap;">
                 @((context.UpdatedAt ?? context.CreatedAt)
                     .ToString("dd MMM yyyy HH:mm"))

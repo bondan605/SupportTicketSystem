@@ -441,10 +441,22 @@ namespace SupportTicketSystem.Bsui.Components.Pages
 
         private async Task OpenDetailsDialogAsync(TicketDto ticket)
         {
-            var parameters = new DialogParameters { ["Ticket"] = ticket, ["Description"] = ticket.Description };
-            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+            var parameters = new DialogParameters
+            {
+                ["TicketId"] = ticket.Id
+            };
 
-            await DialogService.ShowAsync<DescriptionDialog>("Ticket Detail", parameters, options);
+            var options = new DialogOptions
+            {
+                CloseButton = true,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true
+            };
+
+            await DialogService.ShowAsync<TicketDetailDialog>(
+                $"Detail Tiket - {ticket.TicketNumber}",
+                parameters,
+                options);
         }
 
         private async Task OpenAssignDialogAsync(TicketDto ticket, string title = "Assign Agent")

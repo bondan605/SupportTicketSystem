@@ -1,0 +1,487 @@
+﻿@using System.Net
+@using System.Text.RegularExpressions
+
+@inject ITicketClient TicketClient
+@inject IUserClient UserClient
+
+<MudDialog>
+    <DialogContent>
+        <div style="max-height:70vh; overflow-y:auto; padding-right:4px;">
+
+            @if (_isLoading)
+            {
+                <MudStack AlignItems="AlignItems.Center"
+                          Justify="Justify.Center"
+                          Class="py-8">
+
+                    <MudProgressCircular Indeterminate="true"
+                                         Color="Color.Primary" />
+
+                    <MudText Typo="Typo.body2"
+                             Color="Color.Secondary">
+                        Memuat detail tiket...
+                    </MudText>
+                </MudStack>
+            }
+            else if (!string.IsNullOrWhiteSpace(_errorMessage))
+            {
+                <MudAlert Severity="MudBlazor.Severity.Error"
+                          Variant="Variant.Outlined">
+                    @_errorMessage
+                </MudAlert>
+            }
+            else if (_ticket is not null)
+            {
+                <MudStack Spacing="4">
+
+                    @* Metadata tepat di bawah judul dialog *@
+                    <MudStack Row="true"
+                              Spacing="1"
+                              AlignItems="AlignItems.Center"
+                              Class="px-1"
+                              Style="flex-wrap: wrap;">
+
+                        <MudText Typo="Typo.caption"
+                                 Color="Color.Secondary">
+                            Dibuat: @FormatDateTime(_ticket.CreatedAt)
+                        </MudText>
+
+                        <MudText Typo="Typo.caption"
+                                 Color="Color.Secondary">
+                            •
+                        </MudText>
+
+                        <MudText Typo="Typo.caption"
+                                 Color="Color.Secondary">
+                            Terakhir diperbarui:
+                            @FormatNullableDateTime(_ticket.UpdatedAt)
+                        </MudText>
+
+                    </MudStack>
+
+                    @* =========================
+           INFORMASI TIKET
+           ========================= *@
+                    <MudPaper Outlined="true"
+                              Elevation="0"
+                              Class="pa-4">
+
+                        <MudText Typo="Typo.subtitle1"
+                                 Class="font-weight-bold mb-4">
+                            Informasi Tiket
+                        </MudText>
+
+                        <MudGrid Spacing="3">
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Value="@_ticket.TicketNumber"
+                                              Label="Nomor Tiket"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Value="@_createdByName"
+                                              Label="Dibuat Oleh"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Value="@_ticket.Type.ToDisplayText()"
+                                              Label="Tipe Tiket"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Value="@_ticket.Impact.ToDisplayText()"
+                                              Label="Dampak"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@ImpactIcon(_ticket.Impact)"
+                                              AdornmentColor="@ImpactColor(_ticket.Impact)" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Value="@_ticket.Category.ToDisplayText()"
+                                              Label="Kategori"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Value="@_ticket.Application.ToDisplayText()"
+                                              Label="Aplikasi / Sistem"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Value="@_ticket.Priority.ToDisplayText()"
+                                              Label="Prioritas"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Filled.Flag"
+                                              AdornmentColor="@PriorityColor(_ticket.Priority)" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Value="@_ticket.Status.ToDisplayText()"
+                                              Label="Status"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Filled.Circle"
+                                              AdornmentColor="@StatusColor(_ticket.Status)" />
+                            </MudItem>
+
+                            @* Perkiraan selesai dan Assign To sejajar *@
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Value="@FormatDate(_ticket.EstimatedDueDate)"
+                                              Label="Perkiraan Selesai"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true"
+                                              Adornment="Adornment.End"
+                                              AdornmentIcon="@Icons.Material.Filled.CalendarMonth" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="6">
+                                <MudTextField T="string"
+                                              Value="@_assigneeName"
+                                              Label="Assign To"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true"
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Filled.Person" />
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <MudTextField T="string"
+                                              Value="@_ticket.Title"
+                                              Label="Judul"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true" />
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <MudTextField T="string"
+                                              Value="@GetPlainTextDescription(_ticket.Description)"
+                                              Label="Deskripsi"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true"
+                                              Lines="6"
+                                              AutoGrow="true" />
+                            </MudItem>
+
+                        </MudGrid>
+                    </MudPaper>
+
+                    @* =========================
+           INFORMASI KONTAK
+           ========================= *@
+                    <MudPaper Outlined="true"
+                              Elevation="0"
+                              Class="pa-4">
+
+                        <MudText Typo="Typo.subtitle1"
+                                 Class="font-weight-bold mb-4">
+                            Informasi Kontak
+                        </MudText>
+
+                        <MudGrid Spacing="3">
+
+                            <MudItem xs="12" md="4">
+                                <MudTextField T="string"
+                                              Value="@_ticket.CustomerName"
+                                              Label="Nama Pelapor"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true" />
+                            </MudItem>
+
+                            <MudItem xs="12" md="4">
+                                <MudTextField T="string"
+                                              Value="@_ticket.CustomerEmail"
+                                              Label="Email"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true" />
+                            </MudItem>
+
+                            <MudItem xs="12" md="4">
+                                <MudTextField T="string"
+                                              Value="@DisplayValue(_ticket.CustomerPhone)"
+                                              Label="Nomor Telepon"
+                                              Variant="Variant.Outlined"
+                                              ReadOnly="true" />
+                            </MudItem>
+
+                        </MudGrid>
+                    </MudPaper>
+
+                    @* =========================
+           STATUS TIKET
+           ========================= *@
+                    <MudPaper Outlined="true"
+                              Elevation="0"
+                              Class="pa-4">
+
+                        <MudText Typo="Typo.subtitle1"
+                                 Class="font-weight-bold mb-4">
+                            Status Tiket
+                        </MudText>
+
+                        <MudText Typo="Typo.caption"
+                                 Color="Color.Secondary">
+                            Status Saat Ini
+                        </MudText>
+
+                        <MudStack Row="true"
+                                  AlignItems="AlignItems.Center"
+                                  Justify="Justify.SpaceBetween"
+                                  Class="mt-2"
+                                  Style="flex-wrap: wrap; gap: 12px;">
+
+                            <MudChip T="string"
+                                     Size="Size.Medium"
+                                     Color="@StatusColor(_ticket.Status)"
+                                     Variant="Variant.Text">
+
+                                <MudIcon Icon="@Icons.Material.Filled.Circle"
+                                         Size="Size.Small"
+                                         Color="@StatusColor(_ticket.Status)"
+                                         Class="mr-2" />
+
+                                @_ticket.Status.ToDisplayText()
+
+                            </MudChip>
+
+                            <MudText Typo="Typo.caption"
+                                     Color="Color.Secondary">
+                                @FormatNullableDateTime(
+                                    _ticket.UpdatedAt ?? _ticket.CreatedAt)
+                            </MudText>
+
+                        </MudStack>
+
+                    </MudPaper>
+
+                </MudStack>
+            }
+
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="CloseDialog"
+                   Style="text-transform:none;">
+            Tutup
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public Guid TicketId { get; set; }
+
+    private TicketDto? _ticket;
+
+    private bool _isLoading = true;
+    private string? _errorMessage;
+
+    private string _assigneeName = "Unassigned";
+    private string _createdByName = "-";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTicketDetailAsync();
+    }
+
+    private async Task LoadTicketDetailAsync()
+    {
+        try
+        {
+            var ticketResponse =
+                await TicketClient.GetTicketByIdAsync(TicketId);
+
+            if (!ticketResponse.Success ||
+                ticketResponse.Data is null)
+            {
+                _errorMessage =
+                    ticketResponse.Message ??
+                    "Detail tiket tidak ditemukan.";
+
+                return;
+            }
+
+            _ticket = ticketResponse.Data;
+
+            await LoadUserNamesAsync();
+        }
+        catch (Exception)
+        {
+            _errorMessage =
+                "Terjadi kesalahan saat mengambil detail tiket.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task LoadUserNamesAsync()
+    {
+        if (_ticket is null)
+        {
+            return;
+        }
+
+        var userResponse =
+            await UserClient.GetAllAgentsAsync();
+
+        var users = userResponse.Success &&
+                    userResponse.Data is not null
+            ? userResponse.Data.ToList()
+            : [];
+
+        _assigneeName = _ticket.AssignedTo.HasValue
+            ? GetUserName(
+                users,
+                _ticket.AssignedTo.Value,
+                "Unknown Agent")
+            : "Unassigned";
+
+        _createdByName = GetUserName(
+            users,
+            _ticket.CreatedBy,
+            "Unknown User");
+    }
+
+    private static string GetUserName(
+        IEnumerable<UserDto> users,
+        Guid userId,
+        string fallback)
+    {
+        return users
+            .FirstOrDefault(user => user.Id == userId)
+            ?.Name ?? fallback;
+    }
+
+    private static string DisplayValue(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? "-"
+            : value;
+    }
+
+    private static string FormatDate(DateTime? value)
+    {
+        return value.HasValue
+            ? value.Value.ToString("dd MMM yyyy")
+            : "-";
+    }
+
+    private static string FormatDateTime(DateTime value)
+    {
+        return value.ToString("dd MMM yyyy HH:mm");
+    }
+
+    private static string FormatNullableDateTime(DateTime? value)
+    {
+        return value.HasValue
+            ? value.Value.ToString("dd MMM yyyy HH:mm")
+            : "-";
+    }
+
+    private static string GetPlainTextDescription(string? html)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+        {
+            return "-";
+        }
+
+        var text = Regex.Replace(
+            html,
+            @"<br\s*/?>",
+            Environment.NewLine,
+            RegexOptions.IgnoreCase);
+
+        text = Regex.Replace(
+            text,
+            @"</p>",
+            Environment.NewLine,
+            RegexOptions.IgnoreCase);
+
+        text = Regex.Replace(
+            text,
+            @"<[^>]+>",
+            string.Empty);
+
+        return WebUtility.HtmlDecode(text).Trim();
+    }
+
+    private static Color PriorityColor(TicketPriority priority)
+    {
+        return priority switch
+        {
+            TicketPriority.Low => Color.Success,
+            TicketPriority.Medium => Color.Warning,
+            TicketPriority.High => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private static string ImpactIcon(TicketImpact impact)
+    {
+        return impact switch
+        {
+            TicketImpact.SingleUser => Icons.Material.Filled.Person,
+            TicketImpact.SomeUsers => Icons.Material.Filled.Groups,
+            TicketImpact.AllUsers => Icons.Material.Filled.Public,
+            _ => Icons.Material.Filled.Person
+        };
+    }
+
+    private static Color ImpactColor(TicketImpact impact)
+    {
+        return impact switch
+        {
+            TicketImpact.SingleUser => Color.Info,
+            TicketImpact.SomeUsers => Color.Warning,
+            TicketImpact.AllUsers => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private static Color StatusColor(TicketStatus status)
+    {
+        return status switch
+        {
+            TicketStatus.Open => Color.Primary,
+            TicketStatus.InProgress => Color.Warning,
+            TicketStatus.Resolved => Color.Success,
+            TicketStatus.Closed => Color.Default,
+            _ => Color.Default
+        };
+    }
+
+    private void CloseDialog()
+    {
+        MudDialog.Close();
+    }
+}
