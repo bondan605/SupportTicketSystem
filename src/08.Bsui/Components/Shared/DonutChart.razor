@@ -1,29 +1,59 @@
 ﻿@using MudBlazor
 
-<MudPaper Elevation="0" Outlined="true" Class="pa-6 rounded-lg d-flex flex-column" Style="background-color: var(--mud-palette-surface); border-color: var(--mud-palette-lines-default);">
+<MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg d-flex flex-column donut-chart-card"
+          Style="@($"background-color: var(--mud-palette-surface); border-color: var(--mud-palette-lines-default); width: 100%; height: {CardHeight}px; box-sizing: border-box;")">
     
-    <MudText Typo="Typo.h6" Style="font-weight: 700; width: 320px; margin-bottom: 1rem; color: var(--mud-palette-text-primary);">
+    <MudText Style="font-weight: 700; width: 100%; margin-bottom: 0.5rem; color: var(--mud-palette-text-primary); font-size: 16px;">
         @Title
     </MudText>
 
-    <MudChart T="double"
-              ChartType="ChartType.Donut"
-              LegendPosition="Position.Right"
-              ChartSeries="@([Data])" ChartLabels="@FormattedLabels"
-              ChartOptions="@_donutOptions"
-              Width="300px" Height="300px">
-    </MudChart>
+    <div style="flex-grow: 1; min-height: 0; display: flex; align-items: center; justify-content: center;">
+        <MudChart T="double"
+                  ChartType="ChartType.Donut"
+                  LegendPosition="Position.Right"
+                  ChartSeries="@([Data])"
+                  ChartLabels="@FormattedLabels"
+                  ChartOptions="@_donutOptions"
+                  Width="100%"
+                  Height="@($"{CardHeight - 110}px")">
+        </MudChart>
+    </div>
 
-    <div class="mt-4 pt-3" style="width: 320px; border-top: 1px dashed var(--mud-palette-lines-default);">
-        <MudText Typo="Typo.body2" Style="color: var(--mud-palette-text-secondary); font-weight: 500;">
+    <div class="mt-auto pt-3" style="width: 100%; border-top: 1px dashed var(--mud-palette-lines-default);">
+        <MudText Style="color: var(--mud-palette-text-secondary); font-weight: 500; font-size: 12px;">
             @TotalText: <span style="font-weight: 700; color: var(--mud-palette-text-primary);">@Data.Sum()</span>
         </MudText>
     </div>
 </MudPaper>
 
+<style>
+    /* 1. Mengecilkan ukuran teks legend */
+    .donut-chart-card .mud-chart-legend-item,
+    .donut-chart-card .mud-chart-legend-item text,
+    .donut-chart-card .mud-chart-legend-item span,
+    .donut-chart-card .mud-chart-legend-item p {
+        font-size: 11px !important;
+        line-height: 1.2 !important;
+    }
+
+        /* 2. Mengecilkan titik/simbol warna legend */
+        .donut-chart-card .mud-chart-legend-symbol,
+        .donut-chart-card .mud-chart-legend-item svg,
+        .donut-chart-card .mud-chart-legend-item circle,
+        .donut-chart-card .mud-chart-legend-item rect {
+            width: 10px !important;
+            height: 10px !important;
+        }
+
+    /* 3. Merapatkan jarak vertikal antar baris legend */
+    .donut-chart-card .mud-chart-legend-item {
+        margin-bottom: 4px !important;
+        gap: 6px !important;
+    }
+</style>
+
 @code {
     // === DEFINISI PARAMETER REUSABLE ===
-    
     [Parameter]
     public string Title { get; set; } = "Chart Title";
 
@@ -40,16 +70,16 @@
     public string TotalText { get; set; } = "Total";
 
     [Parameter]
-    public bool ShowPercentageAndNumber { get; set; } = false; // Opsional: jika ingin menampilkan persentase
+    public int CardHeight { get; set; } = 280;
+
+    [Parameter]
+    public bool ShowPercentageAndNumber { get; set; } = false;
 
     // ====================================
-
     private ChartOptions _donutOptions = new ChartOptions();
 
-    // OnParametersSet dipanggil setiap kali parameter dari parent berubah
     protected override void OnParametersSet()
     {
-        // Masukkan warna dari parameter ke dalam opsi chart
         if (Colors != null && Colors.Length > 0)
         {
             _donutOptions.ChartPalette = Colors;
@@ -67,7 +97,6 @@
             
             for (int i = 0; i < Data.Length; i++)
             {
-                // Cegah error jika panjang label kurang dari panjang data
                 var labelName = i < Labels.Length ? Labels[i] : $"Item {i + 1}";
 
                 if (ShowPercentageAndNumber)

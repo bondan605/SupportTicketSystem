@@ -1,140 +1,65 @@
 ﻿@using MudBlazor
-@using MudBlazor.Charts
 
-<style>
-    .sla-card {
-        padding: 24px;
-    }
+<MudPaper Outlined="true"
+          Class="pa-4 rounded-lg d-flex flex-column"
+          Style="@($"background-color: var(--mud-palette-surface); border-color: var(--mud-palette-lines-default); width: 100%; height: {CardHeight}px; box-sizing: border-box;")">
 
-    .sla-container {
-        display: flex;
-        align-items: center;
-        gap: 32px;
-    }
-
-    .sla-chart {
-        width: 230px;
-        height: 230px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-shrink: 0;
-    }
-
-        .sla-chart .mud-chart {
-            width: 230px !important;
-            height: 230px !important;
-        }
-
-        /* Hilangkan legend bawaan */
-        .sla-chart .mud-chart-legend {
-            display: none !important;
-        }
-
-    .sla-content {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .sla-value {
-        font-size: 72px;
-        font-weight: 700;
-        line-height: 1;
-        color: var(--mud-palette-text-primary);
-    }
-
-    .sla-title {
-        font-size: 22px;
-        font-weight: 500;
-        color: var(--mud-palette-text-primary);
-        margin-top: 8px;
-    }
-
-    .sla-trend {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 18px;
-    }
-
-    .sla-trend-value {
-        color: #22C55E;
-        font-size: 22px;
-        font-weight: 700;
-    }
-
-    .sla-trend-text {
-        color: var(--mud-palette-text-primary);
-        font-size: 22px;
-    }
-</style>
-
-<MudPaper Outlined="true" Class="rounded-lg sla-card">
-
-    <MudText Typo="Typo.h5" Style="font-weight:700;" Class="mb-5">
+    <MudText Style="font-weight: 700; width: 100%; color: var(--mud-palette-text-primary); font-size: 16px;">
         @Title
     </MudText>
 
-    <div class="sla-container">
+    <div class="d-flex flex-row align-center justify-center flex-grow-1 gap-4 mt-2">
 
-        <div class="sla-chart">
-
+        <div style="width: 100px; height: 100px; flex-shrink: 0; position: relative;">
             <MudChart T="double"
                       ChartType="ChartType.Donut"
                       ChartSeries="@([ChartData])"
                       ChartLabels="@ChartLabels"
                       ChartOptions="@_chartOptions"
-                      Width="230px"
-                      Height="230px" />
-
+                      DisableLegend="true"
+                      Width="100px"
+                      Height="100px" />
         </div>
 
-        <div class="sla-content">
-
-            <div class="sla-value">
+        <div class="d-flex flex-column justify-center">
+            
+            <MudText Style="font-size: 36px; font-weight: 700; line-height: 1; color: var(--mud-palette-text-primary);">
                 @($"{Value:F1}%")
-            </div>
-
-            <div class="sla-title">
+            </MudText>
+            
+            <MudText Style="font-size: 13px; font-weight: 500; color: var(--mud-palette-text-secondary); margin-top: 4px;">
                 @Subtitle
-            </div>
+            </MudText>
 
-            <div class="sla-trend">
-
+            <div class="d-flex align-center gap-1 mt-2">
                 <MudIcon Icon="@TrendIcon"
                          Color="@TrendColor"
-                         Size="Size.Medium" />
-
-                <span class="sla-trend-value">
+                         Size="Size.Small" />
+                
+                <MudText Style="font-size: 14px; font-weight: 700; color: #059669;">
                     @TrendValue
-                </span>
-
-                <span class="sla-trend-text">
-                    dari periode lalu
-                </span>
-
+                </MudText>
             </div>
+            
+            <MudText Style="font-size: 11px; color: var(--mud-palette-text-secondary); margin-top: 2px;">
+                dari periode lalu
+            </MudText>
 
         </div>
 
     </div>
-
 </MudPaper>
 
 @code {
-
     [Parameter] public string Title { get; set; } = "SLA Compliance";
-
     [Parameter] public double Value { get; set; } = 92.5;
-
     [Parameter] public string Subtitle { get; set; } = "Kepatuhan SLA";
-
     [Parameter] public string TrendValue { get; set; } = "+4.2%";
-
     [Parameter] public Color TrendColor { get; set; } = Color.Success;
-
     [Parameter] public string TrendIcon { get; set; } = Icons.Material.Filled.ArrowUpward;
+    
+    // Parameter Penyelaras Tinggi Kartu
+    [Parameter] public int CardHeight { get; set; } = 260;
 
     private double[] ChartData => new[]
     {
@@ -142,20 +67,14 @@
         100 - Value
     };
 
-    // Kosong supaya tidak muncul tulisan legend
-    private readonly string[] ChartLabels =
-    {
-        "",
-        ""
-    };
+    private readonly string[] ChartLabels = { "", "" };
 
-    private readonly DonutChartOptions _chartOptions = new()
+    private readonly ChartOptions _chartOptions = new()
     {
-        ShowLegend = false,
         ChartPalette = new[]
         {
-            "#22C55E",
-            "#E5E7EB"
+            "#059669", // Emerald Green
+            "#E5E7EB"  // Abu-abu terang
         }
     };
 }

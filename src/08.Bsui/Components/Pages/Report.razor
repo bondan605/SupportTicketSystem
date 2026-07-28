@@ -93,31 +93,90 @@
         </MudStack>
 
         @* Bar chart dan average time *@
-        <MudGrid Spacing="2">
+    <MudGrid Spacing="3">
+    
+        <MudItem xs="12" lg="4">
+            <DonutChart Title="Tickets per Status"
+                        Data="@_statusData"
+                        Labels="@_statusLabels"
+                        Colors="@_statusColors"
+                        TotalText="Total Tiket"
+                        ShowPercentageAndNumber="true"
+                        CardHeight="280" />
+        </MudItem>
 
-            <MudItem xs="12" lg="5">
-                <AssigneeBarChart Title="Tickets per Assignee (Top 6)"
-                          Items="@_assigneeChartData"
-                          AxisMaximum="300"
-                          AxisStep="50"
-                          CardHeight="280"
-                          BarColor="#2F73F6" />
-            </MudItem>
+        <MudItem xs="12" lg="4">
+            <LineChart Title="Ticket Trends"
+                       Series="@_ticketTrendSeries"
+                       XAxisLabels="@_months"
+                       Colors="@_trendColors"
+                       CardHeight="280" />
+        </MudItem>
 
-            <MudItem xs="12" lg="4">
-                <TicketsByCategoryTable Title="Tickets by Category"
-                               Items="@_categoryData"
-                               TotalTickets="1245"
-                               CardHeight="260"
-                               BarColor="#2F73F6" />
-            </MudItem>
+        <MudItem xs="12" lg="4">
+            <AssigneeBarChart Title="Tickets per Assignee (Top 6)"
+                              Items="@_assigneeChartData"
+                              AxisMaximum="300"
+                              AxisStep="50"
+                              BarColor="#2F73F6"
+                              CardHeight="280" />
+        </MudItem>
 
-            <MudItem xs="12" lg="3">
-                <AverageResponseTimeCard Data="@_averageResponseTime"
-                                 CardHeight="260" />
-            </MudItem>
+        <MudItem xs="12" lg="3">
+            <DonutChart Title="Tickets per Category"
+                        Data="@_categoryTicket"
+                        Labels="@_categoryLabels"
+                        Colors="@_categoryColors"
+                        TotalText="Total Tiket"
+                        CardHeight="260" />
+        </MudItem>
 
-        </MudGrid>
+        <MudItem xs="12" lg="3">
+            <DonutChart Title="Tickets per Priority"
+                        Data="@_priorityData"
+                        Labels="@_priorityLabels"
+                        Colors="@_priorityColors"
+                        TotalText="Total Tiket"
+                        CardHeight="260" />
+        </MudItem>
+
+        <MudItem xs="12" lg="3">
+            <AverageResponseTimeCard Data="@_averageResponseTime"
+                                     CardHeight="260" />
+        </MudItem>
+
+        <MudItem xs="12" lg="3">
+            <SLAComplianceCard Title="SLA Compliance"
+                               Value="92.5"
+                               Subtitle="Kepatuhan SLA"
+                               TrendValue="+4.2%"
+                               CardHeight="260" />
+        </MudItem>
+     
+        <MudItem xs="12" lg="4">
+            <TicketsByCategoryTable Title="Tickets by Category"
+                                    Items="@_categoryData"
+                                    TotalTickets="1245"
+                                    CardHeight="280"
+                                    BarColor="#2F73F6" />
+        </MudItem>
+
+        <MudItem xs="12" lg="4">
+            <RecentClosedTickets Items="@ClosedTickets"
+                                 ViewAllUrl="/tickets/closed"
+                                 CardHeight="280" />
+        </MudItem>
+
+        <MudItem xs="12" lg="4">
+            <LineChart Title="SLA Compliance Trend"
+                       Series="@_slaTrendSeries"
+                       XAxisLabels="@_slaMonth"
+                       Colors="@_slacolors"
+                       ShowCustomLegend="false"
+                       CardHeight="280" />
+        </MudItem>
+
+    </MudGrid>
     </MudContainer>
 
 @code {
@@ -146,4 +205,81 @@
             Duration: new TimeSpan(hours: 2, minutes: 45, seconds: 0),
             ChangePercentage: 8.6m,
             IsIncrease: true);
+
+
+    // Data untuk Chart Pertama
+    private double[] _statusData = { 842, 278, 125, 125 };
+    private string[] _statusLabels = { "Open", "In Progress", "Closed", "Cancelled" };
+    private string[] _statusColors = { "#3B82F6", "#F59E0B", "#10B981", "#EF4444" };
+
+    // Data untuk Chart Kedua
+    private double[] _categoryTicket = { 45, 25, 15, 15 };
+    private string[] _categoryLabels = { "Aplikasi", "Akses", "Laporan", "Lainnya" };
+    private string[] _categoryColors = { "#3B82F6", "#F59E0B", "#10B981", "#EF4444" };
+
+    private double[] _priorityData = { 25.6, 50.2, 24.2 };
+    private string[] _priorityLabels = { "High", "Medium", "Low" };
+    private string[] _priorityColors = { "#3B82F6", "#F59E0B", "#10B981" };
+
+    private string[] _months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+    private string[] _trendColors = { "#3B82F6", "#10B981" };
+
+    private List<ChartSeries<double>> _ticketTrendSeries = new()
+    {
+        new ChartSeries<double> { Name = "Created", Data = new double[] { 120, 150, 110, 90, 180, 200, 170, 140, 130, 160, 190, 210 } },
+        new ChartSeries<double> { Name = "Resolved", Data = new double[] { 100, 130, 115, 95, 160, 180, 165, 150, 120, 155, 170, 200 } }
+    };
+    private string[] _slaMonth = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+
+    private string[] _slacolors =
+    {
+        "#10B981"
+    };
+
+    private List<ChartSeries<double>> _slaTrendSeries = new()
+    {
+        new ChartSeries<double> { Name = "SLA", Data = new double[] { 120, 150, 110, 90, 180, 200, 170, 140, 130, 160, 190, 210 } }
+    };
+
+    private double SlaCompliance = 92.5;
+    private string TrendText = "+4.2% dari periode lalu";
+    private List<ClosedTicketModel> ClosedTickets = new()
+    {
+        new()
+        {
+            TicketNumber="TCK-2026-1242",
+            Title="Data tidak tersimpan",
+            ClosedAt=new DateTime(2026,7,24,14,20,0),
+            ClosedBy="Budi Santoso"
+        },
+        new()
+        {
+            TicketNumber="TCK-2026-1238",
+            Title="Reset password user",
+            ClosedAt=new DateTime(2026,7,24,10,30,0),
+            ClosedBy="Budi Santoso"
+        },
+        new()
+        {
+            TicketNumber="TCK-2026-1229",
+            Title="Aplikasi lambat",
+            ClosedAt=new DateTime(2026,7,23,16,45,0),
+            ClosedBy="Siti Aisyah"
+        },
+        new()
+        {
+            TicketNumber="TCK-2026-1211",
+            Title="Laporan tidak muncul",
+            ClosedAt=new DateTime(2026,7,23,11,5,0),
+            ClosedBy="Rizky Hidayat"
+        },
+        new()
+        {
+            TicketNumber="TCK-2026-1190",
+            Title="Integrasi API gagal",
+            ClosedAt=new DateTime(2026,7,22,15,20,0),
+            ClosedBy="Andi Pratama"
+        }
+    };
 }
