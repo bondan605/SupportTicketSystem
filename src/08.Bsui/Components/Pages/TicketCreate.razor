@@ -17,7 +17,7 @@
         Lengkapi informasi berikut untuk membuat tiket baru.
     </MudText>
 
-    <MudForm @ref="_form" Model="_model" Class="mb-4">
+    <MudForm @ref="_form" Model="_model" Class="mb-4 ticket-create-form">
     <MudGrid Spacing="4">
 
         <!-- Left column: ticket details -->
@@ -111,13 +111,12 @@
                     <MudItem xs="12" sm="6">
                         <MudTextField T="string" @bind-Value="_model.Title" Label="Judul" Required="true"
                                       Placeholder="Masukkan judul tiket" Variant="Variant.Outlined"
-                                      Counter="255" MaxLength="255" />
+                                      Counter="255" MaxLength="255" Immediate="true" />
                     </MudItem>
 
                     <MudItem xs="12" sm="6">
-                        <MudDatePicker @bind-Date="_model.EstimatedUrgency" Label="Perkiraan Urgensi"
-                                       Placeholder="Pilih tanggal (opsional)" Variant="Variant.Outlined"
-                                       Editable="true" />
+                        <MudDatePicker @bind-Date="_model.EstimatedUrgency" Label="Estimasi Tanggal Jatuh Tempo" Required="true"
+                                       RequiredError="Required" Placeholder="Pilih tanggal" Variant="Variant.Outlined" Editable="true" />
                     </MudItem>
 
                     <MudItem xs="12">
@@ -130,10 +129,10 @@
                                         MaxLength="5000" />
                     </MudItem>
 
-                    <MudItem xs="12">
+                    @* <MudItem xs="12">
                         <MudText Typo="Typo.body2" Class="mb-1">Lampiran</MudText>
                         <FileDropzone @bind-Files="_attachments" MaximumFileCount="10" />
-                    </MudItem>
+                    </MudItem> *@
                 </MudGrid>
             </MudPaper>
         </MudItem>
@@ -160,13 +159,13 @@
                     <MudAutocomplete T="UserDto" @bind-Value="_model.AssignedAgent" Label="Assign To"
                                      Placeholder="Cari user atau tim..." Variant="Variant.Outlined"
                                      AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End"
-                                     Disabled="@(!_isManager && _model.Status == TicketStatus.Open)"
+                                     Disabled="true"
                                      ToStringFunc="@(u => u?.Name)" SearchFunc="SearchAgentsAsync" Clearable="true" />
 
-                    <MudAutocomplete T="UserDto" @bind-Value="_model.CcAgent" Label="CC (Opsional)"
+                    @* <MudAutocomplete T="UserDto" @bind-Value="_model.CcAgent" Label="CC (Opsional)"
                                      Placeholder="Cari user atau email..." Variant="Variant.Outlined" Disabled
                                      AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End"
-                                     ToStringFunc="@(u => u?.Name)" SearchFunc="SearchAgentsAsync" Clearable="true" />
+                                     ToStringFunc="@(u => u?.Name)" SearchFunc="SearchAgentsAsync" Clearable="true" /> *@
 
                     <MudAlert Severity="MudBlazor.Severity.Info" Icon="@Icons.Material.Outlined.Info" Dense="false">
                         Tiket akan diberikan ke tim yang sesuai jika tidak ada penugasan khusus.
@@ -337,4 +336,23 @@
         }
     }
 }
+
+<style>
+    /* Give editable fields the sidebar's navy accent (#1e3a8a) so they visibly stand out
+       from disabled/read-only ones, which keep MudBlazor's default muted border. Subtle by
+       default, more pronounced on hover/focus - not just a color swap on every field. */
+    .ticket-create-form .mud-input-outlined:not(.mud-disabled) .mud-input-outlined-border {
+        border-color: #1e3a8a66;
+    }
+
+    .ticket-create-form .mud-input-outlined:not(.mud-disabled) .mud-input-label {
+        color: #1e3a8a;
+    }
+
+    .ticket-create-form .mud-input-outlined:not(.mud-disabled):hover .mud-input-outlined-border,
+    .ticket-create-form .mud-input.mud-input-outlined:not(.mud-disabled).mud-focused .mud-input-outlined-border {
+        border-color: #1e3a8a;
+        border-width: 2px;
+    }
+</style>
 

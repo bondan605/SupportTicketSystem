@@ -65,9 +65,9 @@ namespace SupportTicketSystem.Application.Validators
                 .When(x => x.AssignedTo.HasValue);
 
             RuleFor(x => x.EstimatedDueDate)
-                .GreaterThanOrEqualTo(DateTime.UtcNow.Date)
-                .WithMessage("Estimated due date cannot be in the past.")
-                .When(x => x.EstimatedDueDate.HasValue);
+                .Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage("Estimated due date is required.")
+                .GreaterThanOrEqualTo(DateTime.UtcNow.Date).WithMessage("Estimated due date cannot be in the past.");
         }
     }
 }
