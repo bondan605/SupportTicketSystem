@@ -6,7 +6,7 @@
 @using SupportTicketSystem.Domain.Enums
 @inject NavigationManager Navigation
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="py-8 px-4" Style="@($"background-color:{Colors.Gray.Lighten5}; min-height: 100vh;")">
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-8 px-4" Style="@($"background-color:{Colors.Gray.Lighten5}; min-height: 100vh;")">
     
     <div class="d-flex justify-space-between align-center mb-6">
         <div>
@@ -145,7 +145,7 @@
                 @if (context.Action is TicketHistoryAction.StatusChanged or TicketHistoryAction.PriorityChanged or TicketHistoryAction.AssigneeChanged)
                 {
                     <div class="d-flex align-center flex-wrap gap-2">
-                        <MudIcon Icon="@GetActionIcon(context.Action)" Size="Size.Small" Color="@GetActionColor(context.Action)" />
+                        @* <MudIcon Icon="@GetActionIcon(context.Action)" Size="Size.Small" Color="@GetActionColor(context.Action)" /> *@
                         <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">@GetDetailChangeLabel(context.Action)</MudText>
 
                         <MudChip T="string" Size="Size.Small"
@@ -166,7 +166,7 @@
                 else if (context.Action is TicketHistoryAction.TicketCreated or TicketHistoryAction.TicketUpdated)
                 {
                     <div class="d-flex align-center gap-1">
-                        <MudIcon Icon="@GetActionIcon(context.Action)" Size="Size.Small" Color="@GetActionColor(context.Action)" />
+                        @* <MudIcon Icon="@GetActionIcon(context.Action)" Size="Size.Small" Color="@GetActionColor(context.Action)" /> *@
                         <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">@GetCreateUpdateLabel(context.Action)</MudText>
                         <MudChip T="string" Size="Size.Small" Color="@GetAvatarColor(context.ChangedByName)" Variant="Variant.Filled">
                             @(context.ChangedByName ?? "System User")

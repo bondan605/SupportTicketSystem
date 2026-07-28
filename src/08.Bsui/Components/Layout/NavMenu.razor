@@ -1,7 +1,7 @@
 ﻿<MudNavMenu>
-    <MudNavLink Href="@AppRoutes.Home" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">
+    @* <MudNavLink Href="@AppRoutes.Home" Match="NavLinkMatch.All" Icon="@Icons.Material.Outlined.Home">
         Dashboard
-    </MudNavLink>
+    </MudNavLink> *@
 
     <MudNavLink Href="@AppRoutes.TicketList" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.ConfirmationNumber">
         Ticket List
@@ -11,23 +11,27 @@
         Ticket Histories
     </MudNavLink>
 
-    <MudNavLink Href="@AppRoutes.Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person">
+    @* <MudNavLink Href="@AppRoutes.Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person">
         Users
-    </MudNavLink>
+    </MudNavLink> *@
 
-    <MudNavLink Href="@AppRoutes.Report" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.BarChart">
-        Report
-    </MudNavLink>
+    <AuthorizeView Roles="Manager">
+        <Authorized>
+            <MudNavLink Href="@AppRoutes.Report" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.BarChart">
+                Report
+            </MudNavLink>
+        </Authorized>
+    </AuthorizeView>
 
-    <MudText Typo="Typo.overline" Class="sidebar-section-label">Settings</MudText>
+    @* <MudText Typo="Typo.overline" Class="sidebar-section-label">Settings</MudText> *@
 
-    <MudNavLink Href="@AppRoutes.Profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person">
+    @* <MudNavLink Href="@AppRoutes.Profile" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person">
         Profile
-    </MudNavLink>
+    </MudNavLink> *@
 
-    <MudNavLink Href="@AppRoutes.Settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Settings">
+    @* <MudNavLink Href="@AppRoutes.Settings" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Settings">
         Settings
-    </MudNavLink>
+    </MudNavLink> *@
 
     <MudSpacer />
 

@@ -84,6 +84,7 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex);
                 Snackbar.Add(
                     $"Gagal mengambil summary tiket: {ex.Message}",
                     Severity.Warning);
@@ -98,10 +99,13 @@ namespace SupportTicketSystem.Bsui.Components.Pages
                 PageSize = 1
             };
 
-            var response = await TicketClient.GetFilteredTicketsAsync(
+            var response = await TicketClient.GetTicketListAsync(
                 status?.ToString(),
                 null,
-                request);
+                request,
+                null,
+                null,
+                null);
 
             return response.TotalCount;
         }
