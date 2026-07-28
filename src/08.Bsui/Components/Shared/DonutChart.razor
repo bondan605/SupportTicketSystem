@@ -1,0 +1,88 @@
+﻿@using MudBlazor
+
+<MudPaper Elevation="0" Outlined="true" Class="pa-6 rounded-lg d-flex flex-column" Style="background-color: var(--mud-palette-surface); border-color: var(--mud-palette-lines-default);">
+    
+    <MudText Typo="Typo.h6" Style="font-weight: 700; width: 320px; margin-bottom: 1rem; color: var(--mud-palette-text-primary);">
+        @Title
+    </MudText>
+
+    <MudChart T="double"
+              ChartType="ChartType.Donut"
+              LegendPosition="Position.Right"
+              ChartSeries="@([Data])" ChartLabels="@FormattedLabels"
+              ChartOptions="@_donutOptions"
+              Width="300px" Height="300px">
+    </MudChart>
+
+    <div class="mt-4 pt-3" style="width: 320px; border-top: 1px dashed var(--mud-palette-lines-default);">
+        <MudText Typo="Typo.body2" Style="color: var(--mud-palette-text-secondary); font-weight: 500;">
+            @TotalText: <span style="font-weight: 700; color: var(--mud-palette-text-primary);">@Data.Sum()</span>
+        </MudText>
+    </div>
+</MudPaper>
+
+@code {
+    // === DEFINISI PARAMETER REUSABLE ===
+    
+    [Parameter]
+    public string Title { get; set; } = "Chart Title";
+
+    [Parameter]
+    public double[] Data { get; set; } = Array.Empty<double>();
+
+    [Parameter]
+    public string[] Labels { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public string[] Colors { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public string TotalText { get; set; } = "Total";
+
+    [Parameter]
+    public bool ShowPercentageAndNumber { get; set; } = false; // Opsional: jika ingin menampilkan persentase
+
+    // ====================================
+
+    private ChartOptions _donutOptions = new ChartOptions();
+
+    // OnParametersSet dipanggil setiap kali parameter dari parent berubah
+    protected override void OnParametersSet()
+    {
+        // Masukkan warna dari parameter ke dalam opsi chart
+        if (Colors != null && Colors.Length > 0)
+        {
+            _donutOptions.ChartPalette = Colors;
+        }
+    }
+
+    public string[] FormattedLabels
+    {
+        get
+        {
+            if (Data == null || Labels == null) return Array.Empty<string>();
+
+            var total = Data.Sum();
+            var formatted = new string[Data.Length];
+            
+            for (int i = 0; i < Data.Length; i++)
+            {
+                // Cegah error jika panjang label kurang dari panjang data
+                var labelName = i < Labels.Length ? Labels[i] : $"Item {i + 1}";
+
+                if (ShowPercentageAndNumber)
+                {
+                    double percentage = total > 0 ? (Data[i] / total) * 100 : 0;
+                    formatted[i] = $"{labelName} {Data[i]} ({percentage:F1}%)";
+                }
+                else
+                {
+                    double percentage = total > 0 ? (Data[i] / total) * 100 : 0;
+                    formatted[i] = $"{labelName} ({percentage:F1}%)";
+                }
+            }
+            
+            return formatted;
+        }
+    }
+}

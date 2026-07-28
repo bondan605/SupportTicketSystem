@@ -1,0 +1,99 @@
+﻿@using MudBlazor
+<style>
+    .recent-ticket-table .mud-table {
+        border: none;
+    }
+
+    .recent-ticket-table .mud-table-container {
+        box-shadow: none;
+    }
+
+    .recent-ticket-table table thead th {
+        font-weight: 700;
+        color: #64748b;
+        font-size: 13px;
+    }
+
+    .recent-ticket-table table tbody td {
+        font-size: 14px;
+        vertical-align: middle;
+    }
+
+    .recent-ticket-table table tbody tr:hover {
+        background: #f8fafc;
+    }
+</style>
+<MudPaper Outlined="true" Class="pa-5 rounded-lg">
+
+    <MudText Typo="Typo.h6"
+             Style="font-weight:700;"
+             Class="mb-4">
+        @Title
+    </MudText>
+
+    <MudTable Items="@Items"
+              Class="recent-ticket-table"
+              Hover="true"
+              Dense="true"
+              Elevation="0">
+
+        <HeaderContent>
+
+            <MudTh>Ticket Number</MudTh>
+            <MudTh>Title</MudTh>
+            <MudTh>Closed At</MudTh>
+            <MudTh>Closed By</MudTh>
+
+        </HeaderContent>
+
+        <RowTemplate>
+
+
+            <MudTd>
+                <MudText Style="font-weight:600;">
+                    @context.TicketNumber
+                </MudText>
+            </MudTd>
+
+            <MudTd>@context.Title</MudTd>
+
+            <MudTd>
+                @context.ClosedAt.ToString("dd MMM yyyy HH:mm")
+            </MudTd>
+
+            <MudTd>@context.ClosedBy</MudTd>
+
+        </RowTemplate>
+
+    </MudTable>
+
+    <MudLink Href="@ViewAllUrl"
+             Underline="Underline.None"
+             Class="mt-4 d-inline-flex align-center">
+
+        <MudText Color="Color.Primary"
+                 Style="font-weight:600;">
+            Lihat semua closed tickets
+        </MudText>
+
+        <MudIcon Icon="@Icons.Material.Filled.ArrowForward"
+                 Color="Color.Primary"
+                 Class="ml-1" />
+
+    </MudLink>
+
+</MudPaper>
+
+@code {
+
+    [Parameter]
+    public string Title { get; set; } = "Recent Closed Tickets";
+
+    [Parameter]
+    public List<ClosedTicketModel> Items { get; set; } = new();
+
+    [Parameter]
+    public string ViewAllUrl { get; set; } = "/tickets/closed";
+
+
+}

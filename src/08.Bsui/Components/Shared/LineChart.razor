@@ -1,0 +1,89 @@
+﻿@using MudBlazor
+@using MudBlazor.Charts
+
+<MudPaper Outlined="true"
+          Class="pa-6 rounded-lg d-flex flex-column"
+          Style="background-color: var(--mud-palette-surface);
+    border-color: var(--mud-palette-lines-default);
+    height:100%;">
+
+    <MudStack Row="true"
+              Justify="Justify.SpaceBetween"
+              AlignItems="AlignItems.Center"
+              Class="mb-4">
+
+        <MudText Typo="@TitleTypo" Style="font-weight:700;">
+            @Title
+        </MudText>
+
+        @if (ShowCustomLegend)
+        {
+            <MudStack Row="true" Spacing="3">
+                @foreach (var item in Series.Select((series, index) => new { series, index }))
+                {
+                    var color = item.index < Colors.Length
+                        ? Colors[item.index]
+                        : "#4CAF50";
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center">
+                        <MudIcon Icon="@LegendIcon"
+                                 Style="@($"color:{color};font-size:{LegendIconSize}px;")" />
+                        <MudText>@item.series.Name</MudText>
+                    </MudStack>
+                }
+            </MudStack>
+        }
+
+    </MudStack>
+
+    <MudChart T="double"
+              ChartType="@ChartType"
+              ChartSeries="@Series"
+              ChartLabels="@XAxisLabels"
+              ChartOptions="@_chartOptions"
+              Width="100%"
+              Height="@($"{ChartHeight}px")" />
+
+</MudPaper>
+@code{
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public List<ChartSeries<double>> Series { get; set; } = new();
+    [Parameter] public string[] XAxisLabels { get; set; } = Array.Empty<string>();
+    [Parameter] public string[] Colors { get; set; } = Array.Empty<string>();
+
+    // Custom
+    [Parameter] public bool ShowCustomLegend { get; set; } = true;
+    [Parameter] public bool ShowMarkers { get; set; } = true;
+    [Parameter] public int StrokeWidth { get; set; } = 3;
+    [Parameter] public int ChartHeight { get; set; } = 350;
+    [Parameter] public LineDisplayType DisplayType { get; set; } = LineDisplayType.Line;
+    [Parameter] public ChartType ChartType { get; set; } = ChartType.Line;
+
+    [Parameter] public Typo TitleTypo { get; set; } = Typo.h6;
+    [Parameter] public string LegendIcon { get; set; } = Icons.Material.Filled.Circle;
+    [Parameter] public int LegendIconSize { get; set; } = 14;
+
+    private readonly LineChartOptions _chartOptions = new();
+
+    protected override void OnParametersSet()
+    {
+        _chartOptions.ShowLegend = false;
+        _chartOptions.ShowDataMarkers = ShowMarkers;
+        _chartOptions.LineStrokeWidth = StrokeWidth;
+        _chartOptions.XAxisLabelRotation = 0;
+        _chartOptions.ChartPalette = Colors;
+
+        _chartOptions.SeriesDisplayOverrides = new Dictionary<IChartSeries, SeriesDisplayOverride>
+        {
+        };
+
+        foreach (var series in Series)
+        {
+            _chartOptions.SeriesDisplayOverrides.Add(series,
+                new SeriesDisplayOverride
+                {
+                    LineDisplayType = DisplayType
+                });
+        }
+    }
+}
