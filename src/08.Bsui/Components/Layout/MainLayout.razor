@@ -21,6 +21,12 @@
         <NavMenu />
     </MudDrawer>
 
+    @* Floating pill toggle - half-tucked into the sidebar's edge when open, flush against
+       the viewport's left edge when the sidebar is hidden. *@
+    <MudIconButton Icon="@(_drawerOpen ? Icons.Material.Filled.ChevronLeft : Icons.Material.Filled.ChevronRight)"
+                   Class="@($"sidebar-toggle {(_drawerOpen ? "sidebar-toggle--open" : "sidebar-toggle--closed")}")"
+                   OnClick="DrawerToggle" />
+
     @* Main Content *@
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pt-0 pb-0">
@@ -121,5 +127,35 @@
         color: rgba(255, 255, 255, 0.45) !important;
         letter-spacing: 0.05em;
         padding: 1.5rem 1rem 0.5rem 1rem;
+    }
+
+    /* Floating pill toggle for the sidebar */
+    .sidebar-toggle {
+        position: fixed !important;
+        top: 50%;
+        z-index: 1300;
+        width: 32px !important;
+        height: 32px !important;
+        padding: 0 !important;
+        background-color: #0f1c3f !important;
+        color: white !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+        transition: left 225ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms ease;
+    }
+
+    .sidebar-toggle:hover {
+        background-color: #1e3a8a !important;
+    }
+
+    /* Open: half-tucked into the sidebar, straddling its right edge */
+    .sidebar-toggle--open {
+        left: var(--mud-drawer-width-left, 250px);
+        transform: translate(-50%, -50%);
+    }
+
+    /* Hidden: flush against the viewport's left edge */
+    .sidebar-toggle--closed {
+        left: 0;
+        transform: translateY(-50%);
     }
 </style>
