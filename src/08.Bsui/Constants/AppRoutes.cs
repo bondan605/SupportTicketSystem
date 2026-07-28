@@ -6,8 +6,6 @@
         public const string Login = "/login";
         public const string Unauthorized = "/unauthorized";
         public const string Dashboard = "/dashboard";
-        public const string ManagerReport = "/manager-report";
-        public const string SupportAgent = "/support-agent";
         public const string TicketList = "/ticket-list";
         public const string TicketCreate = "/tickets/create";
         public const string TicketUpdate = "/tickets/update";
