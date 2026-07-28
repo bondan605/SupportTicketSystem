@@ -33,23 +33,23 @@
                   AlignItems="AlignItems.Center"
                   Spacing="4">
 
-            <MudButton Variant="Variant.Outlined"
+            @* <MudButton Variant="Variant.Outlined"
                        StartIcon="@Icons.Material.Outlined.CalendarMonth"
                        Color="Color.Default">
                     @DateRangeText
-            </MudButton>
+            </MudButton> *@
 
-            <MudButton Variant="Variant.Outlined"
+            @* <MudButton Variant="Variant.Outlined"
                        StartIcon="@Icons.Material.Outlined.FileDownload"
                        Color="Color.Default">
                 Export
-            </MudButton>
+            </MudButton> *@
 
-            <MudButton Variant="Variant.Outlined"
+            @* <MudButton Variant="Variant.Outlined"
                        StartIcon="@Icons.Material.Outlined.FilterAlt"
                        Color="Color.Default">
                 Filter
-            </MudButton>
+            </MudButton> *@
             <ProfileMenu />
         </MudStack>
     </MudStack>
@@ -71,28 +71,28 @@
                          Icon="@Icons.Material.Filled.ConfirmationNumber"
                          IconBackgroundColor="#1677ff" />
 
-            <SummaryCard Title="Tickets Selesai"
-                     Value="@_report.Overview.ResolvedCount.ToString("N0")"
-                     Description="@GetPercentageText(_report.Overview.ResolvedCount)"
+            <SummaryCard Title="Open"
+                     Value="@_report.Overview.OpenCount.ToString("N0")"
+                     Description="@GetPercentageText(_report.Overview.OpenCount)"
                          Icon="@Icons.Material.Filled.CheckCircleOutline"
                          IconBackgroundColor="#00c853" />
 
-            <SummaryCard Title="Dalam Proses"
+            <SummaryCard Title="In Progress"
                      Value="@_report.Overview.InProgressCount.ToString("N0")"
                      Description="@GetPercentageText(_report.Overview.InProgressCount)"
                          Icon="@Icons.Material.Filled.HourglassEmpty"
                          IconBackgroundColor="#ffb300" />
 
-            <SummaryCard Title="Closed"
-                     Value="@_report.Overview.ClosedCount.ToString("N0")"
-                     Description="@GetPercentageText(_report.Overview.ClosedCount)"
-                         Icon="@Icons.Material.Filled.Close"
-                         IconBackgroundColor="#ff3b30" />
+            <SummaryCard Title="Resolved"
+                     Value="@_report.Overview.ResolvedCount.ToString("N0")"
+                     Description="@GetPercentageText(_report.Overview.ResolvedCount)"
+                         Icon="@Icons.Material.Filled.DoneAll"
+                         IconBackgroundColor="#14b8a6" />
 
-            <SummaryCard Title="Total Users"
-                     Value="@_report.Overview.TotalUsers.ToString("N0")"
-                         Description="Semua pengguna"
-                         Icon="@Icons.Material.Filled.People"
+            <SummaryCard Title="Closed"
+                         Value="@_report.Overview.ClosedCount.ToString("N0")"
+                         Description="@GetPercentageText(_report.Overview.ClosedCount)"
+                         Icon="@Icons.Material.Filled.MoreHoriz"
                          IconBackgroundColor="#5b5fe9" />
 
         </MudStack>
@@ -321,22 +321,22 @@
             .ToArray();
 
         _ticketTrendSeries = new List<ChartSeries<double>>
+    {
+        new()
         {
-            new()
-            {
-                Name = "Created",
-                Data = trendItems
-                    .Select(item => (double)item.CreatedCount)
-                    .ToArray()
-            },
-            new()
-            {
-                Name = "Closed",
-                Data = trendItems
-                    .Select(item => (double)item.ClosedCount)
-                    .ToArray()
-            }
-        };
+            Name = "Created",
+            Data = trendItems
+                .Select(item => (double)item.CreatedCount)
+                .ToArray()
+        },
+        new()
+        {
+            Name = "Closed",
+            Data = trendItems
+                .Select(item => (double)item.ClosedCount)
+                .ToArray()
+        }
+    };
     }
 
     private void ApplyAssigneeData(ReportSummaryDto report)
@@ -450,16 +450,16 @@
             .ToArray();
 
         _slaTrendSeries = new List<ChartSeries<double>>
+    {
+        new()
         {
-            new()
-            {
-                Name = "SLA",
-                Data = trendItems
-                    .Select(item =>
-                        (double)item.CumulativeCompliancePercentage)
-                    .ToArray()
-            }
-        };
+            Name = "SLA",
+            Data = trendItems
+                .Select(item =>
+                    (double)item.CumulativeCompliancePercentage)
+                .ToArray()
+        }
+    };
     }
 
     private string GetPercentageText(int count)

@@ -247,64 +247,7 @@
                     </MudText>
                 </MudStack>
             </MudStack>
-        </MudPaper>
-
-        @* Closed *@
-        <MudPaper Elevation="0"
-                  Class="pa-4"
-                  Style="flex:1 1 0;
-                    min-width:0;
-                    height:110px;
-                    box-sizing:border-box;
-                    border:1px solid #e8edf4;
-                    border-radius:10px;
-                    background:#ffffff;
-                    box-shadow:0 2px 8px rgba(15, 23, 42, 0.06);">
-
-            <MudStack Row="true"
-                      Spacing="3"
-                      AlignItems="AlignItems.Center"
-                      Style="height:100%;">
-
-                <MudAvatar Color="Color.Default"
-                           Rounded="true"
-                           Style="width:40px;
-                            height:40px;
-                            min-width:40px;
-                            border-radius:8px;
-                            background-color:#5b5fe9 !important;
-                            color:#ffffff !important;">
-
-                    <MudIcon Icon="@Icons.Material.Filled.MoreHoriz"
-                             Size="Size.Small" />
-                </MudAvatar>
-
-                <MudStack Spacing="0">
-                    <MudText Style="font-size:11px;
-                        line-height:1.2;
-                        font-weight:600;
-                        color:#42526e;">
-                        Closed
-                    </MudText>
-
-                    <MudText Style="margin-top:4px;
-                        font-size:24px;
-                        line-height:1.1;
-                        font-weight:700;
-                        color:#102544;">
-                        @ClosedTicketCount.ToString("N0")
-                    </MudText>
-
-                    <MudText Style="margin-top:7px;
-                        font-size:11px;
-                        line-height:1.2;
-                        color:#60708a;
-                        white-space:nowrap;">
-                        @GetPercentage(ClosedTicketCount) dari total
-                    </MudText>
-                </MudStack>
-            </MudStack>
-        </MudPaper>
+        </MudPaper>        
 
         @* Cancelled *@
         @* <MudPaper Elevation="0"
@@ -415,6 +358,63 @@
                         color:#60708a;
                         white-space:nowrap;">
                         @GetPercentage(ResolvedTicketCount) dari total
+                    </MudText>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+
+        @* Closed *@
+        <MudPaper Elevation="0"
+                  Class="pa-4"
+                  Style="flex:1 1 0;
+            min-width:0;
+            height:110px;
+            box-sizing:border-box;
+            border:1px solid #e8edf4;
+            border-radius:10px;
+            background:#ffffff;
+            box-shadow:0 2px 8px rgba(15, 23, 42, 0.06);">
+
+            <MudStack Row="true"
+                      Spacing="3"
+                      AlignItems="AlignItems.Center"
+                      Style="height:100%;">
+
+                <MudAvatar Color="Color.Default"
+                           Rounded="true"
+                           Style="width:40px;
+                    height:40px;
+                    min-width:40px;
+                    border-radius:8px;
+                    background-color:#5b5fe9 !important;
+                    color:#ffffff !important;">
+
+                    <MudIcon Icon="@Icons.Material.Filled.MoreHoriz"
+                             Size="Size.Small" />
+                </MudAvatar>
+
+                <MudStack Spacing="0">
+                    <MudText Style="font-size:11px;
+                        line-height:1.2;
+                        font-weight:600;
+                        color:#42526e;">
+                        Closed
+                    </MudText>
+
+                    <MudText Style="margin-top:4px;
+                        font-size:24px;
+                        line-height:1.1;
+                        font-weight:700;
+                        color:#102544;">
+                        @ClosedTicketCount.ToString("N0")
+                    </MudText>
+
+                    <MudText Style="margin-top:7px;
+                        font-size:11px;
+                        line-height:1.2;
+                        color:#60708a;
+                        white-space:nowrap;">
+                        @GetPercentage(ClosedTicketCount) dari total
                     </MudText>
                 </MudStack>
             </MudStack>
