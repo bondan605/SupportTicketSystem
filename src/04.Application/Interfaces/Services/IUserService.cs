@@ -7,4 +7,5 @@ public interface IUserService
 {
     Task<IEnumerable<UserDto>> GetAllUserAsync();
     Task<IEnumerable<UserDto>> GetAllUserByRoleAsync(UserRole role);
+    Task<IEnumerable<UserDto>> GetAllAgentsAsync();
 }

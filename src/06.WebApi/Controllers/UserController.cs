@@ -58,6 +58,23 @@ namespace SupportTicketSystem.WebApi.Controllers
             var data = await _userService.GetAllUserByRoleAsync(role);
             return Ok(ApiResponse<IEnumerable<UserDto>>.SuccessResponse(data, "Users retrieved successfully."));
         }
+
+        /// <summary>
+        /// Retrieves all users filtered by agent role.
+        /// </summary>
+        /// <returns>A collection of users that have the agent role.</returns>
+        /// <response code="200">Returns the filtered list of users successfully.</response>
+        /// <response code="400">If the role segment is not a valid role value.</response>
+        /// <response code="500">If an unexpected internal server error occurs.</response>
+        [HttpGet(ApiRoutes.Users.AgentSegment)]
+        [ProducesResponseType(typeof(ApiResponse<IEnumerable<UserDto>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetAllAgents()
+        {
+            var data = await _userService.GetAllAgentsAsync();
+            return Ok(ApiResponse<IEnumerable<UserDto>>.SuccessResponse(data, "Agents retrieved successfully."));
+        }
     }
 }
 

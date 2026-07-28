@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using SupportTicketSystem.Application.Interfaces.Repositories;
 using SupportTicketSystem.Domain.Enums;
-using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Users;
 
 namespace SupportTicketSystem.Application.Services
@@ -26,6 +25,12 @@ namespace SupportTicketSystem.Application.Services
         public async Task<IEnumerable<UserDto>> GetAllUserByRoleAsync(UserRole role)
         {
             var users = await _userRepository.GetAllByRoleAsync(role);
+            return _mapper.Map<IEnumerable<UserDto>>(users);
+        }
+
+        public async Task<IEnumerable<UserDto>> GetAllAgentsAsync()
+        {
+            var users = await _userRepository.GetAllAgentsAsync();
             return _mapper.Map<IEnumerable<UserDto>>(users);
         }
     }

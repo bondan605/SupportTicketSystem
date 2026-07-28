@@ -11,4 +11,5 @@ public interface IUserClient
     /// </summary>
     Task<ApiResponse<IEnumerable<UserDto>>> GetAllUserAsync();
     Task<ApiResponse<IEnumerable<UserDto>>> GetAllUserByRoleAsync(UserRole role);
+    Task<ApiResponse<IEnumerable<UserDto>>> GetAllAgentsAsync();
 }

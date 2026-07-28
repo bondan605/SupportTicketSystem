@@ -7,6 +7,7 @@ namespace SupportTicketSystem.Application.Interfaces.Repositories
     {
         Task<IEnumerable<User>> GetAllAsync();
         Task<IEnumerable<User>> GetAllByRoleAsync(UserRole role);
+        Task<IEnumerable<User>> GetAllAgentsAsync();
         Task<User?> GetByIdAsync(Guid id);
         Task<User?> GetByEmailAsync(string email);
         Task<bool> ExistsAsync(Guid id);

@@ -25,6 +25,11 @@ namespace SupportTicketSystem.Infrastructure.Repositories
             return await _context.Users.AsNoTracking().Where(u => u.Role == role).ToListAsync();
         }
 
+        public async Task<IEnumerable<User>> GetAllAgentsAsync()
+        {
+            return await _context.Users.AsNoTracking().Where(u => u.Role == UserRole.SupportAgent).ToListAsync();
+        }
+
         public async Task<User?> GetByIdAsync(Guid id)
         {
             return await _context.Users.FindAsync(id);
