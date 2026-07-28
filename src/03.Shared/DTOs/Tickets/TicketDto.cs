@@ -7,6 +7,8 @@ namespace SupportTicketSystem.Shared.DTOs.Tickets
     {
         public Guid Id { get; set; }
         public string TicketNumber { get; set; } = string.Empty;
+        public string CreatedByName { get; set; } = string.Empty;
+        public string? AssignedToName { get; set; }
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerEmail { get; set; } = string.Empty;
         public string? CustomerPhone { get; set; }
