@@ -4,7 +4,8 @@
 @using SupportTicketSystem.Shared.DTOs.Tickets
 @using SupportTicketSystem.Shared.Models
 @using SupportTicketSystem.Domain.Enums
-@inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-8 px-4" Style="@($"background-color:{Colors.Gray.Lighten5}; min-height: 100vh;")">
     
@@ -262,9 +263,9 @@
                                 else if (!string.IsNullOrEmpty(item.OldValue) || !string.IsNullOrEmpty(item.NewValue))
                                 {
                                     <div class="d-flex flex-wrap align-center gap-2">
-                                        <MudChip T="string" Size="Size.Small" Color="@GetValueColor(item.Action, item.OldValue)" Variant="Variant.Outlined">@(item.OldValue ?? "-")</MudChip>
+                                        <MudChip T="string" Size="Size.Small" Color="@GetChipColor(item.Action, item.OldValue)" Variant="Variant.Outlined">@GetChipDisplayValue(item.Action, item.OldValue)</MudChip>
                                         <MudIcon Icon="@Icons.Material.Filled.ArrowRightAlt" Size="Size.Small" Style="@($"color:{Colors.Gray.Default};")" />
-                                        <MudChip T="string" Size="Size.Small" Color="@GetValueColor(item.Action, item.NewValue)" Variant="Variant.Filled">@(item.NewValue ?? "-")</MudChip>
+                                        <MudChip T="string" Size="Size.Small" Color="@GetChipColor(item.Action, item.NewValue)" Variant="Variant.Filled">@GetChipDisplayValue(item.Action, item.NewValue)</MudChip>
                                     </div>
                                 }
                                 else
@@ -471,32 +472,36 @@
         return $"HS-{year}-{sequenceNumber:D5}";
     }
 
-    private void DownloadCsv()
+    private async Task DownloadCsv()
     {
         DateTime? filterStart = _dateRange?.Start ?? _singleFilterDate;
         DateTime? filterEnd = _dateRange?.End ?? _singleFilterDate;
 
-        var backendUrl = "https://localhost:7299";
-        var url = $"{backendUrl}/api/ticket-histories/export-csv?search={Uri.EscapeDataString(searchString ?? "")}&action={Uri.EscapeDataString(selectedAction ?? "")}";
-        if (selectedUserId.HasValue) url += $"&changedBy={selectedUserId.Value}";
-        if (filterStart.HasValue) url += $"&startDate={filterStart.Value:yyyy-MM-dd}";
-        if (filterEnd.HasValue) url += $"&endDate={filterEnd.Value:yyyy-MM-dd}";
-
-        Navigation.NavigateTo(url, forceLoad: true);
+        try
+        {
+            var (content, fileName) = await HistoryClient.ExportCsvAsync(null, selectedAction, selectedUserId, searchString, filterStart, filterEnd);
+            await JS.InvokeVoidAsync("fileDownload.saveAs", fileName, "text/csv", Convert.ToBase64String(content));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Gagal export CSV: {ex.Message}", MudBlazor.Severity.Error);
+        }
     }
 
-    private void DownloadPdf()
+    private async Task DownloadPdf()
     {
         DateTime? filterStart = _dateRange?.Start ?? _singleFilterDate;
         DateTime? filterEnd = _dateRange?.End ?? _singleFilterDate;
 
-        var backendUrl = "https://localhost:7299";
-        var url = $"{backendUrl}/api/ticket-histories/export-pdf?search={Uri.EscapeDataString(searchString ?? "")}&action={Uri.EscapeDataString(selectedAction ?? "")}";
-        if (selectedUserId.HasValue) url += $"&changedBy={selectedUserId.Value}";
-        if (filterStart.HasValue) url += $"&startDate={filterStart.Value:yyyy-MM-dd}";
-        if (filterEnd.HasValue) url += $"&endDate={filterEnd.Value:yyyy-MM-dd}";
-
-        Navigation.NavigateTo(url, forceLoad: true);
+        try
+        {
+            var (content, fileName) = await HistoryClient.ExportPdfAsync(null, selectedAction, selectedUserId, searchString, filterStart, filterEnd);
+            await JS.InvokeVoidAsync("fileDownload.saveAs", fileName, "application/pdf", Convert.ToBase64String(content));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Gagal export PDF: {ex.Message}", MudBlazor.Severity.Error);
+        }
     }
 
     private int GetFirstItemIndex() => _totalItems == 0 ? 0 : (_currentPage * _pageSize) + 1;

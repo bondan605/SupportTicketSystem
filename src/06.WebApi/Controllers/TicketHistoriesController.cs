@@ -4,6 +4,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using SupportTicketSystem.Application.Abstractions.Services;
+using SupportTicketSystem.Application.Services;
 using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Tickets;
@@ -20,15 +21,37 @@ namespace SupportTicketSystem.WebApi.Controllers
     public class TicketHistoriesController : ControllerBase
     {
         private readonly ITicketHistoryService _historyService;
+        private readonly IUserService _userService;
 
-        public TicketHistoriesController(ITicketHistoryService historyService)
+        public TicketHistoriesController(ITicketHistoryService historyService, IUserService userService)
         {
             _historyService = historyService;
+            _userService = userService;
         }
 
         // Managers see every ticket's history; any other role only sees history for tickets
         // they created or are assigned to.
         private Guid? GetScopedToUserId() => User.GetRole() == "Manager" ? null : User.GetUserId();
+
+        /// <summary>Agent Id -> Name, used to resolve AssigneeChanged's raw Guid Old/NewValue
+        /// into a readable name for CSV/PDF exports (the UI resolves this client-side; exports
+        /// need their own lookup since they're generated entirely server-side).</summary>
+        private async Task<Dictionary<Guid, string>> GetAgentNameLookupAsync()
+        {
+            var agents = await _userService.GetAllAgentsAsync();
+            return agents.ToDictionary(a => a.Id, a => a.Name);
+        }
+
+        private static string ResolveHistoryValue(TicketHistoryAction action, string? value, IReadOnlyDictionary<Guid, string> agentNames)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return "-";
+
+            if (action == TicketHistoryAction.AssigneeChanged && Guid.TryParse(value, out var userId))
+                return agentNames.TryGetValue(userId, out var name) ? name : "Unknown User";
+
+            return value;
+        }
 
         [HttpGet]
         [ProducesResponseType(typeof(ApiResponse<PagedResult<TicketHistoryDto>>), StatusCodes.Status200OK)]
@@ -57,6 +80,7 @@ namespace SupportTicketSystem.WebApi.Controllers
             var request = new PagedRequest { PageNumber = 1, PageSize = int.MaxValue };
             var result = await _historyService.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request, GetScopedToUserId());
             var histories = result.Items ?? new List<TicketHistoryDto>();
+            var agentNames = await GetAgentNameLookupAsync();
 
             var csvBuilder = new StringBuilder();
 
@@ -69,7 +93,9 @@ namespace SupportTicketSystem.WebApi.Controllers
 
                 var detail = item.Action == TicketHistoryAction.TicketCreated
                     ? (item.Note ?? "Ticket created")
-                    : (!string.IsNullOrEmpty(item.OldValue) ? $"Dari {item.OldValue} ke {item.NewValue}" : (item.Note ?? "-"));
+                    : (!string.IsNullOrEmpty(item.OldValue)
+                        ? $"Dari {ResolveHistoryValue(item.Action, item.OldValue, agentNames)} ke {ResolveHistoryValue(item.Action, item.NewValue, agentNames)}"
+                        : (item.Note ?? "-"));
 
                 detail = detail.Replace("\"", "\"\"");
 
@@ -95,6 +121,7 @@ namespace SupportTicketSystem.WebApi.Controllers
             var request = new PagedRequest { PageNumber = 1, PageSize = int.MaxValue };
             var result = await _historyService.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request, GetScopedToUserId());
             var histories = result.Items ?? new List<TicketHistoryDto>();
+            var agentNames = await GetAgentNameLookupAsync();
 
             var pdfBytes = Document.Create(container =>
             {
@@ -107,7 +134,7 @@ namespace SupportTicketSystem.WebApi.Controllers
 
                     page.Header().Element(ComposeHeader);
 
-                    page.Content().Element(container => ComposeContent(container, histories));
+                    page.Content().Element(container => ComposeContent(container, histories, agentNames));
 
                     page.Footer()
                         .AlignCenter()
@@ -137,7 +164,7 @@ namespace SupportTicketSystem.WebApi.Controllers
             });
         }
 
-        private void ComposeContent(IContainer container, IEnumerable<TicketHistoryDto> histories)
+        private void ComposeContent(IContainer container, IEnumerable<TicketHistoryDto> histories, IReadOnlyDictionary<Guid, string> agentNames)
         {
             container.PaddingVertical(10).Table(table =>
             {
@@ -167,7 +194,9 @@ namespace SupportTicketSystem.WebApi.Controllers
                 {
                     var detail = h.Action == TicketHistoryAction.TicketCreated
                                 ? ($"Ticket created by {h.ChangedByName}" ?? "Ticket created")
-                                : (!string.IsNullOrEmpty(h.OldValue) ? $"Dari {h.OldValue} ke {h.NewValue}" : (h.Note ?? "-"));
+                                : (!string.IsNullOrEmpty(h.OldValue)
+                                    ? $"Dari {ResolveHistoryValue(h.Action, h.OldValue, agentNames)} ke {ResolveHistoryValue(h.Action, h.NewValue, agentNames)}"
+                                    : (h.Note ?? "-"));
                     var bg = alternate ? "#F9FAFB" : "#FFFFFF";
 
                     table.Cell().Background(bg).BorderBottom(1).BorderColor("#E5E7EB").Padding(6).Text(h.TicketNumber ?? "-");
