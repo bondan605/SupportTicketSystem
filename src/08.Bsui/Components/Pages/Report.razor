@@ -2,6 +2,11 @@
 
 @using SupportTicketSystem.Bsui.Components.Shared
 @using SupportTicketSystem.Bsui.Components.Models.Reports
+@using SupportTicketSystem.Client.Features.Interfaces
+@using SupportTicketSystem.Shared.DTOs.Reports.Responses
+
+@inject IReportClient ReportClient
+@inject ISnackbar Snackbar
 
 <PageTitle>Reports</PageTitle>
 
@@ -31,7 +36,7 @@
             <MudButton Variant="Variant.Outlined"
                        StartIcon="@Icons.Material.Outlined.CalendarMonth"
                        Color="Color.Default">
-                26 Jun 2026 - 24 Jul 2026
+                    @DateRangeText
             </MudButton>
 
             <MudButton Variant="Variant.Outlined"
@@ -61,31 +66,31 @@
                   Style="width:100%; box-sizing:border-box;">
 
             <SummaryCard Title="Total Tickets"
-                         Value="1,245"
+                     Value="@_report.Overview.TotalTickets.ToString("N0")"
                          Description="Semua tiket"
                          Icon="@Icons.Material.Filled.ConfirmationNumber"
                          IconBackgroundColor="#1677ff" />
 
             <SummaryCard Title="Tickets Selesai"
-                         Value="842"
-                         Description="67.7% dari total"
+                     Value="@_report.Overview.ResolvedCount.ToString("N0")"
+                     Description="@GetPercentageText(_report.Overview.ResolvedCount)"
                          Icon="@Icons.Material.Filled.CheckCircleOutline"
                          IconBackgroundColor="#00c853" />
 
             <SummaryCard Title="Dalam Proses"
-                         Value="278"
-                         Description="22.3% dari total"
+                     Value="@_report.Overview.InProgressCount.ToString("N0")"
+                     Description="@GetPercentageText(_report.Overview.InProgressCount)"
                          Icon="@Icons.Material.Filled.HourglassEmpty"
                          IconBackgroundColor="#ffb300" />
 
             <SummaryCard Title="Closed"
-                         Value="125"
-                         Description="10.0% dari total"
+                     Value="@_report.Overview.ClosedCount.ToString("N0")"
+                     Description="@GetPercentageText(_report.Overview.ClosedCount)"
                          Icon="@Icons.Material.Filled.Close"
                          IconBackgroundColor="#ff3b30" />
 
             <SummaryCard Title="Total Users"
-                         Value="68"
+                     Value="@_report.Overview.TotalUsers.ToString("N0")"
                          Description="Semua pengguna"
                          Icon="@Icons.Material.Filled.People"
                          IconBackgroundColor="#5b5fe9" />
@@ -116,8 +121,8 @@
         <MudItem xs="12" lg="4">
             <AssigneeBarChart Title="Tickets per Assignee (Top 6)"
                               Items="@_assigneeChartData"
-                              AxisMaximum="300"
-                              AxisStep="50"
+                              AxisMaximum="@AssigneeAxisMaximum"
+                              AxisStep="@AssigneeAxisStep"
                               BarColor="#2F73F6"
                               CardHeight="280" />
         </MudItem>
@@ -147,16 +152,16 @@
 
         <MudItem xs="12" lg="3">
             <SLAComplianceCard Title="SLA Compliance"
-                               Value="92.5"
+                               Value="@SlaCompliance"
                                Subtitle="Kepatuhan SLA"
-                               TrendValue="+4.2%"
+                               TrendValue="@SlaTrendValue"
                                CardHeight="260" />
         </MudItem>
      
         <MudItem xs="12" lg="4">
             <TicketsByCategoryTable Title="Tickets by Category"
                                     Items="@_categoryData"
-                                    TotalTickets="1245"
+                                    TotalTickets="@_report.Overview.TotalTickets"
                                     CardHeight="280"
                                     BarColor="#2F73F6" />
         </MudItem>
@@ -180,106 +185,418 @@
     </MudContainer>
 
 @code {
-    private readonly IReadOnlyList<AssigneeChartItem> _assigneeChartData =
-    new List<AssigneeChartItem>
-    {
-        new("Andi Pratama", 245),
-        new("Siti Aisyah", 198),
-        new("Budi Santoso", 176),
-        new("Dewi Lestari", 142),
-        new("Rizky Hidayat", 98),
-        new("Unassigned", 234)
-    };
+    private DateTime? _startDate = DateTime.Today.AddDays(-30);
+    private DateTime? _endDate = DateTime.Today;
 
-    private readonly IReadOnlyList<CategoryReportItem> _categoryData =
-        new List<CategoryReportItem>
-        {
-        new("Aplikasi", 560),
-        new("Akses", 311),
-        new("Laporan", 187),
-        new("Lainnya", 187)
-        };
+    private ReportSummaryDto _report = new();
 
-    private readonly AverageResponseTimeModel _averageResponseTime =
+    private IReadOnlyList<AssigneeChartItem> _assigneeChartData =
+        Array.Empty<AssigneeChartItem>();
+
+    private IReadOnlyList<CategoryReportItem> _categoryData =
+        Array.Empty<CategoryReportItem>();
+
+    private AverageResponseTimeModel _averageResponseTime =
         new(
-            Duration: new TimeSpan(hours: 2, minutes: 45, seconds: 0),
-            ChangePercentage: 8.6m,
-            IsIncrease: true);
+            Duration: TimeSpan.Zero,
+            ChangePercentage: 0m,
+            IsIncrease: false);
 
+    private double[] _statusData = Array.Empty<double>();
+    private string[] _statusLabels = Array.Empty<string>();
+    private string[] _statusColors = Array.Empty<string>();
 
-    // Data untuk Chart Pertama
-    private double[] _statusData = { 842, 278, 125, 125 };
-    private string[] _statusLabels = { "Open", "In Progress", "Closed", "Cancelled" };
-    private string[] _statusColors = { "#3B82F6", "#F59E0B", "#10B981", "#EF4444" };
+    private double[] _categoryTicket = Array.Empty<double>();
+    private string[] _categoryLabels = Array.Empty<string>();
+    private string[] _categoryColors = Array.Empty<string>();
 
-    // Data untuk Chart Kedua
-    private double[] _categoryTicket = { 45, 25, 15, 15 };
-    private string[] _categoryLabels = { "Aplikasi", "Akses", "Laporan", "Lainnya" };
-    private string[] _categoryColors = { "#3B82F6", "#F59E0B", "#10B981", "#EF4444" };
+    private double[] _priorityData = Array.Empty<double>();
+    private string[] _priorityLabels = Array.Empty<string>();
+    private string[] _priorityColors = Array.Empty<string>();
 
-    private double[] _priorityData = { 25.6, 50.2, 24.2 };
-    private string[] _priorityLabels = { "High", "Medium", "Low" };
-    private string[] _priorityColors = { "#3B82F6", "#F59E0B", "#10B981" };
+    private string[] _months = Array.Empty<string>();
 
-    private string[] _months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-
-    private string[] _trendColors = { "#3B82F6", "#10B981" };
-
-    private List<ChartSeries<double>> _ticketTrendSeries = new()
+    private readonly string[] _trendColors =
     {
-        new ChartSeries<double> { Name = "Created", Data = new double[] { 120, 150, 110, 90, 180, 200, 170, 140, 130, 160, 190, 210 } },
-        new ChartSeries<double> { Name = "Resolved", Data = new double[] { 100, 130, 115, 95, 160, 180, 165, 150, 120, 155, 170, 200 } }
+        "#3B82F6",
+        "#10B981"
     };
-    private string[] _slaMonth = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 
-    private string[] _slacolors =
+    private List<ChartSeries<double>> _ticketTrendSeries = new();
+
+    private string[] _slaMonth = Array.Empty<string>();
+
+    private readonly string[] _slacolors =
     {
         "#10B981"
     };
 
-    private List<ChartSeries<double>> _slaTrendSeries = new()
-    {
-        new ChartSeries<double> { Name = "SLA", Data = new double[] { 120, 150, 110, 90, 180, 200, 170, 140, 130, 160, 190, 210 } }
-    };
+    private List<ChartSeries<double>> _slaTrendSeries = new();
 
-    private double SlaCompliance = 92.5;
-    private string TrendText = "+4.2% dari periode lalu";
-    private List<ClosedTicketModel> ClosedTickets = new()
+    private double SlaCompliance;
+
+    private string SlaTrendValue = "-";
+
+    private List<ClosedTicketModel> ClosedTickets = new();
+
+    private string DateRangeText =>
+        $"{_startDate?.ToString("dd MMM yyyy") ?? "-"} - " +
+        $"{_endDate?.ToString("dd MMM yyyy") ?? "-"}";
+
+    protected override async Task OnInitializedAsync()
     {
-        new()
+        await LoadReportAsync();
+    }
+
+    private async Task LoadReportAsync()
+    {
+        try
         {
-            TicketNumber="TCK-2026-1242",
-            Title="Data tidak tersimpan",
-            ClosedAt=new DateTime(2026,7,24,14,20,0),
-            ClosedBy="Budi Santoso"
-        },
-        new()
-        {
-            TicketNumber="TCK-2026-1238",
-            Title="Reset password user",
-            ClosedAt=new DateTime(2026,7,24,10,30,0),
-            ClosedBy="Budi Santoso"
-        },
-        new()
-        {
-            TicketNumber="TCK-2026-1229",
-            Title="Aplikasi lambat",
-            ClosedAt=new DateTime(2026,7,23,16,45,0),
-            ClosedBy="Siti Aisyah"
-        },
-        new()
-        {
-            TicketNumber="TCK-2026-1211",
-            Title="Laporan tidak muncul",
-            ClosedAt=new DateTime(2026,7,23,11,5,0),
-            ClosedBy="Rizky Hidayat"
-        },
-        new()
-        {
-            TicketNumber="TCK-2026-1190",
-            Title="Integrasi API gagal",
-            ClosedAt=new DateTime(2026,7,22,15,20,0),
-            ClosedBy="Andi Pratama"
+            var response =
+                await ReportClient.GetReportSummaryAsync(
+                    _startDate,
+                    _endDate);
+
+            if (!response.Success || response.Data is null)
+            {
+                Snackbar.Add(
+                    response.Message ?? "Data report gagal diambil.",
+                    MudBlazor.Severity.Error);
+
+                return;
+            }
+
+            ApplyReport(response.Data);
         }
-    };
+        catch (Exception ex)
+        {
+            Snackbar.Add(
+                $"Gagal mengambil data report: {ex.Message}",
+                MudBlazor.Severity.Error);
+        }
+    }
+
+    private void ApplyReport(ReportSummaryDto report)
+    {
+        _report = report;
+
+        ApplyStatusData(report);
+        ApplyTicketTrendData(report);
+        ApplyAssigneeData(report);
+        ApplyCategoryData(report);
+        ApplyPriorityData(report);
+        ApplyAverageResponseTime(report);
+        ApplySlaCompliance(report);
+        ApplyRecentClosedTickets(report);
+        ApplySlaTrend(report);
+    }
+
+    private void ApplyStatusData(ReportSummaryDto report)
+    {
+        var statusItems = report.TicketsPerStatus
+            .OrderBy(item => GetStatusOrder(item.Status))
+            .ToList();
+
+        _statusData = statusItems
+            .Select(item => (double)item.Count)
+            .ToArray();
+
+        _statusLabels = statusItems
+            .Select(item => GetStatusText(item.Status))
+            .ToArray();
+
+        _statusColors = statusItems
+            .Select(item => GetStatusColor(item.Status))
+            .ToArray();
+    }
+
+    private void ApplyTicketTrendData(ReportSummaryDto report)
+    {
+        var trendItems = report.TicketsTrend
+            .OrderBy(item => item.Date)
+            .ToList();
+
+        _months = trendItems
+            .Select(item => item.Date.ToString("dd MMM"))
+            .ToArray();
+
+        _ticketTrendSeries = new List<ChartSeries<double>>
+        {
+            new()
+            {
+                Name = "Created",
+                Data = trendItems
+                    .Select(item => (double)item.CreatedCount)
+                    .ToArray()
+            },
+            new()
+            {
+                Name = "Closed",
+                Data = trendItems
+                    .Select(item => (double)item.ClosedCount)
+                    .ToArray()
+            }
+        };
+    }
+
+    private void ApplyAssigneeData(ReportSummaryDto report)
+    {
+        _assigneeChartData = report.TicketsPerAssignee
+            .OrderByDescending(item => item.Count)
+            .Take(6)
+            .Select(item => new AssigneeChartItem(
+                item.AssigneeName,
+                item.Count))
+            .ToList();
+    }
+
+    private void ApplyCategoryData(ReportSummaryDto report)
+    {
+        var categoryItems = report.TicketsPerCategory
+            .OrderByDescending(item => item.Count)
+            .ToList();
+
+        _categoryData = categoryItems
+            .Select(item => new CategoryReportItem(
+                GetCategoryText(item.Category),
+                item.Count))
+            .ToList();
+
+        _categoryTicket = categoryItems
+            .Select(item => (double)item.Count)
+            .ToArray();
+
+        _categoryLabels = categoryItems
+            .Select(item => GetCategoryText(item.Category))
+            .ToArray();
+
+        _categoryColors = categoryItems
+            .Select(item => GetCategoryColor(item.Category))
+            .ToArray();
+    }
+
+    private void ApplyPriorityData(ReportSummaryDto report)
+    {
+        var priorityItems = report.TicketsPerPriority
+            .OrderBy(item => GetPriorityOrder(item.Priority))
+            .ToList();
+
+        _priorityData = priorityItems
+            .Select(item => (double)item.Count)
+            .ToArray();
+
+        _priorityLabels = priorityItems
+            .Select(item => item.Priority)
+            .ToArray();
+
+        _priorityColors = priorityItems
+            .Select(item => GetPriorityColor(item.Priority))
+            .ToArray();
+    }
+
+    private void ApplyAverageResponseTime(ReportSummaryDto report)
+    {
+        var averageMinutes = Math.Max(
+            0,
+            report.AverageResponseTime.AverageResponseMinutes);
+
+        var changePercent =
+            report.AverageResponseTime.ChangePercent ?? 0;
+
+        _averageResponseTime =
+            new AverageResponseTimeModel(
+                Duration: TimeSpan.FromMinutes(
+                    Math.Round(averageMinutes)),
+
+                ChangePercentage: Convert.ToDecimal(
+                    Math.Abs(changePercent)),
+
+                IsIncrease: changePercent > 0);
+    }
+
+    private void ApplySlaCompliance(ReportSummaryDto report)
+    {
+        SlaCompliance =
+            report.SlaCompliance.CompliancePercentage;
+
+        SlaTrendValue =
+            report.SlaCompliance.ChangePercent.HasValue
+                ? $"{report.SlaCompliance.ChangePercent.Value:+0.0;-0.0;0.0}%"
+                : "-";
+    }
+
+    private void ApplyRecentClosedTickets(ReportSummaryDto report)
+    {
+        ClosedTickets = report.RecentClosedTickets
+            .Where(item => item.ClosedAt.HasValue)
+            .Select(item => new ClosedTicketModel
+            {
+                TicketNumber = item.TicketNumber,
+                Title = item.Title,
+                ClosedAt = item.ClosedAt.GetValueOrDefault(),
+                ClosedBy = item.ClosedBy
+            })
+            .ToList();
+    }
+
+    private void ApplySlaTrend(ReportSummaryDto report)
+    {
+        var trendItems = report.SlaComplianceTrend
+            .OrderBy(item => item.Date)
+            .ToList();
+
+        _slaMonth = trendItems
+            .Select(item => item.Date.ToString("dd MMM"))
+            .ToArray();
+
+        _slaTrendSeries = new List<ChartSeries<double>>
+        {
+            new()
+            {
+                Name = "SLA",
+                Data = trendItems
+                    .Select(item =>
+                        (double)item.CumulativeCompliancePercentage)
+                    .ToArray()
+            }
+        };
+    }
+
+    private string GetPercentageText(int count)
+    {
+        var totalTickets = _report.Overview.TotalTickets;
+
+        if (totalTickets <= 0)
+        {
+            return "0.0% dari total";
+        }
+
+        var percentage =
+            count * 100d / totalTickets;
+
+        return $"{percentage:0.0}% dari total";
+    }
+
+    private int AssigneeAxisStep
+    {
+        get
+        {
+            var maximum = GetMaximumAssigneeCount();
+
+            return maximum switch
+            {
+                <= 10 => 2,
+                <= 50 => 10,
+                <= 100 => 20,
+                <= 250 => 50,
+                _ => 100
+            };
+        }
+    }
+
+    private int AssigneeAxisMaximum
+    {
+        get
+        {
+            var maximum = GetMaximumAssigneeCount();
+            var step = AssigneeAxisStep;
+
+            if (maximum <= 0)
+            {
+                return step;
+            }
+
+            return (int)Math.Ceiling(
+                maximum / (double)step) * step;
+        }
+    }
+
+    private int GetMaximumAssigneeCount()
+    {
+        return _assigneeChartData.Count == 0
+            ? 0
+            : _assigneeChartData.Max(
+                item => item.TotalTickets);
+    }
+
+    private static int GetStatusOrder(string status)
+    {
+        return status switch
+        {
+            "Open" => 1,
+            "InProgress" => 2,
+            "Resolved" => 3,
+            "Closed" => 4,
+            _ => 99
+        };
+    }
+
+    private static string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "InProgress" => "In Progress",
+            _ => status
+        };
+    }
+
+    private static string GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Open" => "#3B82F6",
+            "InProgress" => "#F59E0B",
+            "Resolved" => "#10B981",
+            "Closed" => "#64748B",
+            _ => "#94A3B8"
+        };
+    }
+
+    private static string GetCategoryText(string category)
+    {
+        return category switch
+        {
+            "Application" => "Aplikasi",
+            "Access" => "Akses",
+            "Report" => "Laporan",
+            "Hardware" => "Hardware",
+            "Other" => "Lainnya",
+            _ => category
+        };
+    }
+
+    private static string GetCategoryColor(string category)
+    {
+        return category switch
+        {
+            "Application" => "#3B82F6",
+            "Access" => "#F59E0B",
+            "Report" => "#10B981",
+            "Hardware" => "#8B5CF6",
+            "Other" => "#EF4444",
+            _ => "#94A3B8"
+        };
+    }
+
+    private static int GetPriorityOrder(string priority)
+    {
+        return priority switch
+        {
+            "High" => 1,
+            "Medium" => 2,
+            "Low" => 3,
+            _ => 99
+        };
+    }
+
+    private static string GetPriorityColor(string priority)
+    {
+        return priority switch
+        {
+            "High" => "#EF4444",
+            "Medium" => "#F59E0B",
+            "Low" => "#10B981",
+            _ => "#94A3B8"
+        };
+    }
 }

@@ -36,6 +36,11 @@ public static class DependencyInjection
             client.BaseAddress = new Uri(apiBaseUrl);
         }).AddHttpMessageHandler<JwtForwardingHandler>();
 
+        services.AddHttpClient<IReportClient, ReportClient>(client =>
+        {
+            client.BaseAddress = new Uri(apiBaseUrl);
+        }).AddHttpMessageHandler<JwtForwardingHandler>();
+
         services.AddHttpClient<ITicketHistoryExportService, TicketHistoryExportService>(client =>
         {
             client.BaseAddress = new Uri(apiBaseUrl);
