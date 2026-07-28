@@ -1,0 +1,137 @@
+@implements IAsyncDisposable
+@using SupportTicketSystem.Client
+@inject ServerJwtAccessor JwtAccessor
+@inject ISessionExpiryNotifier Notifier
+@inject NavigationManager NavigationManager
+
+@* Rendered once in MainLayout. Has no visible UI of its own until the session actually
+   expires - then it shows an unclosable dialog with a countdown and forces a re-login.
+   Two ways trigger it: a proactive timer scheduled from the token's own "exp" claim
+   (fires exactly on time, no polling), and SessionExpiryHandler's reactive 401 catch
+   (safety net for a token going bad earlier than scheduled). *@
+@if (_isVisible)
+{
+    <MudDialog Visible="_isVisible" Options="_dialogOptions">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="@Icons.Material.Filled.TimerOff" Color="Color.Warning" />
+                <MudText Typo="Typo.h6">Sesi Berakhir</MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudText>Sesi berakhir, harap login ulang.</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mt-2">
+                Anda akan diarahkan ke halaman login dalam @_secondsLeft detik...
+            </MudText>
+        </DialogContent>
+        <DialogActions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GoToLoginNow">
+                Login Sekarang
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+    private bool _isVisible;
+    private int _secondsLeft = 5;
+    private CancellationTokenSource? _scheduleCts;
+    private CancellationTokenSource? _countdownCts;
+
+    private readonly DialogOptions _dialogOptions = new()
+    {
+        BackdropClick = false,
+        CloseOnEscapeKey = false,
+        CloseButton = false,
+        MaxWidth = MaxWidth.ExtraSmall,
+        FullWidth = true
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        Notifier.SessionExpired += OnSessionExpired;
+        await ScheduleProactiveCheckAsync();
+    }
+
+    private async Task ScheduleProactiveCheckAsync()
+    {
+        var expiry = await JwtAccessor.GetTokenExpiryAsync();
+        if (expiry is null)
+        {
+            return;
+        }
+
+        var delay = expiry.Value - DateTime.UtcNow;
+        _scheduleCts = new CancellationTokenSource();
+        _ = WaitAndNotifyAsync(delay > TimeSpan.Zero ? delay : TimeSpan.Zero, _scheduleCts.Token);
+    }
+
+    private async Task WaitAndNotifyAsync(TimeSpan delay, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(delay, token);
+            Notifier.NotifyExpired();
+        }
+        catch (TaskCanceledException)
+        {
+            // Guard disposed (e.g. logout, circuit end) before the schedule fired.
+        }
+    }
+
+    private void OnSessionExpired()
+    {
+        _ = InvokeAsync(async () =>
+        {
+            if (_isVisible)
+            {
+                return; // Already showing (proactive + reactive both fired) - ignore the second one.
+            }
+
+            _isVisible = true;
+            _secondsLeft = 5;
+            _countdownCts = new CancellationTokenSource();
+            StateHasChanged();
+
+            await RunCountdownAsync(_countdownCts.Token);
+        });
+    }
+
+    private async Task RunCountdownAsync(CancellationToken token)
+    {
+        try
+        {
+            while (_secondsLeft > 0)
+            {
+                await Task.Delay(1000, token);
+                _secondsLeft--;
+                await InvokeAsync(StateHasChanged);
+            }
+
+            GoToLoginNow();
+        }
+        catch (TaskCanceledException)
+        {
+            // Cancelled because the user already clicked "Login Sekarang".
+        }
+    }
+
+    private void GoToLoginNow()
+    {
+        _countdownCts?.Cancel();
+        NavigationManager.NavigateTo("/Account/SessionExpired", forceLoad: true);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Notifier.SessionExpired -= OnSessionExpired;
+
+        _scheduleCts?.Cancel();
+        _scheduleCts?.Dispose();
+
+        _countdownCts?.Cancel();
+        _countdownCts?.Dispose();
+
+        await Task.CompletedTask;
+    }
+}

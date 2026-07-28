@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace SupportTicketSystem.Bsui.Services
 {
@@ -27,6 +28,26 @@ namespace SupportTicketSystem.Bsui.Services
             }
 
             return _cachedToken;
+        }
+
+        /// <summary>The token's own "exp" claim (UTC), used to schedule the proactive
+        /// session-expiry check. Returns null if there's no token or it can't be read.</summary>
+        public async Task<DateTime?> GetTokenExpiryAsync()
+        {
+            var token = await GetTokenAsync();
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return null;
+            }
+
+            try
+            {
+                return new JwtSecurityTokenHandler().ReadJwtToken(token).ValidTo;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
         }
     }
 }

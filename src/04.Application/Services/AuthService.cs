@@ -45,6 +45,7 @@ namespace SupportTicketSystem.Application.Services
 
             var response = _mapper.Map<LoginResponseDto>(user);
             response.Token = token;
+            response.ExpiresAt = expiresAt;
             return response;
         }
 

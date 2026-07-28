@@ -99,7 +99,7 @@ app.MapPost("/Account/Login", async (
         var authProperties = new AuthenticationProperties
         {
             IsPersistent = true,
-            ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+            ExpiresUtc = new DateTimeOffset(data.ExpiresAt, TimeSpan.Zero)
         };
         authProperties.StoreTokens(new[]
         {
@@ -122,6 +122,14 @@ app.MapPost("/Account/Login", async (
 });
 
 app.MapPost("/Account/Logout", async (HttpContext httpContext) =>
+{
+    await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.Redirect(AppRoutes.Login);
+});
+
+// GET (not POST) because SessionExpiryGuard triggers this via a plain NavigationManager
+// redirect from an active Blazor circuit, not a form submit.
+app.MapGet("/Account/SessionExpired", async (HttpContext httpContext) =>
 {
     await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     return Results.Redirect(AppRoutes.Login);

@@ -12,5 +12,9 @@ namespace SupportTicketSystem.Shared.DTOs.Auth
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public UserRole Role { get; set; }
         public string Token { get; set; } = string.Empty;
+
+        /// <summary>UTC instant the token expires. Used by the host app to size the auth
+        /// cookie's lifetime and to schedule the session-expiry warning.</summary>
+        public DateTime ExpiresAt { get; set; }
     }
 }
