@@ -8,12 +8,12 @@ namespace SupportTicketSystem.Api.Controllers;
 
 [ApiController]
 [Route("api/dev/report-data")]
-public class DevDataController : ControllerBase
+public class DevController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IWebHostEnvironment _environment;
 
-    public DevDataController(AppDbContext context, IWebHostEnvironment environment)
+    public DevController(AppDbContext context, IWebHostEnvironment environment)
     {
         _context = context;
         _environment = environment;

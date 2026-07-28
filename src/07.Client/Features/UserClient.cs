@@ -1,4 +1,5 @@
 ﻿using SupportTicketSystem.Client.Features.Interfaces;
+using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Shared.Constants;
 using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Users;
@@ -15,7 +16,7 @@ namespace SupportTicketSystem.Client.Clients
             _httpClient = httpClient;
         }
 
-        public async Task<ApiResponse<IEnumerable<UserDto>>> GetAllAgentsAsync()
+        public async Task<ApiResponse<IEnumerable<UserDto>>> GetAllUserAsync()
         {
             try
             {
@@ -28,6 +29,27 @@ namespace SupportTicketSystem.Client.Clients
                 };
             }
             catch (Exception ex)
+            {
+                return new ApiResponse<IEnumerable<UserDto>>
+                {
+                    Success = false,
+                    Message = $"Client Error: {ex.Message}"
+                };
+            }
+        }
+
+        public async Task<ApiResponse<IEnumerable<UserDto>>> GetAllUserByRoleAsync(UserRole role)
+        {
+            try
+            {
+                var response = await _httpClient.GetFromJsonAsync<ApiResponse<IEnumerable<UserDto>>>(ApiRoutes.Users.Role);
+                return response ?? new ApiResponse<IEnumerable<UserDto>>
+                {
+                    Success = false,
+                    Message = "No response received from the server."
+                };
+            }
+            catch (Exception ex) 
             {
                 return new ApiResponse<IEnumerable<UserDto>>
                 {

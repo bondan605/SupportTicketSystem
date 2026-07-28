@@ -17,16 +17,16 @@ namespace SupportTicketSystem.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<IEnumerable<UserDto>> GetAllAgentsAsync()
+        public async Task<IEnumerable<UserDto>> GetAllUserAsync()
         {
             var users = await _userRepository.GetAllAsync();
+            return _mapper.Map<IEnumerable<UserDto>>(users);
+        }
 
-            // Filter: Hanya ambil Support Agent untuk daftar penugasan
-            var agents = users.Where(u => u.Role == UserRole.SupportAgent);
-
-            var dtos = _mapper.Map<IEnumerable<UserDto>>(agents);
-
-            return _mapper.Map<IEnumerable<UserDto>>(agents);
+        public async Task<IEnumerable<UserDto>> GetAllUserByRoleAsync(UserRole role)
+        {
+            var users = await _userRepository.GetAllByRoleAsync(role);
+            return _mapper.Map<IEnumerable<UserDto>>(users);
         }
     }
 }

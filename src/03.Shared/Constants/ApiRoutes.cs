@@ -17,6 +17,7 @@
         public static class Users
         {
             public const string Base = $"{BaseApi}/users";
+            public const string Role = $"{BaseApi}/users/{{role}}";
         }
 
         public static class Tickets
