@@ -108,9 +108,8 @@ app.MapPost("/Account/Login", async (
 
         await httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties);
 
-        // Regardless of role, land the user on the universal dashboard (Home.razor, "/").
-        // Role-specific pages (e.g. /dashboard for Manager) remain reachable from there via navigation.
-        var redirectTo = !string.IsNullOrEmpty(returnUrl) ? returnUrl : AppRoutes.Home;
+        // Regardless of role, land the user straight on the ticket list after login.
+        var redirectTo = !string.IsNullOrEmpty(returnUrl) ? returnUrl : AppRoutes.TicketList;
 
         return Results.Redirect(redirectTo);
     }

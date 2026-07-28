@@ -1,32 +1,13 @@
 @page "/"
 @attribute [Authorize]
-
-<PageTitle>Dashboard</PageTitle>
-
-<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="pa-4 pl-6 pr-6">
-
-    @* Left side: menu toggle + page title/subtitle *@
-    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu"
-                        Color="Color.Default"
-                        Edge="Edge.Start"
-                        OnClick="ToggleSidebar" />
-
-        <MudStack Spacing="0">
-            <MudText Typo="Typo.h5" Class="font-weight-bold" Style="color:#1e293b;">Dashboard</MudText>
-            <MudText Typo="Typo.body2" Style="color:#64748b;">Overview of ticket activities and performance</MudText>
-        </MudStack>
-    </MudStack>
-
-    @* Right side: profile menu *@
-    <ProfileMenu />
-</MudStack>
-
-<MudDivider />
+@inject NavigationManager NavigationManager
 
 @code {
-    [Parameter]
-    public EventCallback OnToggleSidebar { get; set; }
-
-    private Task ToggleSidebar() => OnToggleSidebar.InvokeAsync();
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            NavigationManager.NavigateTo(AppRoutes.TicketList, forceLoad: true);
+        }
+    }
 }

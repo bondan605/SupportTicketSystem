@@ -19,15 +19,21 @@ else
     <MudContainer MaxWidth="MaxWidth.False" Class="pa-4 pb-16">
 
         <MudBreadcrumbs Items="_breadcrumbs" Class="pl-0 mb-2" />
-        <MudText Typo="Typo.h5" Class="font-weight-bold">@(AssignOnly ? "Ubah Penugasan Agent" : "Update Tiket")</MudText>
+        <MudText Typo="Typo.h5" Class="font-weight-bold">@PageHeading</MudText>
         <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
-            @(AssignOnly ? "Hanya penugasan agent yang bisa diubah di halaman ini." : "Perbarui informasi dan status tiket.")
+            @PageSubheading
         </MudText>
 
         @if (AssignOnly)
         {
             <MudAlert Severity="MudBlazor.Severity.Info" Icon="@Icons.Material.Outlined.Info" Dense="true" Class="mb-4">
                 Field lain dikunci. Menugaskan agent ke tiket yang masih <b>Open</b> akan otomatis mengubah statusnya menjadi <b>In Progress</b>.
+            </MudAlert>
+        }
+        else if (StatusOnly)
+        {
+            <MudAlert Severity="MudBlazor.Severity.Info" Icon="@Icons.Material.Outlined.Info" Dense="true" Class="mb-4">
+                Field lain dikunci. Hanya status tiket yang bisa diubah di halaman ini.
             </MudAlert>
         }
 
@@ -39,7 +45,7 @@ else
                 <MudPaper Outlined="true" Elevation="0" Class="pa-4 pa-sm-6">
                     <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-4">Informasi Tiket</MudText>
 
-                    <MudGrid Spacing="4" Class="@(AssignOnly ? "field-locked" : null)">
+                    <MudGrid Spacing="4" Class="@(IsAnyRestrictedMode ? "field-locked" : null)">
                         <MudItem xs="12" sm="4">
                             <MudTextField T="string" Value="_model.TicketNumber" Label="Nomor Tiket"
                                           Variant="Variant.Outlined" Disabled="true" />
@@ -57,7 +63,7 @@ else
 
                         <MudItem xs="12" sm="6">
                             <MudSelect T="TicketType" @bind-Value="_model.TicketType" Label="Tipe Tiket" Required="true"
-                                       Variant="Variant.Outlined" ToStringFunc="@(t => t.ToDisplayText())" Disabled="@AssignOnly">
+                                       Variant="Variant.Outlined" ToStringFunc="@(t => t.ToDisplayText())" Disabled="@IsAnyRestrictedMode">
                                 @foreach (var type in Enum.GetValues<TicketType>())
                                 {
                                     <MudSelectItem Value="@type">@type.ToDisplayText()</MudSelectItem>
@@ -67,7 +73,7 @@ else
 
                         <MudItem xs="12" sm="6">
                             <MudSelect T="TicketImpact?" @bind-Value="_model.Impact" Label="Dampak" Required="true"
-                                       Placeholder="-- Pilih Dampak --" Variant="Variant.Outlined" Disabled="@AssignOnly"
+                                       Placeholder="-- Pilih Dampak --" Variant="Variant.Outlined" Disabled="@IsAnyRestrictedMode"
                                        Adornment="@(_model.Impact.HasValue ? Adornment.Start : Adornment.None)"
                                        AdornmentIcon="@(_model.Impact.HasValue ? ImpactIcon(_model.Impact.Value) : null)"
                                        AdornmentColor="@(_model.Impact.HasValue ? ImpactColor(_model.Impact.Value) : Color.Default)"
@@ -86,7 +92,7 @@ else
 
                         <MudItem xs="12" sm="6">
                             <MudSelect T="TicketCategory?" @bind-Value="_model.Category" @bind-Value:after="OnCategoryChanged"
-                                       Label="Kategori" Required="true" Disabled="@AssignOnly"
+                                       Label="Kategori" Required="true" Disabled="@IsAnyRestrictedMode"
                                        Placeholder="-- Pilih Kategori --" Variant="Variant.Outlined"
                                        ToStringFunc="@(c => c.HasValue ? c.Value.ToDisplayText() : null)">
                                 @foreach (var category in Enum.GetValues<TicketCategory>())
@@ -99,7 +105,7 @@ else
                         <MudItem xs="12" sm="6">
                             <MudSelect T="TicketApplication?" @bind-Value="_model.Application" Label="Aplikasi / Sistem" Required="true"
                                        Placeholder="-- Pilih Aplikasi / Sistem --" Variant="Variant.Outlined"
-                                       Disabled="@(AssignOnly || _model.Category == TicketCategory.Hardware)"
+                                       Disabled="@(IsAnyRestrictedMode || _model.Category == TicketCategory.Hardware)"
                                        ToStringFunc="@(a => a.HasValue ? a.Value.ToDisplayText() : null)">
                                 @foreach (var app in Enum.GetValues<TicketApplication>())
                                 {
@@ -109,7 +115,7 @@ else
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
-                            <MudSelect T="TicketPriority" @bind-Value="_model.Priority" Label="Prioritas" Required="true" Disabled="@AssignOnly"
+                            <MudSelect T="TicketPriority" @bind-Value="_model.Priority" Label="Prioritas" Required="true" Disabled="@IsAnyRestrictedMode"
                                        Variant="Variant.Outlined" ToStringFunc="@(p => p.ToDisplayText())"
                                        Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Flag" AdornmentColor="@PriorityColor(_model.Priority)">
                                 @foreach (var priority in Enum.GetValues<TicketPriority>())
@@ -124,7 +130,7 @@ else
                             </MudSelect>
                         </MudItem>
 
-                        <MudItem xs="12" sm="6">
+                        <MudItem xs="12" sm="6" Class="@(StatusOnly ? "field-unlocked" : null)">
                             <MudSelect T="TicketStatus" @bind-Value="_model.Status" Label="Status" Required="true" Disabled="@AssignOnly"
                                        Variant="Variant.Outlined" ToStringFunc="@(s => s.ToDisplayText())"
                                        Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Circle" AdornmentColor="@StatusColor(_model.Status)">
@@ -141,13 +147,13 @@ else
                         </MudItem>
 
                         <MudItem xs="12" sm="6">
-                            <MudDatePicker @bind-Date="_model.EstimatedDueDate" Label="Perkiraan Selesai" Disabled="@AssignOnly"
+                            <MudDatePicker @bind-Date="_model.EstimatedDueDate" Label="Perkiraan Selesai" Disabled="@IsAnyRestrictedMode"
                                            Placeholder="Pilih tanggal (opsional)" Variant="Variant.Outlined"
                                            Editable="true" />
                         </MudItem>
 
                         <MudItem xs="12">
-                            <MudTextField T="string" @bind-Value="_model.Title" Label="Judul" Required="true" Disabled="@AssignOnly"
+                            <MudTextField T="string" @bind-Value="_model.Title" Label="Judul" Required="true" Disabled="@IsAnyRestrictedMode"
                                           Placeholder="Masukkan judul tiket" Variant="Variant.Outlined"
                                           Counter="255" MaxLength="255" />
                         </MudItem>
@@ -190,11 +196,11 @@ else
 
                     <MudStack Spacing="4">
                         <MudAutocomplete T="UserDto" @bind-Value="_model.AssignedAgent" @bind-Value:after="OnAssignedAgentChanged" Label="Assign To"
-                                         Placeholder= "Cari user atau tim..." Variant="Variant.Outlined"
+                                         Placeholder= "Cari user atau tim..." Variant="Variant.Outlined" Disabled="@StatusOnly"
                                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Person"
                                          ToStringFunc="@(u => u?.Name)" SearchFunc="SearchAgentsAsync" Clearable="true" />
 
-                        <MudAutocomplete T="UserDto" @bind-Value="_model.CcAgent" Label="CC (Opsional)" Disabled="@AssignOnly"
+                        <MudAutocomplete T="UserDto" @bind-Value="_model.CcAgent" Label="CC (Opsional)" Disabled="@IsAnyRestrictedMode"
                                          Placeholder="Cari user atau email..." Variant="Variant.Outlined"
                                          AdornmentIcon="@Icons.Material.Outlined.Search" Adornment="Adornment.End"
                                          ToStringFunc="@(u => u?.Name)" SearchFunc="SearchAgentsAsync" Clearable="true" />
@@ -231,7 +237,7 @@ else
                             </MudStack>
                         </div>
 
-                        <MudTextField T="string" @bind-Value="_model.StatusChangeNote" Label="Catatan (Opsional)" Disabled="@AssignOnly"
+                        <MudTextField T="string" @bind-Value="_model.StatusChangeNote" Label="Catatan (Opsional)" Disabled="@IsAnyRestrictedMode"
                                       Placeholder="Tambahkan catatan perubahan status..." Variant="Variant.Outlined"
                                       Lines="3" MaxLength="1000" Counter="1000" />
                     </MudStack>
@@ -269,10 +275,21 @@ else
     [Parameter]
     public Guid Id { get; set; }
 
-    /// <summary>When true (via ?assignOnly=true), only the "Assign To" field is editable -
-    /// used by the "Assign Agent"/"Change Agent" actions on the ticket list.</summary>
     [SupplyParameterFromQuery(Name = "assignOnly")]
     public bool AssignOnly { get; set; }
+
+    [SupplyParameterFromQuery(Name = "statusOnly")]
+    public bool StatusOnly { get; set; }
+
+    private bool IsAnyRestrictedMode => AssignOnly || StatusOnly;
+
+    private string PageHeading => AssignOnly ? "Ubah Penugasan Agent" : StatusOnly ? "Ubah Status Tiket" : "Update Tiket";
+
+    private string PageSubheading => AssignOnly
+        ? "Hanya penugasan agent yang bisa diubah di halaman ini."
+        : StatusOnly
+            ? "Hanya status tiket yang bisa diubah di halaman ini."
+            : "Perbarui informasi dan status tiket.";
 
     private List<BreadcrumbItem> _breadcrumbs = new();
     private UpdateTicketModel _model = new();
@@ -280,6 +297,8 @@ else
     private IReadOnlyList<IBrowserFile>? _attachments;
     private bool _isLoading = true;
     private bool _isSubmitting;
+
+    private Guid? _originalAssignedAgentId;
 
     private List<UserDto> _agents = new();
 
@@ -328,6 +347,7 @@ else
         _model.AssignedAgent = ticket.AssignedTo.HasValue
             ? _agents.FirstOrDefault(a => a.Id == ticket.AssignedTo.Value)
             : null;
+        _originalAssignedAgentId = ticket.AssignedTo;
 
         _breadcrumbs = new List<BreadcrumbItem>
         {
@@ -407,6 +427,27 @@ else
 
     private async Task SaveAsync(bool closeAfter)
     {
+        if (AssignOnly)
+        {
+            if (_model.AssignedAgent is null)
+            {
+                Snackbar.Add("Anda harus menugaskan seorang agent sebelum menyimpan.", MudBlazor.Severity.Warning);
+                return;
+            }
+
+            if (_originalAssignedAgentId.HasValue && _model.AssignedAgent.Id == _originalAssignedAgentId.Value)
+            {
+                Snackbar.Add("Pilih agent lain untuk mengubah penugasan.", MudBlazor.Severity.Warning);
+                return;
+            }
+        }
+
+        if (StatusOnly && _model.Status == _model.PreviousStatus)
+        {
+            Snackbar.Add("Ubah status terlebih dahulu sebelum menyimpan.", MudBlazor.Severity.Warning);
+            return;
+        }
+
         await _form!.ValidateAsync();
         if (!_form.IsValid)
         {
@@ -478,11 +519,13 @@ else
 }
 
 <style>
-    /* Assign-only mode (?assignOnly=true): most MudSelect/MudTextField controls already get
-       Disabled="@AssignOnly", but RichTextEditor and FileDropzone don't expose a Disabled
-       parameter - this locks them (and gives everything a consistent dimmed look) instead. */
-    .field-locked {
+    .field-locked > * {
         opacity: 0.6;
         pointer-events: none;
+    }
+    
+    .field-locked > .field-unlocked {
+        opacity: 1;
+        pointer-events: auto;
     }
 </style>

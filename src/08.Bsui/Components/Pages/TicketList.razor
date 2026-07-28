@@ -709,28 +709,36 @@
                         gap:2px;
                         white-space:nowrap;">
                     
-                    <MudTooltip Text="Edit Ticket">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                       Color="Color.Primary"
-                                       Size="Size.Small"
-                                       OnClick="@(() => NavigationManager.NavigateTo($"{AppRoutes.TicketUpdate}/{context.Id}"))" />
-                    </MudTooltip>
-                    @if (context.Status == TicketStatus.Open)
+                    @if (_isManager)
                     {
-                        <MudTooltip Text="Assign Agent">
-                            <MudIconButton Icon="@Icons.Material.Filled.PersonSearch"
+                        @if (context.Status == TicketStatus.Open)
+                        {
+                            <MudTooltip Text="Assign Agent">
+                                <MudIconButton Icon="@Icons.Material.Filled.PersonSearch"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               OnClick="@(() => NavigationManager.NavigateTo($"{AppRoutes.TicketUpdate}/{context.Id}?assignOnly=true"))" />
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudTooltip Text="Change Agent">
+                                <MudIconButton Icon="@Icons.Material.Filled.PersonAdd"
+                                               Color="Color.Warning"
+                                               Size="Size.Small"
+                                               Disabled="@(context.Status == TicketStatus.Closed || context.Status == TicketStatus.Resolved)"
+                                               OnClick="@(() => NavigationManager.NavigateTo($"{AppRoutes.TicketUpdate}/{context.Id}?assignOnly=true"))" />
+                            </MudTooltip>
+                        }
+                    }
+                    else
+                    {
+                        <MudTooltip Text="Change Status">
+                            <MudIconButton Icon="@Icons.Material.Filled.ChangeCircle"
                                            Color="Color.Primary"
                                            Size="Size.Small"
-                                           OnClick="@(() => NavigationManager.NavigateTo($"{AppRoutes.TicketUpdate}/{context.Id}?assignOnly=true"))" />
-                        </MudTooltip>
-                    }
-                    @if (context.Status == TicketStatus.InProgress)
-                    {
-                        <MudTooltip Text="Change Agent">
-                            <MudIconButton Icon="@Icons.Material.Filled.PersonAdd"
-                                           Color="Color.Warning"
-                                           Size="Size.Small"
-                                           OnClick="@(() => NavigationManager.NavigateTo($"{AppRoutes.TicketUpdate}/{context.Id}?assignOnly=true"))" />
+                                           Disabled="@(context.Status == TicketStatus.Closed)"
+                                           OnClick="@(() => NavigationManager.NavigateTo($"{AppRoutes.TicketUpdate}/{context.Id}?statusOnly=true"))" />
                         </MudTooltip>
                     }
                     <MudTooltip Text="View Details">

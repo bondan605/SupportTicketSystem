@@ -1,17 +1,24 @@
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor;
 using SupportTicketSystem.Bsui.Components.Dialogs;
 using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Shared.DTOs.Tickets;
 using SupportTicketSystem.Shared.DTOs.Users;
 using SupportTicketSystem.Shared.Models;
+using System.Security.Claims;
 
 namespace SupportTicketSystem.Bsui.Components.Pages
 {
     public partial class TicketList
     {
+        [Inject]
+        private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
         private MudTable<TicketDto>? _table;
 
         private bool _isLoading;
+        private bool _isManager;
 
         private string? _searchText;
         private TicketStatus? _selectedStatus;
@@ -33,6 +40,9 @@ namespace SupportTicketSystem.Bsui.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            _isManager = string.Equals(authState.User.FindFirst(ClaimTypes.Role)?.Value, "Manager", StringComparison.OrdinalIgnoreCase);
+
             await Task.WhenAll(
                 LoadAgentsAsync(),
                 LoadSummaryAsync());
