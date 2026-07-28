@@ -1,0 +1,94 @@
+﻿<MudPaper Elevation="0"
+          Class="pa-4"
+          Style="@CardStyle">
+
+    <MudStack Row="true"
+              Spacing="3"
+              AlignItems="AlignItems.Center"
+              Style="height:100%;">
+
+        <MudAvatar Color="Color.Default"
+                   Rounded="true"
+                   Style="@IconContainerStyle">
+
+            <MudIcon Icon="@Icon"
+                     Size="Size.Small" />
+        </MudAvatar>
+
+        <MudStack Spacing="0"
+                  Style="min-width:0;">
+
+            <MudText Style="@TitleStyle">
+                @Title
+            </MudText>
+
+            <MudText Style="@ValueStyle">
+                @Value
+            </MudText>
+
+            <MudText Style="@DescriptionStyle">
+                @Description
+            </MudText>
+
+        </MudStack>
+    </MudStack>
+
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Description { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Icon { get; set; }
+        = Icons.Material.Filled.ConfirmationNumber;
+
+    [Parameter]
+    public string IconBackgroundColor { get; set; } = "#1677ff";
+
+    private const string CardStyle =
+        "flex:1 1 0;" +
+        "min-width:0;" +
+        "height:110px;" +
+        "box-sizing:border-box;" +
+        "border:1px solid #e8edf4;" +
+        "border-radius:10px;" +
+        "background:#ffffff;" +
+        "box-shadow:0 2px 8px rgba(15, 23, 42, 0.06);";
+
+    private string IconContainerStyle =>
+        "width:40px;" +
+        "height:40px;" +
+        "min-width:40px;" +
+        "border-radius:8px;" +
+        $"background-color:{IconBackgroundColor} !important;" +
+        "color:#ffffff !important;";
+
+    private const string TitleStyle =
+        "font-size:11px;" +
+        "line-height:1.2;" +
+        "font-weight:600;" +
+        "color:#42526e;";
+
+    private const string ValueStyle =
+        "margin-top:4px;" +
+        "font-size:24px;" +
+        "line-height:1.1;" +
+        "font-weight:700;" +
+        "color:#102544;";
+
+    private const string DescriptionStyle =
+        "margin-top:7px;" +
+        "font-size:11px;" +
+        "line-height:1.2;" +
+        "color:#60708a;" +
+        "white-space:nowrap;" +
+        "overflow:hidden;" +
+        "text-overflow:ellipsis;";
+}

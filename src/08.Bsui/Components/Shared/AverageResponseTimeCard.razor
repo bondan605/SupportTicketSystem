@@ -1,0 +1,144 @@
+﻿@using SupportTicketSystem.Bsui.Components.Models.Reports
+
+<MudPaper Elevation="0"
+          Class="pa-4"
+          Style="@CardStyle">
+
+    <MudText Style="@TitleStyle">
+        @Title
+    </MudText>
+
+    <div style="@BodyStyle">
+
+        <MudAvatar Color="Color.Default"
+                   Style="@IconContainerStyle">
+
+            <MudIcon Icon="@Icons.Material.Outlined.Schedule"
+                     Style="@IconStyle" />
+        </MudAvatar>
+
+        <MudStack Spacing="1">
+
+            <MudText Style="@TimeStyle">
+                @TimeText
+            </MudText>
+
+            <MudText Style="@SubtitleStyle">
+                @Subtitle
+            </MudText>
+
+            <MudStack Row="true"
+                      AlignItems="AlignItems.Center"
+                      Spacing="1"
+                      Class="mt-2">
+
+                <MudIcon Icon="@TrendIcon"
+                         Size="Size.Small"
+                         Style="@($"color:{TrendColor};")" />
+
+                <MudText Style="@TrendValueStyle">
+                    @TrendText
+                </MudText>
+
+                <MudText Style="@TrendDescriptionStyle">
+                    @TrendDescription
+                </MudText>
+
+            </MudStack>
+
+        </MudStack>
+
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public AverageResponseTimeModel Data { get; set; }
+    = new(TimeSpan.Zero, 0, false);
+
+    [Parameter]
+    public int CardHeight { get; set; } = 260;
+
+    private string TimeText =>
+    $"{(int)Data.Duration.TotalHours}h {Data.Duration.Minutes}m";
+
+    private string TrendText =>
+        $"{Data.ChangePercentage:0.0}%";
+
+    private string TrendIcon =>
+        Data.IsIncrease
+            ? Icons.Material.Filled.ArrowUpward
+            : Icons.Material.Filled.ArrowDownward;
+
+    [Parameter]
+    public string Title { get; set; } = "Average Response Time";
+
+    [Parameter]
+    public string Subtitle { get; set; }
+        = "Rata-rata waktu respons";
+
+    [Parameter]
+    public string TrendDescription { get; set; }
+        = "dari periode lalu";
+
+    private string CardStyle =>
+        $"width:100%;" +
+        $"height:{CardHeight}px;" +
+        "display:flex;" +
+        "flex-direction:column;" +
+        "box-sizing:border-box;" +
+        "border:1px solid #e2e8f0;" +
+        "border-radius:10px;" +
+        "background:#ffffff;" +
+        "box-shadow:none;";
+
+    private const string BodyStyle =
+        "flex:1;" +
+        "display:flex;" +
+        "align-items:center;" +
+        "justify-content:center;" +
+        "gap:24px;";
+
+    private const string TitleStyle =
+        "font-size:16px;" +
+        "font-weight:700;" +
+        "color:#172033;";
+
+    private const string IconContainerStyle =
+        "width:76px;" +
+        "height:76px;" +
+        "min-width:76px;" +
+        "background-color:#f3f6fa !important;" +
+        "color:#607694 !important;" +
+        "box-shadow:none;";
+
+    private const string IconStyle =
+        "font-size:38px;" +
+        "color:#607694;";
+
+    private const string TimeStyle =
+        "font-size:38px;" +
+        "line-height:1.1;" +
+        "font-weight:700;" +
+        "color:#172033;";
+
+    private const string SubtitleStyle =
+        "font-size:13px;" +
+        "font-weight:600;" +
+        "color:#475569;";
+
+    private string TrendValueStyle =>
+        "font-size:12px;" +
+        "font-weight:700;" +
+        $"color:{TrendColor};";
+
+    private const string TrendDescriptionStyle =
+        "font-size:12px;" +
+        "font-weight:500;" +
+        "color:#64748b;";
+
+    private string TrendColor =>
+    Data.IsIncrease
+        ? "#ef4444"
+        : "#16a34a";
+}
