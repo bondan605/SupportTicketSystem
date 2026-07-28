@@ -721,16 +721,16 @@
                             <MudIconButton Icon="@Icons.Material.Filled.PersonSearch"
                                            Color="Color.Primary"
                                            Size="Size.Small"
-                                           OnClick="@(() => OpenAssignDialogAsync(context, "Assign Agent"))" />
+                                           OnClick="@(() => NavigationManager.NavigateTo($"{AppRoutes.TicketUpdate}/{context.Id}?assignOnly=true"))" />
                         </MudTooltip>
                     }
                     @if (context.Status == TicketStatus.InProgress)
                     {
-                        <MudTooltip Text="Edit Agent">
+                        <MudTooltip Text="Change Agent">
                             <MudIconButton Icon="@Icons.Material.Filled.PersonAdd"
                                            Color="Color.Warning"
                                            Size="Size.Small"
-                                           OnClick="@(() => OpenAssignDialogAsync(context, "Edit Agent"))" />
+                                           OnClick="@(() => NavigationManager.NavigateTo($"{AppRoutes.TicketUpdate}/{context.Id}?assignOnly=true"))" />
                         </MudTooltip>
                     }
                     <MudTooltip Text="View Details">

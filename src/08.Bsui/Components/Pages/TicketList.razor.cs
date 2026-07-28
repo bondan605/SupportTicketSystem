@@ -462,41 +462,5 @@ namespace SupportTicketSystem.Bsui.Components.Pages
                 parameters,
                 options);
         }
-
-        private async Task OpenAssignDialogAsync(TicketDto ticket, string title = "Assign Agent")
-        {
-            var parameters = new DialogParameters { ["TicketId"] = ticket.Id, ["Agents"] = _agentList };
-            var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-
-            var dialog = await DialogService.ShowAsync<AssignAgentDialog>(title, parameters, options);
-
-            var result = await dialog.Result;
-
-            if (result is null || result.Canceled)
-            {
-                return;
-            }
-
-            if (result.Data is not Guid agentId)
-            {
-                Snackbar.Add("Please select an agent before saving.", MudBlazor.Severity.Warning);
-                return;
-            }
-
-            var assignResponse = await TicketClient.AssignTicketAsync(ticket.Id, agentId);
-
-            if (assignResponse != null && assignResponse.Success)
-            {
-                Snackbar.Add("Agent assigned successfully.", MudBlazor.Severity.Success);
-                if (_table is not null)
-                {
-                    await _table.ReloadServerData();
-                }
-            }
-            else
-            {
-                Snackbar.Add($"Failed to assign agent: {assignResponse?.Message}", MudBlazor.Severity.Error);
-            }
-        }
     }
 }
