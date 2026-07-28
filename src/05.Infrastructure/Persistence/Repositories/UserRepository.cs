@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SupportTicketSystem.Application.Interfaces.Repositories;
 using SupportTicketSystem.Domain.Entities;
+using SupportTicketSystem.Domain.Enums;
 using SupportTicketSystem.Infrastructure.Persistence;
 
 namespace SupportTicketSystem.Infrastructure.Repositories
@@ -17,6 +18,16 @@ namespace SupportTicketSystem.Infrastructure.Repositories
         public async Task<IEnumerable<User>> GetAllAsync()
         {
             return await _context.Users.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<IEnumerable<User>> GetAllByRoleAsync(UserRole role)
+        {
+            return await _context.Users.AsNoTracking().Where(u => u.Role == role).ToListAsync();
+        }
+
+        public async Task<IEnumerable<User>> GetAllAgentsAsync()
+        {
+            return await _context.Users.AsNoTracking().Where(u => u.Role == UserRole.SupportAgent).ToListAsync();
         }
 
         public async Task<User?> GetByIdAsync(Guid id)

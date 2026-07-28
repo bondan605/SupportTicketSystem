@@ -17,6 +17,10 @@
         public static class Users
         {
             public const string Base = $"{BaseApi}/users";
+            public const string Role = $"{Base}/{{role}}";
+            public const string Agent = $"{Base}/agents" ;
+
+            public const string AgentSegment = "agents";
         }
 
         public static class Tickets
@@ -36,6 +40,11 @@
         public static class Dashboard
         {
             public const string Summary = $"{BaseApi}/dashboard/summary";
+        }
+
+        public static class Report
+        {
+            public const string Reports = $"{BaseApi}/reports";
         }
     }
 }
