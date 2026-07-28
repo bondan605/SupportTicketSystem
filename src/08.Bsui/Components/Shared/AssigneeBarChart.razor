@@ -1,0 +1,152 @@
+﻿@using SupportTicketSystem.Bsui.Components.Models.Reports
+
+<MudPaper Elevation="0"
+          Class="pa-4"
+          Style="@CardStyle">
+
+    <MudStack Row="true"
+              AlignItems="AlignItems.Center"
+              Justify="Justify.SpaceBetween"
+              Class="mb-5">
+
+        <MudText Style="@TitleStyle">
+            @Title
+        </MudText>
+
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert"
+                       Size="Size.Small"
+                       Style="color:#64748b;" />
+    </MudStack>
+
+    <MudStack Spacing="2">
+        @foreach (var item in Items)
+        {
+            <div style="@RowStyle">
+
+                <MudText Style="@LabelStyle">
+                    @item.AssigneeName
+                </MudText>
+
+                <div style="height:16px;width:100%;">
+                    <div style="@GetBarStyle(item.TotalTickets)"></div>
+                </div>
+
+                <MudText Style="@ValueStyle">
+                    @item.TotalTickets
+                </MudText>
+
+            </div>
+        }
+    </MudStack>
+
+    <div style="@AxisRowStyle">
+        <div></div>
+
+        <div style="display:flex; justify-content:space-between; width:100%;">
+            @foreach (var tick in GetAxisTicks())
+            {
+                <MudText Style="@AxisTextStyle">
+                    @tick
+                </MudText>
+            }
+        </div>
+
+        <div></div>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public IReadOnlyList<AssigneeChartItem> Items { get; set; }
+        = Array.Empty<AssigneeChartItem>();
+
+    [Parameter]
+    public int CardHeight { get; set; } = 260;
+
+    [Parameter]
+    public int AxisMaximum { get; set; } = 300;
+
+    [Parameter]
+    public int AxisStep { get; set; } = 50;
+
+    [Parameter]
+    public string BarColor { get; set; } = "#2F73F6";
+
+    private string CardStyle =>
+        $"width:100%;" +
+        $"height:{CardHeight}px;" +
+        "box-sizing:border-box;" +
+        "border:1px solid #e2e8f0;" +
+        "border-radius:10px;" +
+        "background:#ffffff;" +
+        "box-shadow:none;";
+
+    private const string TitleStyle =
+        "font-size:16px;" +
+        "font-weight:700;" +
+        "color:#172033;";
+
+    private const string RowStyle =
+        "display:grid;" +
+        "grid-template-columns:150px minmax(0, 1fr) 50px;" +
+        "align-items:center;" +
+        "column-gap:12px;";
+
+    private const string LabelStyle =
+        "font-size:12px;" +
+        "font-weight:500;" +
+        "color:#334155;" +
+        "white-space:nowrap;" +
+        "overflow:hidden;" +
+        "text-overflow:ellipsis;";
+
+    private const string ValueStyle =
+        "font-size:12px;" +
+        "font-weight:700;" +
+        "text-align:right;" +
+        "color:#172033;";
+
+    private const string AxisRowStyle =
+        "display:grid;" +
+        "grid-template-columns:150px minmax(0, 1fr) 50px;" +
+        "align-items:center;" +
+        "column-gap:12px;" +
+        "margin-top:14px;";
+
+    private const string AxisTextStyle =
+        "font-size:11px;" +
+        "color:#64748b;";
+
+    private string GetBarStyle(double value)
+    {
+        if (AxisMaximum <= 0)
+        {
+            return "width:0%;height:16px;";
+        }
+
+        var percentage = Math.Clamp(
+            value / AxisMaximum * 100,
+            0,
+            100);
+
+        return FormattableString.Invariant(
+            $"width:{percentage:0.##}%;height:16px;background-color:{BarColor};border-radius:1px;");
+    }
+
+    private IEnumerable<int> GetAxisTicks()
+    {
+        if (AxisStep <= 0 || AxisMaximum <= 0)
+        {
+            yield return 0;
+            yield break;
+        }
+
+        for (var value = 0; value <= AxisMaximum; value += AxisStep)
+        {
+            yield return value;
+        }
+    }
+}
