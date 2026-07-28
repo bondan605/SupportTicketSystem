@@ -58,7 +58,7 @@
 
     [Parameter] public Typo TitleTypo { get; set; } = Typo.h6;
     [Parameter] public string LegendIcon { get; set; } = Icons.Material.Filled.Circle;
-    [Parameter] public int LegendIconSize { get; set; } = 10; // Dikecilkan dari 14 ke 10 agar proporsional
+    [Parameter] public int LegendIconSize { get; set; } = 10;
     [Parameter] public int CardHeight { get; set; } = 280;
 
     private readonly LineChartOptions _chartOptions = new();
@@ -68,8 +68,9 @@
         _chartOptions.ShowLegend = false;
         _chartOptions.ShowDataMarkers = ShowMarkers;
         _chartOptions.LineStrokeWidth = StrokeWidth;
-        _chartOptions.XAxisLabelRotation = 0;
+
         _chartOptions.ChartPalette = Colors;
+        _chartOptions.YAxisTicks = 2;
 
         _chartOptions.SeriesDisplayOverrides = new Dictionary<IChartSeries, SeriesDisplayOverride>();
 

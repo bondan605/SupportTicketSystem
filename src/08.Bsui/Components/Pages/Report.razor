@@ -168,7 +168,6 @@
 
         <MudItem xs="12" lg="4">
             <RecentClosedTickets Items="@ClosedTickets"
-                                 ViewAllUrl="/tickets/closed"
                                  CardHeight="280" />
         </MudItem>
 
@@ -317,26 +316,29 @@
             .ToList();
 
         _months = trendItems
-            .Select(item => item.Date.ToString("dd MMM"))
+            .Select((item, index) =>
+                index % 5 == 0
+                    ? item.Date.ToString("dd MMM")
+                    : string.Empty)
             .ToArray();
 
         _ticketTrendSeries = new List<ChartSeries<double>>
-    {
-        new()
         {
-            Name = "Created",
-            Data = trendItems
-                .Select(item => (double)item.CreatedCount)
-                .ToArray()
-        },
-        new()
-        {
-            Name = "Closed",
-            Data = trendItems
-                .Select(item => (double)item.ClosedCount)
-                .ToArray()
-        }
-    };
+            new()
+            {
+                Name = "Created",
+                Data = trendItems
+                    .Select(item => (double)item.CreatedCount)
+                    .ToArray()
+            },
+            new()
+            {
+                Name = "Closed",
+                Data = trendItems
+                    .Select(item => (double)item.ClosedCount)
+                    .ToArray()
+            }
+        };
     }
 
     private void ApplyAssigneeData(ReportSummaryDto report)
@@ -446,20 +448,22 @@
             .ToList();
 
         _slaMonth = trendItems
-            .Select(item => item.Date.ToString("dd MMM"))
+            .Select((item, index) =>
+                index % 5 == 0
+                    ? item.Date.ToString("dd MMM")
+                    : string.Empty)
             .ToArray();
 
         _slaTrendSeries = new List<ChartSeries<double>>
-    {
-        new()
         {
-            Name = "SLA",
-            Data = trendItems
-                .Select(item =>
-                    (double)item.CumulativeCompliancePercentage)
-                .ToArray()
-        }
-    };
+            new()
+            {
+                Name = "SLA",
+                Data = trendItems
+                    .Select(item => (double)item.CumulativeCompliancePercentage)
+                    .ToArray()
+            }
+        };
     }
 
     private string GetPercentageText(int count)
