@@ -13,7 +13,7 @@ namespace SupportTicketSystem.WebApi.Extensions
                 // Define API Metadata
                 options.SwaggerDoc("v1", new OpenApiInfo
                 {
-                    Title = "Support Ticket Management System API",
+                    Title = "Customer Support Ticket Management API",
                     Version = "v1",
                     Description = "A RESTful API built with .NET 8 for managing support tickets throughout their lifecycle. It enables efficient ticket creation, assignment, tracking, and resolution within a centralized ticket management system."
                 });
