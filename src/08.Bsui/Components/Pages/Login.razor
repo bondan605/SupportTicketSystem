@@ -1,61 +1,128 @@
 @page "/login"
 @layout Layout.AuthLayout
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center mud-width-full" Style="height: 100vh;">
-    <MudCard Elevation="4" Class="pa-6 mud-width-full">
-        <MudCardHeader Class="d-flex justify-center pb-0">
-            <CardHeaderContent>
-                <MudText Typo="Typo.h4" Align="Align.Center" Color="Color.Primary" Class="mb-2">
-                    <b>Obscura</b> Support
+<PageTitle>Sign In - Obscura Support</PageTitle>
+
+<MudGrid Spacing="0" Class="login-shell">
+
+    <!-- Left branding panel: hidden on small screens to keep mobile focused on the form -->
+    <MudItem xs="0" md="6" lg="7" Class="d-none d-md-flex login-brand-panel">
+        <div class="login-brand-content">
+            <MudStack Spacing="6">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                    <MudAvatar Size="Size.Large" Class="login-brand-avatar">
+                        <MudIcon Icon="@Icons.Material.Filled.SupportAgent" Size="Size.Medium" />
+                    </MudAvatar>
+                    <MudText Typo="Typo.h5" Class="font-weight-bold login-brand-title">Obscura Support</MudText>
+                </MudStack>
+
+                <div>
+                    <MudText Typo="Typo.h3" Class="font-weight-bold mb-3 login-brand-title">
+                        Every ticket,<br />tracked and resolved.
+                    </MudText>
+                    <MudText Typo="Typo.body1" Class="login-brand-subtext">
+                        One workspace for your support team to log, assign, and close customer
+                        issues with full visibility for agents and managers alike.
+                    </MudText>
+                </div>
+
+                <MudStack Spacing="4" Class="mt-4">
+                    <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="3">
+                        <MudIcon Icon="@Icons.Material.Filled.Verified" Size="Size.Small" Class="mt-1 login-brand-icon" />
+                        <MudText Typo="Typo.body2" Class="login-brand-subtext">Role-based access for agents and managers</MudText>
+                    </MudStack>
+                    <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="3">
+                        <MudIcon Icon="@Icons.Material.Filled.Insights" Size="Size.Small" Class="mt-1 login-brand-icon" />
+                        <MudText Typo="Typo.body2" Class="login-brand-subtext">Real-time dashboard and workload visibility</MudText>
+                    </MudStack>
+                    <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="3">
+                        <MudIcon Icon="@Icons.Material.Filled.Shield" Size="Size.Small" Class="mt-1 login-brand-icon" />
+                        <MudText Typo="Typo.body2" Class="login-brand-subtext">Enterprise-grade security by default</MudText>
+                    </MudStack>
+                </MudStack>
+            </MudStack>
+
+            <MudText Typo="Typo.caption" Class="login-brand-subtext">
+                &copy; @DateTime.UtcNow.Year Obscura. All rights reserved.
+            </MudText>
+        </div>
+    </MudItem>
+
+    <!-- Right panel: sign-in form -->
+    <MudItem xs="12" md="6" lg="5" Class="d-flex align-center justify-center login-form-panel">
+        <MudContainer MaxWidth="MaxWidth.Small" Class="pa-4">
+            <MudPaper Outlined="true" Elevation="0" Class="pa-6 pa-sm-8 login-card">
+
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1 d-flex d-md-none">
+                    <MudAvatar Size="Size.Medium" Class="login-brand-avatar-mobile">
+                        <MudIcon Icon="@Icons.Material.Filled.SupportAgent" Size="Size.Small" />
+                    </MudAvatar>
+                    <MudText Typo="Typo.h6" Class="font-weight-bold" Color="Color.Primary">Obscura Support</MudText>
+                </MudStack>
+
+                <MudText Typo="Typo.h4" Class="font-weight-bold mb-1">Welcome back</MudText>
+                <MudText Typo="Typo.body2" Class="mb-6 login-muted-text">
+                    Sign in to access your workspace.
                 </MudText>
-                <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">
-                    Sign in to access your workspace
-                </MudText>
-            </CardHeaderContent>
-        </MudCardHeader>
 
-        <form method="post" action="Account/Login">
-            <AntiforgeryToken />
-            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+                <form method="post" action="Account/Login">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="returnUrl" value="@ReturnUrl" />
 
-            <MudCardContent>
-                @if (HasError)
-                {
-                    <MudAlert Severity="MudBlazor.Severity.Error" Class="mb-4">Invalid credentials. Please try again.</MudAlert>
-                }
+                    @if (HasError)
+                    {
+                        <MudAlert Severity="MudBlazor.Severity.Error" Class="mb-4" Dense="true">
+                            Invalid credentials. Please try again.
+                        </MudAlert>
+                    }
 
-                <MudTextField T="string"
-                              Label="Email Address"
-                              Variant="Variant.Outlined"
-                              Margin="Margin.Dense"
-                              Class="mb-4"
-                              Adornment="Adornment.End"
-                              AdornmentIcon="@Icons.Material.Filled.Email"
-                              UserAttributes="@(new Dictionary<string, object?> { ["name"] = "email", ["required"] = true })" />
+                    <MudStack Spacing="4" Class="login-form">
+                        <MudTextField T="string"
+                                      Label="Email Address"
+                                      Variant="Variant.Outlined"
+                                      Margin="Margin.Dense"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.Email"
+                                      UserAttributes="@(new Dictionary<string, object?> { ["name"] = "email", ["required"] = true, ["autocomplete"] = "username" })" />
 
-                <MudTextField T="string"
-                              Label="Password"
-                              Variant="Variant.Outlined"
-                              InputType="InputType.Password"
-                              Margin="Margin.Dense"
-                              Class="mb-4"
-                              Adornment="Adornment.End"
-                              AdornmentIcon="@Icons.Material.Filled.Lock"
-                              UserAttributes="@(new Dictionary<string, object?> { ["name"] = "password", ["required"] = true })" />
-            </MudCardContent>
+                        <MudTextField T="string"
+                                      Label="Password"
+                                      Variant="Variant.Outlined"
+                                      InputType="InputType.Password"
+                                      Margin="Margin.Dense"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.Lock"
+                                      UserAttributes="@(new Dictionary<string, object?> { ["name"] = "password", ["required"] = true, ["autocomplete"] = "current-password" })" />
 
-            <MudCardActions Class="d-flex flex-column px-4 pb-4">
-                <MudButton ButtonType="ButtonType.Submit"
-                           Variant="Variant.Filled"
-                           Color="Color.Primary"
-                           Size="Size.Large"
-                           FullWidth="true">
-                    Sign In
-                </MudButton>
-            </MudCardActions>
-        </form>
-    </MudCard>
-</MudContainer>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-n2">
+                            <MudCheckBox T="bool" Label="Remember me" Color="Color.Primary" Dense="true" />
+                            <MudLink Href="#" Typo="Typo.body2" Class="login-forgot-link">Forgot password?</MudLink>
+                        </MudStack>
+
+                        <MudButton ButtonType="ButtonType.Submit"
+                                   Variant="Variant.Filled"
+                                   Size="Size.Large"
+                                   FullWidth="true"
+                                   Class="py-3 login-submit-btn"
+                                   Style="@($"background:{Colors.Blue.Darken4};")"
+                                   Color="Color.Primary">
+                            Sign In
+                        </MudButton>
+                    </MudStack>
+                </form>
+
+                <MudDivider Class="my-6" />
+
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1">
+                    <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Small" Class="login-muted-text" />
+                    <MudText Typo="Typo.caption" Class="login-muted-text">
+                        Protected by enterprise-grade authentication.
+                    </MudText>
+                </MudStack>
+            </MudPaper>
+        </MudContainer>
+    </MudItem>
+</MudGrid>
 
 @code {
     [SupplyParameterFromQuery(Name = "error")]
@@ -66,3 +133,112 @@
 
     private bool HasError => Error is not null;
 }
+
+<style>
+    /* Login layout is a two-pane shell (brand panel + form panel) that mirrors the
+       navy accent (#1e3a8a) and outlined-panel language used on TicketCreate, so the
+       sign-in experience feels like part of the same enterprise product. */
+    .login-shell {
+        min-height: 100vh;
+        margin: 0;
+        width: 100%;
+    }
+
+    .login-brand-panel {
+        background: linear-gradient(160deg, #1e3a8a 0%, #14285f 60%, #0c1a3d 100%);
+        min-height: 100vh;
+        padding: 4rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .login-brand-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.06) 0, transparent 45%),
+                           radial-gradient(circle at 85% 90%, rgba(255, 255, 255, 0.05) 0, transparent 40%);
+        pointer-events: none;
+    }
+
+    .login-brand-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: calc(100vh - 8rem);
+        position: relative;
+        z-index: 1;
+        width: 100%;
+    }
+
+    /* Hardcoded white/near-white values on purpose: these sit on a custom navy gradient
+       that has nothing to do with the app's theme palette, so MudBlazor's Color.Surface /
+       Color.Secondary tokens (which resolve against theme.Palette, not this gradient)
+       are the wrong tool here and previously produced unreadable text. */
+    .login-brand-title {
+        color: #ffffff;
+    }
+
+    .login-brand-subtext {
+        color: rgba(255, 255, 255, 0.72);
+    }
+
+    .login-brand-icon {
+        color: #ffffff;
+    }
+
+    /* Muted helper text: intentionally NOT Color.Secondary, since that maps to the theme's
+       secondary accent color (brand-specific, can be any hue) rather than muted body text. */
+    .login-muted-text {
+        color: var(--mud-palette-text-secondary, rgba(0, 0, 0, 0.6));
+    }
+
+    .login-brand-avatar {
+        background-color: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .login-brand-avatar-mobile {
+        background-color: #1e3a8a1a;
+        color: #1e3a8a;
+    }
+
+    .login-form-panel {
+        min-height: 100vh;
+        width: 100%;
+        background-color: var(--mud-palette-background);
+    }
+
+    .login-card {
+        border-radius: 12px;
+        border-color: #1e3a8a26;
+    }
+
+    /* Match TicketCreate's editable-field accent so both screens read as one system. */
+    .login-form .mud-input-outlined .mud-input-outlined-border {
+        border-color: #1e3a8a66;
+    }
+
+    .login-form .mud-input-outlined .mud-input-label {
+        color: #1e3a8a;
+    }
+
+    .login-form .mud-input-outlined:hover .mud-input-outlined-border,
+    .login-form .mud-input.mud-input-outlined.mud-focused .mud-input-outlined-border {
+        border-color: #1e3a8a;
+        border-width: 2px;
+    }
+
+    .login-forgot-link {
+        color: #1e3a8a;
+        font-weight: 500;
+    }
+
+    .login-submit-btn {
+        text-transform: none;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        box-shadow: 0 8px 20px -6px #1e3a8a66;
+    }
+</style>
