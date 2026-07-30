@@ -15,6 +15,8 @@
         /// access across all tickets in addition to SupportAgent capabilities.
         /// Assign ticket to an agent
         /// </summary>
-        Manager = 2
+        Manager = 2,
+
+        SuperAdmin = 3
     }
 }
