@@ -1,0 +1,144 @@
+@using System.Text.Json
+
+<MudPaper Outlined="true"
+          Class="pa-4 rounded-lg d-flex flex-column"
+          Style="@($"background-color: var(--mud-palette-surface); border-color: var(--mud-palette-lines-default); width: 100%; height: 100%; min-height: {CardHeight}px; box-sizing: border-box;")">
+
+    <MudStack Row="true"
+              Justify="Justify.SpaceBetween"
+              AlignItems="AlignItems.Center"
+              Class="mb-2"
+              Style="flex-wrap: wrap; row-gap: 6px;">
+
+        <MudText Style="font-weight: 700; font-size: 16px; color: var(--mud-palette-text-primary);">
+            @Title
+        </MudText>
+
+        @if (ShowCustomLegend)
+        {
+            <MudStack Row="true" Spacing="2" Style="flex-wrap: wrap;">
+                @foreach (var item in Series.Select((series, index) => new { series, index }))
+                {
+                    var color = item.index < Colors.Length ? Colors[item.index] : "#4CAF50";
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background-color: @color; flex-shrink: 0;"></div>
+                        <MudText Style="font-size: 11px; color: var(--mud-palette-text-secondary); font-weight: 500;">
+                            @item.series.Name
+                        </MudText>
+                    </MudStack>
+                }
+            </MudStack>
+        }
+    </MudStack>
+
+    <div style="flex-grow: 1; min-height: 0;">
+        @if (HasData)
+        {
+            <EChartWrapper ChartOptionJson="@_optionJson" Height="@_chartHeight" />
+        }
+        else
+        {
+            <div class="d-flex justify-center align-center" style="width: 100%; height: 100%;">
+                <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Default" />
+            </div>
+        }
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public List<ChartSeries<double>> Series { get; set; } = new();
+    [Parameter] public string[] XAxisLabels { get; set; } = Array.Empty<string>();
+    [Parameter] public string[] Colors { get; set; } = Array.Empty<string>();
+
+    [Parameter] public bool ShowCustomLegend { get; set; } = true;
+    [Parameter] public bool ShowMarkers { get; set; } = true;
+    [Parameter] public int StrokeWidth { get; set; } = 3;
+    [Parameter] public int CardHeight { get; set; } = 280;
+
+    /// <summary>
+    /// Whether real data has arrived yet. The chart is only mounted once this is
+    /// true, so its very first ECharts render always carries final data — this
+    /// keeps the entrance animation reliable regardless of when the async report
+    /// load resolves relative to the component's first paint.
+    /// </summary>
+    [Parameter] public bool HasData { get; set; } = true;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    private string _optionJson = "{}";
+    private int _chartHeight;
+
+    protected override void OnParametersSet()
+    {
+        _chartHeight = Math.Max(CardHeight - 70, 140);
+        _optionJson = BuildLineOption();
+    }
+
+    private string BuildLineOption()
+    {
+        var series = Series
+            .Select((s, index) => new
+            {
+                name = s.Name,
+                type = "line",
+                stack = "Total",
+                showSymbol = ShowMarkers,
+                lineStyle = new { width = StrokeWidth },
+                itemStyle = new
+                {
+                    color = index < Colors.Length ? Colors[index] : "#4CAF50"
+                },
+                data = s.Data
+            })
+            .ToArray();
+
+        var option = new
+        {
+            animation = true,
+            animationDuration = 1000,
+            animationEasing = "cubicOut",
+            animationDurationUpdate = 1000,
+            animationEasingUpdate = "cubicOut",
+            tooltip = new
+            {
+                trigger = "axis"
+            },
+            legend = new
+            {
+                show = false
+            },
+            grid = new
+            {
+                left = "3%",
+                right = "4%",
+                bottom = "3%",
+                containLabel = true
+            },
+            toolbox = new
+            {
+                feature = new
+                {
+                    saveAsImage = new { }
+                }
+            },
+            xAxis = new
+            {
+                type = "category",
+                boundaryGap = false,
+                data = XAxisLabels
+            },
+            yAxis = new
+            {
+                type = "value"
+            },
+            series
+        };
+
+        return JsonSerializer.Serialize(option, JsonOptions);
+    }
+}

@@ -1,0 +1,51 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JSRuntime
+
+<div id="@_chartId" style="width: 100%; height: @(Height)px; min-width: 0;"></div>
+
+@code {
+    /// <summary>
+    /// ECharts option object, pre-serialized to JSON by the parent component.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string ChartOptionJson { get; set; } = "{}";
+
+    [Parameter]
+    public int Height { get; set; } = 260;
+
+    private readonly string _chartId = $"echart-{Guid.NewGuid():N}";
+
+    // Tracks the option JSON that was last pushed to JS, so we can tell an
+    // already-applied render apart from one that actually carries new data
+    // (e.g. the async report load completing after the first empty render).
+    private string? _appliedOptionJson;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_appliedOptionJson == ChartOptionJson)
+        {
+            return;
+        }
+
+        // The <div> must exist in the DOM before echarts.init() can bind to it,
+        // so init must happen here rather than in OnInitializedAsync. Every
+        // later render whose option actually changed reuses the existing chart
+        // instance via updateChart, instead of only ever running once.
+        var jsMethod = firstRender ? "echartsInterop.initChart" : "echartsInterop.updateChart";
+        await JSRuntime.InvokeVoidAsync(jsMethod, _chartId, ChartOptionJson);
+
+        _appliedOptionJson = ChartOptionJson;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("echartsInterop.disposeChart", _chartId);
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit already gone (e.g. browser closed/navigated away) — nothing to clean up.
+        }
+    }
+}
