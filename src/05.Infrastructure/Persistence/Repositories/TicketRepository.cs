@@ -102,9 +102,32 @@ namespace SupportTicketSystem.Infrastructure.Repositories
 
             var totalCount = await query.CountAsync();
 
-            var items = await query
-                .OrderByDescending(ticket =>
-                    ticket.UpdatedAt ?? ticket.CreatedAt)
+            IOrderedQueryable<Ticket> orderedQuery;
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var keyword = search.Trim();
+
+                orderedQuery = query
+                    .OrderByDescending(ticket =>
+                        ticket.Title.StartsWith(keyword) ||
+                        (ticket.CustomerName != null &&
+                         ticket.CustomerName.StartsWith(keyword)))
+                    .ThenByDescending(ticket =>
+                        ticket.Title.Contains(keyword) ||
+                        (ticket.CustomerName != null &&
+                         ticket.CustomerName.Contains(keyword)))
+                    .ThenByDescending(ticket =>
+                        ticket.UpdatedAt ?? ticket.CreatedAt);
+            }
+            else
+            {
+                orderedQuery = query
+                    .OrderByDescending(ticket =>
+                        ticket.UpdatedAt ?? ticket.CreatedAt);
+            }
+
+            var items = await orderedQuery
                 .Skip(skip)
                 .Take(pageSize)
                 .ToListAsync();

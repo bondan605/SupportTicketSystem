@@ -310,8 +310,8 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             switch (status)
             {
                 case TicketStatus.Open:
-                    backgroundColor = "#E8F2FF";
-                    textColor = "#1683FF";
+                    backgroundColor = "#FDEBEC";
+                    textColor = "#EF4444";
                     break;
 
                 case TicketStatus.InProgress:
