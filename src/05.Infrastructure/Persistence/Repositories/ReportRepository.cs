@@ -171,6 +171,7 @@ public class ReportRepository : IReportRepository
         var responseMinutes = await _context.Tickets
             .Where(t => t.CreatedAt >= filter.StartDate && t.CreatedAt <= filter.EndDate)
             .Join(firstInProgressByTicket, t => t.Id, h => h.TicketId, (t, h) => new { t.CreatedAt, h.FirstInProgressAt })
+            .Where(i => i.FirstInProgressAt >= i.CreatedAt)
             .Select(x => EF.Functions.DateDiffMinute(x.CreatedAt, x.FirstInProgressAt))
             .ToListAsync();
 

@@ -344,8 +344,6 @@
     private void ApplyAssigneeData(ReportSummaryDto report)
     {
         _assigneeChartData = report.TicketsPerAssignee
-            .OrderByDescending(item => item.Count)
-            .Take(6)
             .Select(item => new AssigneeChartItem(
                 item.AssigneeName,
                 item.Count))
