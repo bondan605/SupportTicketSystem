@@ -1,0 +1,160 @@
+﻿@using SupportTicketSystem.Shared.DTOs.Users
+@using SupportTicketSystem.Domain.Enums
+@using SupportTicketSystem.Client.Features.Interfaces
+@inject IUserClient UserClient
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <div class="d-flex align-center justify-space-between px-2 pt-2">
+            <MudText Typo="Typo.h6" Style="font-weight: 700;">Tambah Pengguna Baru</MudText>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <EditForm Model="@_createUserModel" OnValidSubmit="HandleCreateUser">
+            <DataAnnotationsValidator />
+            
+            <!-- Menggunakan MudGrid dengan Spacing yang pas agar antar input tidak mepet -->
+            <MudGrid Spacing="3" Class="pa-2">
+                
+                <!-- Nama Lengkap (Full Width) -->
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_createUserModel.Name"
+                                  Label="Nama Lengkap"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <!-- Username & Email (Dibagi 2 kolom) -->
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_createUserModel.Username"
+                                  Label="Username"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_createUserModel.Email"
+                                  Label="Email"
+                                  InputType="InputType.Email"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <!-- Password & Role (Dibagi 2 kolom) -->
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_createUserModel.Password"
+                                  Label="Password"
+                                  InputType="InputType.Password"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="UserRole"
+                               @bind-Value="_createUserModel.Role"
+                               Label="Role"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense">
+                        <MudSelectItem Value="UserRole.SupportAgent">Support Agent</MudSelectItem>
+                        <MudSelectItem Value="UserRole.Manager">Manager</MudSelectItem>
+                        <MudSelectItem Value="UserRole.SuperAdmin">Super Admin</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
+                <!-- No. Telepon & Jabatan (Dibagi 2 kolom) -->
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_createUserModel.PhoneNumber"
+                                  Label="No. Telepon"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="_createUserModel.JobTitle"
+                                  Label="Jabatan"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <!-- Tanggal Lahir (Full Width) -->
+                <MudItem xs="12">
+                    <MudDatePicker @bind-Date="_createUserModel.BirthDate"
+                                   Label="Tanggal Lahir"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense" />
+                </MudItem>
+
+                <!-- Alamat (Full Width dengan Multi-line) -->
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_createUserModel.Address"
+                                  Label="Alamat"
+                                  Variant="Variant.Outlined"
+                                  Lines="2"
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+    <DialogActions>
+        <div class="px-3 pb-2 d-flex gap-2">
+            <MudButton OnClick="Cancel"
+                       Variant="Variant.Outlined"
+                       Class="px-4">
+                Batal
+            </MudButton>
+            <MudButton Color="Color.Info"
+                       Variant="Variant.Filled"
+                       OnClick="HandleCreateUser"
+                       Disabled="_isSubmitting"
+                       Class="px-4">
+                @if (_isSubmitting)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Menyimpan...</span>
+                }
+                else
+                {
+                    <span>Simpan Pengguna</span>
+                }
+            </MudButton>
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private bool _isSubmitting = false;
+    private CreateUserRequest _createUserModel = new() { Role = UserRole.SupportAgent };
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task HandleCreateUser()
+    {
+        _isSubmitting = true;
+        try
+        {
+            var response = await UserClient.CreateUserAsync(_createUserModel);
+            if (response?.Success == true)
+            {
+                Snackbar.Add("Pengguna berhasil ditambahkan!", MudBlazor.Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(response?.Message ?? "Gagal menambahkan pengguna.", MudBlazor.Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Terjadi kesalahan: {ex.Message}", MudBlazor.Severity.Error);
+        }
+        finally
+        {
+            _isSubmitting = false;
+        }
+    }
+}

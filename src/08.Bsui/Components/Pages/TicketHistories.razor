@@ -15,7 +15,7 @@
             <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">Riwayat perubahan semua tiket</MudText>
         </div>
         <div class="d-flex gap-3 align-center">
-            <MudDateRangePicker DateRange="_dateRange" DateRangeChanged="OnDateRangeChanged" Margin="Margin.Dense" Variant="Variant.Outlined" Style="@($"background-color:{Colors.Shades.White};")" PlaceholderStart="Start Date" PlaceholderEnd="End Date" Clearable="true" />
+            <MudDateRangePicker DateRange="_dateRange" DateRangeChanged="OnDateRangeChanged" Margin="Margin.Dense" Variant="Variant.Outlined" Style="@($"background-color:{Colors.Shades.White};")" PlaceholderStart="Start Date" PlaceholderEnd="End Date"  />
             
             <MudMenu Label="Export" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Outlined" Margin="Margin.Dense">
                 <MudMenuItem OnClick="DownloadCsv">Export to CSV</MudMenuItem>
@@ -82,16 +82,15 @@
                               AdornmentIcon="@Icons.Material.Filled.Search"
                               Variant="Variant.Outlined"
                               Margin="Margin.Dense"
-                              Clearable="true"
                               Style="@($"background-color:{Colors.Shades.White};")" />
             </div>
 
             <div style="flex: 1 1 160px;">
-                <MudDatePicker Date="_singleFilterDate" DateChanged="@((DateTime? val) => OnSingleDateChanged(val))" Placeholder="Pilih Tanggal" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="@($"background-color:{Colors.Shades.White};")" />
+                <MudDatePicker Date="_singleFilterDate" DateChanged="@((DateTime? val) => OnSingleDateChanged(val))" Placeholder="Pilih Tanggal" Variant="Variant.Outlined" Margin="Margin.Dense"  Style="@($"background-color:{Colors.Shades.White};")" />
             </div>
             
             <div style="flex: 1 1 160px;">
-                <MudSelect T="string" Value="@selectedAction" ValueChanged="@((string? val) => OnActionChanged(val))" Placeholder="Semua Action" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="@($"background-color:{Colors.Shades.White};")">
+                <MudSelect T="string" Value="@selectedAction" ValueChanged="@((string? val) => OnActionChanged(val))" Placeholder="Semua Action" Variant="Variant.Outlined" Margin="Margin.Dense" Style="@($"background-color:{Colors.Shades.White};")">
                     <MudSelectItem Value="@("")">Semua Action</MudSelectItem>
                     <MudSelectItem Value="@("TicketCreated")">Ticket Created</MudSelectItem>
                     <MudSelectItem Value="@("StatusChanged")">Status Changed</MudSelectItem>
@@ -103,7 +102,7 @@
             </div>
 
             <div style="flex: 1 1 160px;">
-                <MudSelect T="Guid?" Value="@selectedUserId" ValueChanged="@((Guid? val) => OnUserChanged(val))" Placeholder="Semua User" Variant="Variant.Outlined" Margin="Margin.Dense" Clearable="true" Style="@($"background-color:{Colors.Shades.White};")">
+                <MudSelect T="Guid?" Value="@selectedUserId" ValueChanged="@((Guid? val) => OnUserChanged(val))" Placeholder="Semua User" Variant="Variant.Outlined" Margin="Margin.Dense" Style="@($"background-color:{Colors.Shades.White};")">
                     <MudSelectItem Value="@((Guid?)null)">Semua User</MudSelectItem>
                     @foreach (var user in availableUsers)
                     {
@@ -130,7 +129,7 @@
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="ID History">
-                <MudText Typo="Typo.body2" Color="Color.Primary" Style="font-weight: 500;">
+                <MudText Typo="Typo.body2" Color="Color.Info" Style="font-weight: 500;">
                     @GetFormattedHistoryNumber(context, histories.IndexOf(context))
                 </MudText>
             </MudTd>
@@ -207,9 +206,9 @@
                 </MudText>
 
                 <div class="d-flex align-center gap-4">
-                    <MudPagination Count="@GetPageCount()" Selected="@(_currentPage + 1)" SelectedChanged="OnPageSelected" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary" />
+                    <MudPagination Count="@GetPageCount()" Selected="@(_currentPage + 1)" SelectedChanged="OnPageSelected" Size="Size.Small" Rectangular="true" Variant="Variant.Filled" Color="Color.Info" />
 
-                    <div style="width: 130px;">
+                    <div>
                         <MudSelect T="int" Value="@_pageSize" ValueChanged="OnPageSizeChanged" Margin="Margin.Dense" Variant="Variant.Outlined" Dense="true">
                             <MudSelectItem Value="10">10 /halaman</MudSelectItem>
                             <MudSelectItem Value="25">25 /halaman</MudSelectItem>

@@ -31,7 +31,11 @@ namespace SupportTicketSystem.WebApi.Controllers
 
         // Managers see every ticket's history; any other role only sees history for tickets
         // they created or are assigned to.
-        private Guid? GetScopedToUserId() => User.GetRole() == "Manager" ? null : User.GetUserId();
+        private Guid? GetScopedToUserId()
+        {
+            var role = User.GetRole();
+            return (role == "Manager" || role == "SuperAdmin") ? null : User.GetUserId();
+        }
 
         /// <summary>Agent Id -> Name, used to resolve AssigneeChanged's raw Guid Old/NewValue
         /// into a readable name for CSV/PDF exports (the UI resolves this client-side; exports

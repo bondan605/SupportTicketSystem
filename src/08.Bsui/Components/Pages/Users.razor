@@ -1,0 +1,492 @@
+﻿@page "/user"
+@using MudBlazor
+@using SupportTicketSystem.Shared.DTOs.Users
+@using SupportTicketSystem.Domain.Enums
+@using SupportTicketSystem.Shared.Models
+@using SupportTicketSystem.Client.Features.Interfaces
+@inject IUserClient UserClient
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudStack Row="true"
+          Justify="Justify.SpaceBetween"
+          AlignItems="AlignItems.Center"
+          Class="pt-4 pl-6 pr-6">
+
+    @* Bagian kiri *@
+    <MudStack Spacing="0">
+        <MudText Typo="Typo.h5" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 700;")">Users</MudText>
+        <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">Kelola penggunaan sistem</MudText>
+    </MudStack>
+
+    @* Bagian kanan *@
+    <MudStack Row="true"
+              AlignItems="AlignItems.Center"
+              Spacing="4">
+
+        <MudButton Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.PersonAdd"
+                   OnClick="OpenCreateUserDialog"
+                   Class="px-4 py-2 rounded-lg blue darken-1 text-white">
+            Tambah User
+        </MudButton>
+
+        <ProfileMenu />
+
+    </MudStack>
+</MudStack>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="py-8 px-4">
+
+    <!-- Statistik Cards -->
+    <MudGrid Class="mb-6">
+        <!-- Total Pengguna -->
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="0" Outlined="true" Class="pa-4 d-flex align-center gap-4 rounded-lg">
+                <MudAvatar Size="Size.Large" Variant="Variant.Filled" Class="rounded-lg blue darken-1 text-white">
+                    <MudIcon Icon="@Icons.Material.Filled.Group" Size="Size.Medium" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1}; font-weight: 500;")">Total Pengguna</MudText>
+                    <MudText Typo="Typo.h6" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 700;")">@_totalUsersCount</MudText>
+                    <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">Semua pengguna</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Pengguna Aktif -->
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="0" Outlined="true" Class="pa-4 d-flex align-center gap-4 rounded-lg">
+                <MudAvatar Size="Size.Large" Variant="Variant.Filled" Class="rounded-lg green darken-1 text-white">
+                    <MudIcon Icon="@Icons.Material.Filled.PermIdentity" Size="Size.Medium" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1}; font-weight: 500;")">Active Users</MudText>
+                    <MudText Typo="Typo.h6" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 700;")">@_activeUsersCount</MudText>
+                    <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">@GetActivePercentage()% dari total</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Pengguna Non-Aktif -->
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="0" Outlined="true" Class="pa-4 d-flex align-center gap-4 rounded-lg">
+                <MudAvatar Size="Size.Large" Variant="Variant.Filled" Class="rounded-lg yellow darken-3 text-white">
+                    <MudIcon Icon="@Icons.Material.Filled.ManageAccounts" Size="Size.Medium" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1}; font-weight: 500;")">Inactive Users</MudText>
+                    <MudText Typo="Typo.h6" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 700;")">@_inactiveUsersCount</MudText>
+                    <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">@GetInactivePercentage()% dari total</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Jenis Role -->
+        <MudItem xs="12" sm="6" md="3">
+            <MudPaper Elevation="0" Outlined="true" Class="pa-4 d-flex align-center gap-4 rounded-lg">
+                <MudAvatar Size="Size.Large" Color="Color.Primary" Variant="Variant.Filled" Class="rounded-lg">
+                    <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Size="Size.Medium" />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1}; font-weight: 500;")">Role</MudText>
+                    <MudText Typo="Typo.h6" Style="@($"color:{Colors.BlueGray.Darken4}; font-weight: 700;")">@_roleTypesCount</MudText>
+                    <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">Jenis Peran</MudText>
+                </div>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Filter Section -->
+    <MudPaper Elevation="0" Outlined="true" Class="pa-4 mb-6 rounded-lg">
+        <div class="d-flex flex-wrap align-center gap-3">
+            <div class="flex-grow-1" style="min-width: 220px;">
+                <MudTextField T="string"
+                              Value="@_searchString"
+                              ValueChanged="@(async (string val) => { _searchString = val; await OnFilterChanged(); })"
+                              Immediate="true"
+                              Placeholder="Cari nama, email, username..."
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              />
+            </div>
+
+            <div style="min-width: 160px;">
+                <MudSelect T="UserRole?"
+                           Value="@_selectedRole"
+                           ValueChanged="@(async (UserRole? val) => { _selectedRole = val; await OnFilterChanged(); })"
+                           Placeholder="Semua Role"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           >
+                    <MudSelectItem Value="@((UserRole?)null)">Semua Role</MudSelectItem>
+                    <MudSelectItem Value="@((UserRole?)UserRole.SuperAdmin)">Super Admin</MudSelectItem>
+                    <MudSelectItem Value="@((UserRole?)UserRole.Manager)">Manager</MudSelectItem>
+                    <MudSelectItem Value="@((UserRole?)UserRole.SupportAgent)">Support Agent</MudSelectItem>
+                </MudSelect>
+            </div>
+
+            <div style="min-width: 150px;">
+                <MudSelect T="bool?"
+                           Value="@_selectedStatus"
+                           ValueChanged="@(async (bool? val) => { _selectedStatus = val; await OnFilterChanged(); })"
+                           Placeholder="Semua Status"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense"
+                           >
+                    <MudSelectItem Value="@((bool?)null)">Semua Status</MudSelectItem>
+                    <MudSelectItem Value="@((bool?)true)">Aktif</MudSelectItem>
+                    <MudSelectItem Value="@((bool?)false)">Non-Aktif</MudSelectItem>
+                </MudSelect>
+            </div>
+
+            <div style="min-width: 220px;">
+                <MudDatePicker Date="_selectedDate"
+                               DateChanged="@(async (DateTime? val) => { _selectedDate = val; await OnFilterChanged(); })"
+                               Placeholder="Tanggal Dibuat"
+                               Variant="Variant.Outlined"
+                               Margin="Margin.Dense"
+                                />
+            </div>
+
+            <MudButton Variant="Variant.Outlined"
+                       Style="@($"color:{Colors.Gray.Darken2}; text-transform: none;")"
+                       StartIcon="@Icons.Material.Filled.Refresh"
+                       OnClick="ResetFilter">
+                Reset
+            </MudButton>
+        </div>
+    </MudPaper>
+
+    <!-- Table Section -->
+    <MudPaper Elevation="0" Outlined="true" Class="rounded-lg">
+        <MudTable Items="@_pagedUsers" Loading="@_isLoading" Hover="true" Striped="true" Elevation="0">
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Nama</MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh>Role</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Tanggal Dibuat</MudTh>
+                <MudTh Style="text-align: center;">Aksi</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="ID">
+                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};font-weight: 500;")">
+                        @GetFormattedHistoryNumber(context, _pagedUsers.IndexOf(context))
+                    </MudText>
+                </MudTd>
+                <MudTd DataLabel="Nama">
+                    <div class="d-flex align-center gap-3">
+                        <MudAvatar Color="@GetAvatarColor(context.Name)" Variant="Variant.Filled" Size="Size.Medium">
+                            @GetInitials(context.Name)
+                        </MudAvatar>
+                        <div>
+                            <MudText Typo="Typo.body2" Class="fw-bold">@context.Name</MudText>
+                        </div>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Email">
+                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">@context.Email</MudText>
+                </MudTd>
+                <MudTd DataLabel="Role">
+                    <MudChip T="string" Size="Size.Small" Color="@GetRoleColor(context.Role)" Variant="Variant.Filled">
+                        @context.Role.ToString()
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Status">
+                    <MudChip T="string" Size="Size.Small" Color="@(context.Status? Color.Success: Color.Error)" Variant="Variant.Text">
+                        @(context.Status ? "Active" : "Inactive")
+                    </MudChip>
+                </MudTd>
+                <MudTd DataLabel="Tanggal Dibuat">
+                    <MudText Typo="Typo.body2">@context.TanggalDibuat.ToLocalTime().ToString("dd MMM yyyy")</MudText>
+                </MudTd>
+                <MudTd DataLabel="Aksi" Style="text-align: center;">
+                    <MudTooltip Text="Lihat Detail">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Info" Size="Size.Small" OnClick="@(() => OpenUserDetailDrawer(context.UserId))" />
+                    </MudTooltip>
+                    <MudTooltip Text="Edit Pengguna">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" OnClick="@(() => OpenEditUserDialog(context))" />
+                    </MudTooltip>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Align="Align.Center" Class="py-6" Color="Color.Secondary">Tidak ada data pengguna ditemukan.</MudText>
+            </NoRecordsContent>
+            <LoadingContent>
+                <MudText Align="Align.Center" Class="py-6">Memuat data pengguna...</MudText>
+            </LoadingContent>
+            <PagerContent>
+                <div class="d-flex align-center justify-space-between px-4 py-1" Style="border-top: 1px solid var(--mud-palette-lines-default);">
+                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken2};")">
+                        Menampilkan @GetFirstItemIndex() - @GetLastItemIndex() dari @_totalItems pengguna
+                    </MudText>
+                    <div class="d-flex align-center gap-4">
+                        <MudPagination Rectangular="true" Variant="Variant.Filled" Size="Size.Small" Count="@GetPageCount()" Selected="@(_currentPage + 1)" SelectedChanged="OnPageSelected" Class="my-4" Color="Color.Info" />
+                        <div>
+                            <MudSelect T="int" Value="@_pageSize" ValueChanged="OnPageSizeChanged" Margin="Margin.Dense" Variant="Variant.Outlined" Dense="true">
+                                <MudSelectItem Value="10">10 /halaman</MudSelectItem>
+                                <MudSelectItem Value="25">25 /halaman</MudSelectItem>
+                                <MudSelectItem Value="50">50 /halaman</MudSelectItem>
+                            </MudSelect>
+                        </div>
+                    </div>
+                </div>
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
+
+<!-- Drawer Detail User -->
+<UserDetailDrawer @bind-IsOpen="_isDetailDrawerOpen" UserDetail="_selectedUserDetail" IsLoading="_isLoadingDetail" />
+
+@code {
+    private List<UserResponseDto> _pagedUsers = new();
+    private bool _isLoading = true;
+
+    // Custom Pagination States
+    private int _currentPage = 0;
+    private int _pageSize = 10;
+    private int _totalItems = 0;
+
+    // Statistik & Data Cache
+    private int _totalUsersCount = 0;
+    private int _activeUsersCount = 0;
+    private int _inactiveUsersCount = 0;
+    private int _roleTypesCount => Enum.GetValues<UserRole>().Length;
+
+    // Filter Controls
+    private string? _searchString;
+    private UserRole? _selectedRole;
+    private bool? _selectedStatus;
+    private DateTime? _selectedDate;
+
+    // Drawer State
+    private bool _isDetailDrawerOpen = false;
+    private bool _isLoadingDetail = false;
+    private UserResponseDto? _selectedUserDetail;
+
+    private string GetFormattedHistoryNumber(UserResponseDto context, int index)
+    {
+        int sequenceNumber = (_currentPage * _pageSize) + index + 1;
+        return $"USR-{sequenceNumber:D4}";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStatisticsAsync();
+        await LoadDataAsync();
+    }
+
+    private async Task LoadStatisticsAsync()
+    {
+        try
+        {
+            var response = await UserClient.GetAllUsersDetailAsync(new PagedRequest { PageNumber = 1, PageSize = int.MaxValue });
+            if (response?.Success == true && response.Data?.Items != null)
+            {
+                var allItems = response.Data.Items.ToList();
+                _totalUsersCount = allItems.Count;
+                _activeUsersCount = allItems.Count(u => u.Status);
+                _inactiveUsersCount = allItems.Count(u => !u.Status);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Gagal memuat statistik: {ex.Message}", MudBlazor.Severity.Error);
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            var request = new PagedRequest
+            {
+                PageNumber = _currentPage + 1,
+                PageSize = _pageSize
+            };
+
+            var response = await UserClient.GetAllUsersDetailAsync(
+                request,
+                searchString: _searchString,
+                role: _selectedRole,
+                status: _selectedStatus,
+                startDate: _selectedDate,
+                endDate: _selectedDate
+            );
+
+            if (response?.Success == true && response.Data != null)
+            {
+                _pagedUsers = response.Data.Items.ToList();
+                _totalItems = response.Data.TotalCount;
+            }
+            else
+            {
+                Snackbar.Add(response?.Message ?? "Gagal memuat data pengguna.", MudBlazor.Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Terjadi kesalahan: {ex.Message}", MudBlazor.Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnFilterChanged()
+    {
+        _currentPage = 0; // Reset ke halaman pertama saat filter berubah
+        await LoadDataAsync();
+    }
+
+    private async Task ResetFilter()
+    {
+        _searchString = null;
+        _selectedRole = null;
+        _selectedStatus = null;
+        _selectedDate = null;
+        
+        await OnFilterChanged();
+    }
+
+    // Pagination Helpers
+    private async Task OnPageSelected(int page)
+    {
+        _currentPage = page - 1;
+        await LoadDataAsync();
+    }
+
+    private async Task OnPageSizeChanged(int size)
+    {
+        _pageSize = size;
+        _currentPage = 0;
+        await LoadDataAsync();
+    }
+
+    private int GetPageCount() => _totalItems == 0 ? 1 : (int)Math.Ceiling((double)_totalItems / _pageSize);
+    private int GetFirstItemIndex() => _totalItems == 0 ? 0 : (_currentPage * _pageSize) + 1;
+    private int GetLastItemIndex() => Math.Min((_currentPage + 1) * _pageSize, _totalItems);
+
+    private double GetActivePercentage()
+    {
+        if (_totalUsersCount == 0) return 0;
+        return Math.Round((double)_activeUsersCount / _totalUsersCount * 100, 1);
+    }
+
+    private double GetInactivePercentage()
+    {
+        if (_totalUsersCount == 0) return 0;
+        return Math.Round((double)_inactiveUsersCount / _totalUsersCount * 100, 1);
+    }
+
+    private async Task OpenCreateUserDialog()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<CreateUserDialog>("Tambah Pengguna Baru", options);
+        var result = await dialog.Result;
+
+        if (result?.Canceled == false)
+        {
+            await LoadStatisticsAsync();
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task OpenEditUserDialog(UserResponseDto user)
+    {
+        var parameters = new DialogParameters<UpdateUserDialog>
+        {
+            { x => x.UserId, user.UserId },
+            { x => x.InitialModel, new UpdateUserRequest
+                {
+                    Name = user.Name,
+                    Role = user.Role,
+                    PhoneNumber = user.PhoneNumber,
+                    BirthDate = user.BirthDate,
+                    JobTitle = user.JobTitle,
+                    Address = user.Address,
+                    Status = user.Status
+                }
+            }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<UpdateUserDialog>("Edit Pengguna", parameters, options);
+        var result = await dialog.Result;
+
+        if (result?.Canceled == false)
+        {
+            await LoadStatisticsAsync();
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task OpenUserDetailDrawer(Guid userId)
+    {
+        _selectedUserDetail = null;
+        _isDetailDrawerOpen = true;
+        _isLoadingDetail = true;
+
+        try
+        {
+            var response = await UserClient.GetUserDetailByIdAsync(userId);
+            if (response?.Success == true && response.Data != null)
+            {
+                _selectedUserDetail = response.Data;
+            }
+            else
+            {
+                Snackbar.Add(response?.Message ?? "Gagal mengambil detail pengguna.", MudBlazor.Severity.Error);
+                _isDetailDrawerOpen = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Terjadi kesalahan: {ex.Message}", MudBlazor.Severity.Error);
+            _isDetailDrawerOpen = false;
+        }
+        finally
+        {
+            _isLoadingDetail = false;
+        }
+    }
+
+    private Color GetRoleColor(UserRole role) => role switch
+    {
+        UserRole.SuperAdmin => Color.Info,
+        UserRole.Manager => Color.Primary,
+        UserRole.SupportAgent => Color.Success,
+        _ => Color.Default
+    };
+
+    private Color GetAvatarColor(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return Color.Default;
+        var firstChar = name.ToUpper()[0];
+        return firstChar switch
+        {
+            >= 'A' and <= 'F' => Color.Info,
+            >= 'G' and <= 'L' => Color.Primary,
+            >= 'M' and <= 'R' => Color.Warning,
+            >= 'S' and <= 'Z' => Color.Success,
+            _ => Color.Default
+        };
+    }
+
+    private string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "US";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2 ? $"{parts[0][0]}{parts[1][0]}".ToUpper() : parts[0][0].ToString().ToUpper();
+    }
+}

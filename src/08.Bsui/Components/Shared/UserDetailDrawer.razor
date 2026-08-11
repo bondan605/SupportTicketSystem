@@ -1,0 +1,112 @@
+﻿@using SupportTicketSystem.Shared.DTOs.Users
+@using SupportTicketSystem.Domain.Enums
+
+<MudDrawer @bind-Open="IsOpen" Anchor="Anchor.End" Elevation="2" Variant="DrawerVariant.Temporary" Width="420px">
+    <div class="d-flex align-center justify-space-between pa-4 border-bottom">
+        <MudText Typo="Typo.h6" Class="fw-bold">Detail Pengguna</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="CloseDrawer" />
+    </div>
+
+    @if (UserDetail != null)
+    {
+        <div class="pa-6 d-flex flex-column gap-4">
+            <div class="d-flex align-center gap-4">
+                <MudAvatar Size="Size.Large" Color="@GetAvatarColor(UserDetail.Name)" Variant="Variant.Filled">
+                    @GetInitials(UserDetail.Name)
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.subtitle1" Class="fw-bold">@UserDetail.Name</MudText>
+                    <MudText Typo="Typo.body2" Style="@($"color:{Colors.Gray.Darken1};")">@UserDetail.Username</MudText>
+                    <MudChip T="string" Size="Size.Small" Color="@GetRoleColor(UserDetail.Role)" Class="mt-1">
+                        @UserDetail.Role.ToString()
+                    </MudChip>
+                </div>
+            </div>
+
+            <MudDivider Class="my-2" />
+
+            <div class="d-flex flex-column gap-3">
+                <div>
+                    <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">Email</MudText>
+                    <MudText Typo="Typo.body2" Class="fw-bold">@UserDetail.Email</MudText>
+                </div>
+                <div>
+                    <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">Jabatan</MudText>
+                    <MudText Typo="Typo.body2">@(string.IsNullOrEmpty(UserDetail.JobTitle) ? "-" : UserDetail.JobTitle)</MudText>
+                </div>
+                <div>
+                    <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">No. Telepon</MudText>
+                    <MudText Typo="Typo.body2">@(string.IsNullOrEmpty(UserDetail.PhoneNumber) ? "-" : UserDetail.PhoneNumber)</MudText>
+                </div>
+                <div>
+                    <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">Tanggal Lahir</MudText>
+                    <MudText Typo="Typo.body2">@(UserDetail.BirthDate.HasValue? UserDetail.BirthDate.Value.ToString("dd MMMM yyyy") : "-")</MudText>
+                </div>
+                <div>
+                    <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">Alamat</MudText>
+                    <MudText Typo="Typo.body2">@(string.IsNullOrEmpty(UserDetail.Address) ? "-" : UserDetail.Address)</MudText>
+                </div>
+                <div>
+                    <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">Status Akun</MudText>
+                    <div>
+                        <MudChip T="string" Size="Size.Small" Color="@(UserDetail.Status? Color.Success: Color.Default)">
+                            @(UserDetail.Status ? "Aktif" : "Non-Aktif")
+                        </MudChip>
+                    </div>
+                </div>
+                <div>
+                    <MudText Typo="Typo.caption" Style="@($"color:{Colors.Gray.Darken1};")">Tanggal Terdaftar</MudText>
+                    <MudText Typo="Typo.body2">@UserDetail.TanggalDibuat.ToLocalTime().ToString("dd MMMM yyyy HH:mm")</MudText>
+                </div>
+            </div>
+        </div>
+    }
+    else if (IsLoading)
+    {
+        <div class="d-flex justify-center align-center py-12">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        </div>
+    }
+</MudDrawer>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public UserResponseDto? UserDetail { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+
+    private async Task CloseDrawer()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    private Color GetRoleColor(UserRole role) => role switch
+    {
+        UserRole.SuperAdmin => Color.Error,
+        UserRole.Manager => Color.Warning,
+        UserRole.SupportAgent => Color.Primary,
+        _ => Color.Default
+    };
+    
+    private Color GetAvatarColor(string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return Color.Default;
+        var firstChar = name.ToUpper()[0];
+        return firstChar switch
+        {
+            >= 'A' and <= 'F' => Color.Info,
+            >= 'G' and <= 'L' => Color.Primary,
+            >= 'M' and <= 'R' => Color.Warning,
+            >= 'S' and <= 'Z' => Color.Success,
+            _ => Color.Default
+        };
+    }
+
+    private string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "US";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2 ? $"{parts[0][0]}{parts[1][0]}".ToUpper() : parts[0][0].ToString().ToUpper();
+    }
+}

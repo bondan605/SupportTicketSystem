@@ -75,6 +75,20 @@ namespace SupportTicketSystem.Infrastructure.Persistence.Configurations
             {
                 new User
                 {
+                    Id = Guid.Parse("99999999-9999-9999-9999-999999999999"),
+                    Name = "Super Admin",
+                    Username = "superadmin",
+                    Email = "superadmin@company.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Demo@123"),
+                    Role = UserRole.SuperAdmin,
+                    PhoneNumber = "0812-3456-7890",
+                    JobTitle = "Administrator",
+                    Address = "Jl. Jenderal Sudirman No. 10, Jakarta Pusat, DKI Jakarta",
+                    IsActive = true,
+                    CreatedAt = seedDate,
+                },
+                new User
+                {
                     Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
                     Name = "Admin User",
                     Username = "admin",
