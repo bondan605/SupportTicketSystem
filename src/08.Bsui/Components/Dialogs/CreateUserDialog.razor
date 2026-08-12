@@ -14,48 +14,80 @@
         <EditForm Model="@_createUserModel" OnValidSubmit="HandleCreateUser">
             <DataAnnotationsValidator />
             
-            <!-- Menggunakan MudGrid dengan Spacing yang pas agar antar input tidak mepet -->
             <MudGrid Spacing="3" Class="pa-2">
                 
-                <!-- Nama Lengkap (Full Width) -->
+                <!-- Nama Lengkap -->
                 <MudItem xs="12">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Nama Lengkap <span style="color: var(--mud-palette-error);">*</span>
+                    </MudText>
                     <MudTextField @bind-Value="_createUserModel.Name"
-                                  Label="Nama Lengkap"
+                                  For="@(() => _createUserModel.Name)"
+                                  Placeholder="Masukkan nama lengkap"
                                   Variant="Variant.Outlined"
-                                  Required="true"
                                   Margin="Margin.Dense" />
                 </MudItem>
 
-                <!-- Username & Email (Dibagi 2 kolom) -->
+                <!-- Username -->
                 <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Username <span style="color: var(--mud-palette-error);">*</span>
+                    </MudText>
                     <MudTextField @bind-Value="_createUserModel.Username"
-                                  Label="Username"
+                                  For="@(() => _createUserModel.Username)"
+                                  Placeholder="Masukkan username"
                                   Variant="Variant.Outlined"
-                                  Required="true"
                                   Margin="Margin.Dense" />
                 </MudItem>
+
+                <!-- Email -->
                 <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Email <span style="color: var(--mud-palette-error);">*</span>
+                    </MudText>
                     <MudTextField @bind-Value="_createUserModel.Email"
-                                  Label="Email"
+                                  For="@(() => _createUserModel.Email)"
+                                  Placeholder="Masukkan alamat email"
                                   InputType="InputType.Email"
                                   Variant="Variant.Outlined"
-                                  Required="true"
                                   Margin="Margin.Dense" />
                 </MudItem>
 
-                <!-- Password & Role (Dibagi 2 kolom) -->
+                <!-- Password -->
                 <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Password <span style="color: var(--mud-palette-error);">*</span>
+                    </MudText>
                     <MudTextField @bind-Value="_createUserModel.Password"
-                                  Label="Password"
+                                  For="@(() => _createUserModel.Password)"
+                                  Placeholder="Masukkan password"
                                   InputType="InputType.Password"
                                   Variant="Variant.Outlined"
-                                  Required="true"
                                   Margin="Margin.Dense" />
                 </MudItem>
+
+                <!-- Konfirmasi Password -->
                 <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Konfirmasi Password <span style="color: var(--mud-palette-error);">*</span>
+                    </MudText>
+                    <MudTextField @bind-Value="_createUserModel.ConfirmPassword"
+                                  For="@(() => _createUserModel.ConfirmPassword)"
+                                  Placeholder="Ketik ulang password"
+                                  InputType="InputType.Password"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <!-- Role -->
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Role (Peran) <span style="color: var(--mud-palette-error);">*</span>
+                    </MudText>
                     <MudSelect T="UserRole"
                                @bind-Value="_createUserModel.Role"
-                               Label="Role"
+                               For="@(() => _createUserModel.Role)"
+                               Placeholder="Pilih role"
                                Variant="Variant.Outlined"
                                Margin="Margin.Dense">
                         <MudSelectItem Value="UserRole.SupportAgent">Support Agent</MudSelectItem>
@@ -64,64 +96,73 @@
                     </MudSelect>
                 </MudItem>
 
-                <!-- No. Telepon & Jabatan (Dibagi 2 kolom) -->
+                <!-- No. Telepon -->
                 <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        No. Telepon
+                    </MudText>
                     <MudTextField @bind-Value="_createUserModel.PhoneNumber"
-                                  Label="No. Telepon"
-                                  Variant="Variant.Outlined"
-                                  Margin="Margin.Dense" />
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_createUserModel.JobTitle"
-                                  Label="Jabatan"
+                                  For="@(() => _createUserModel.PhoneNumber)"
+                                  Placeholder="Masukkan nomor telepon"
                                   Variant="Variant.Outlined"
                                   Margin="Margin.Dense" />
                 </MudItem>
 
-                <!-- Tanggal Lahir (Full Width) -->
-                <MudItem xs="12">
+                <!-- Jabatan -->
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Jabatan
+                    </MudText>
+                    <MudTextField @bind-Value="_createUserModel.JobTitle"
+                                  For="@(() => _createUserModel.JobTitle)"
+                                  Placeholder="Masukkan jabatan"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <!-- Tanggal Lahir -->
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Tanggal Lahir
+                    </MudText>
                     <MudDatePicker @bind-Date="_createUserModel.BirthDate"
-                                   Label="Tanggal Lahir"
+                                   For="@(() => _createUserModel.BirthDate)"
+                                   Placeholder="Pilih tanggal lahir"
                                    Variant="Variant.Outlined"
                                    Margin="Margin.Dense" />
                 </MudItem>
 
-                <!-- Alamat (Full Width dengan Multi-line) -->
+                <!-- Alamat -->
                 <MudItem xs="12">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Alamat
+                    </MudText>
                     <MudTextField @bind-Value="_createUserModel.Address"
-                                  Label="Alamat"
+                                  For="@(() => _createUserModel.Address)"
+                                  Placeholder="Masukkan alamat lengkap"
                                   Variant="Variant.Outlined"
                                   Lines="2"
                                   Margin="Margin.Dense" />
                 </MudItem>
 
             </MudGrid>
+
+            <div class="px-5 pb-4 pt-2 d-flex justify-end gap-2">
+                <MudButton OnClick="Cancel" Variant="Variant.Outlined" Class="px-4">Batal</MudButton>
+                <MudButton Color="Color.Info" ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isSubmitting" Class="px-4">
+                    @if (_isSubmitting)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>Menyimpan...</span>
+                    }
+                    else
+                    {
+                        <span>Simpan Pengguna</span>
+                    }
+                </MudButton>
+            </div>
         </EditForm>
     </DialogContent>
-    <DialogActions>
-        <div class="px-3 pb-2 d-flex gap-2">
-            <MudButton OnClick="Cancel"
-                       Variant="Variant.Outlined"
-                       Class="px-4">
-                Batal
-            </MudButton>
-            <MudButton Color="Color.Info"
-                       Variant="Variant.Filled"
-                       OnClick="HandleCreateUser"
-                       Disabled="_isSubmitting"
-                       Class="px-4">
-                @if (_isSubmitting)
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                    <span>Menyimpan...</span>
-                }
-                else
-                {
-                    <span>Simpan Pengguna</span>
-                }
-            </MudButton>
-        </div>
-    </DialogActions>
 </MudDialog>
 
 @code {

@@ -14,23 +14,29 @@
         <EditForm Model="@_updateUserModel" OnValidSubmit="HandleUpdateUser">
             <DataAnnotationsValidator />
             
-            <!-- Menggunakan MudGrid dengan Spacing="3" agar rapi dan tidak bertumpuk -->
             <MudGrid Spacing="3" Class="pa-2">
                 
-                <!-- Nama Lengkap (Full Width) -->
+                <!-- Nama Lengkap -->
                 <MudItem xs="12">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Nama Lengkap <span style="color: var(--mud-palette-error);">*</span>
+                    </MudText>
                     <MudTextField @bind-Value="_updateUserModel.Name"
-                                  Label="Nama Lengkap"
+                                  For="@(() => _updateUserModel.Name)"
+                                  Placeholder="Masukkan nama lengkap"
                                   Variant="Variant.Outlined"
-                                  Required="true"
                                   Margin="Margin.Dense" />
                 </MudItem>
 
-                <!-- Role & Status (Dibagi 2 kolom) -->
+                <!-- Role -->
                 <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Role (Peran) <span style="color: var(--mud-palette-error);">*</span>
+                    </MudText>
                     <MudSelect T="UserRole"
                                @bind-Value="_updateUserModel.Role"
-                               Label="Role"
+                               For="@(() => _updateUserModel.Role)"
+                               Placeholder="Pilih role"
                                Variant="Variant.Outlined"
                                Margin="Margin.Dense">
                         <MudSelectItem Value="UserRole.SupportAgent">Support Agent</MudSelectItem>
@@ -38,71 +44,82 @@
                         <MudSelectItem Value="UserRole.SuperAdmin">Super Admin</MudSelectItem>
                     </MudSelect>
                 </MudItem>
-                <MudItem xs="12" sm="6" Class="d-flex align-center pt-3">
+
+                <!-- Status -->
+                <MudItem xs="12" sm="6" Class="d-flex align-center pt-5">
                     <MudSwitch T="bool"
                                @bind-Value="_updateUserModel.Status"
                                Color="Color.Success"
                                Label="@(_updateUserModel.Status ? "Status: Aktif" : "Status: Non-Aktif")" />
                 </MudItem>
 
-                <!-- No. Telepon & Jabatan (Dibagi 2 kolom) -->
+                <!-- No. Telepon -->
                 <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        No. Telepon
+                    </MudText>
                     <MudTextField @bind-Value="_updateUserModel.PhoneNumber"
-                                  Label="No. Telepon"
-                                  Variant="Variant.Outlined"
-                                  Margin="Margin.Dense" />
-                </MudItem>
-                <MudItem xs="12" sm="6">
-                    <MudTextField @bind-Value="_updateUserModel.JobTitle"
-                                  Label="Jabatan"
+                                  For="@(() => _updateUserModel.PhoneNumber)"
+                                  Placeholder="Masukkan nomor telepon"
                                   Variant="Variant.Outlined"
                                   Margin="Margin.Dense" />
                 </MudItem>
 
-                <!-- Tanggal Lahir (Full Width) -->
-                <MudItem xs="12">
+                <!-- Jabatan -->
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Jabatan
+                    </MudText>
+                    <MudTextField @bind-Value="_updateUserModel.JobTitle"
+                                  For="@(() => _updateUserModel.JobTitle)"
+                                  Placeholder="Masukkan jabatan"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense" />
+                </MudItem>
+
+                <!-- Tanggal Lahir -->
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Tanggal Lahir
+                    </MudText>
                     <MudDatePicker @bind-Date="_updateUserModel.BirthDate"
-                                   Label="Tanggal Lahir"
+                                   For="@(() => _updateUserModel.BirthDate)"
+                                   Placeholder="Pilih tanggal lahir"
                                    Variant="Variant.Outlined"
                                    Margin="Margin.Dense" />
                 </MudItem>
 
-                <!-- Alamat (Full Width dengan Multi-line) -->
+                <!-- Alamat -->
                 <MudItem xs="12">
+                    <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
+                        Alamat
+                    </MudText>
                     <MudTextField @bind-Value="_updateUserModel.Address"
-                                  Label="Alamat"
+                                  For="@(() => _updateUserModel.Address)"
+                                  Placeholder="Masukkan alamat lengkap"
                                   Variant="Variant.Outlined"
                                   Lines="2"
                                   Margin="Margin.Dense" />
                 </MudItem>
 
             </MudGrid>
+
+            <div class="px-5 pb-4 pt-2 d-flex justify-end gap-2">
+                <MudButton OnClick="Cancel" Variant="Variant.Outlined" Class="px-4">Batal</MudButton>
+                <MudButton Color="Color.Info" ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isSubmitting" Class="px-4">
+                    @if (_isSubmitting)
+                    {
+                        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                        <span>Menyimpan...</span>
+                    }
+                    else
+                    {
+                        <span>Update Pengguna</span>
+                    }
+                </MudButton>
+            </div>
         </EditForm>
     </DialogContent>
-    <DialogActions>
-        <div class="px-3 pb-2 d-flex gap-2">
-            <MudButton OnClick="Cancel"
-                       Variant="Variant.Outlined"
-                       Class="px-4">
-                Batal
-            </MudButton>
-            <MudButton Color="Color.Info"
-                       Variant="Variant.Filled"
-                       OnClick="HandleUpdateUser"
-                       Disabled="_isSubmitting"
-                       Class="px-4">
-                @if (_isSubmitting)
-                {
-                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                    <span>Menyimpan...</span>
-                }
-                else
-                {
-                    <span>Update Pengguna</span>
-                }
-            </MudButton>
-        </div>
-    </DialogActions>
 </MudDialog>
 
 @code {
