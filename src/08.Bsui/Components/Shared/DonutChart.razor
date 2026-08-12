@@ -1,4 +1,5 @@
 ﻿@using MudBlazor
+@using System.Text.Json
 
 <MudPaper Elevation="0" Outlined="true" Class="pa-4 rounded-lg d-flex flex-column donut-chart-card"
           Style="@($"background-color: var(--mud-palette-surface); border-color: var(--mud-palette-lines-default); width: 100%; height: {CardHeight}px; box-sizing: border-box;")">
@@ -7,111 +8,146 @@
         @Title
     </MudText>
 
-    <div style="flex-grow: 1; min-height: 0; display: flex; align-items: center; justify-content: center;">
-        <MudChart T="double"
-                  ChartType="ChartType.Donut"
-                  LegendPosition="Position.Right"
-                  ChartSeries="@([Data])"
-                  ChartLabels="@FormattedLabels"
-                  ChartOptions="@_donutOptions"
-                  Width="100%"
-                  Height="@($"{CardHeight - 110}px")">
-        </MudChart>
+    <!-- Kontainer Flex untuk Chart (Kiri) dan Custom Legend (Kanan) -->
+    <div style="flex-grow: 1; min-height: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+        
+        <!-- Bagian Kiri: ECharts Donut -->
+        <div style="flex: 1; height: @($"{CardHeight - 110}px"); min-width: 0;">
+            <EChartWrapper ChartOptionJson="@_chartOptionJson" Height="@(CardHeight - 110)" />
+        </div>
+
+        <!-- Bagian Kanan: Custom HTML Legend yang Rapi -->
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 12px; padding-right: 8px;">
+            @for (int i = 0; i < Data.Length; i++)
+            {
+                var index = i;
+                var labelName = index < Labels.Length ? Labels[index] : $"Item {index + 1}";
+                var value = Data[index];
+                var percentage = Total > 0 ? (value / Total) * 100 : 0;
+                var color = GetColor(index);
+
+                <!-- Baris Legend dengan Flexbox (Space-Between) -->
+                <div style="display: flex; justify-content: space-between; align-items: center; font-family: 'Inter', sans-serif;">
+                    
+                    <!-- Titik Warna dan Nama Label -->
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background-color: @color;"></span>
+                        <span style="color: var(--mud-palette-text-primary); font-weight: 600; font-size: 13px;">
+                            @labelName
+                        </span>
+                    </div>
+
+                    <!-- Nilai dan Persentase (Rata Kanan) -->
+                    <div style="color: var(--mud-palette-text-secondary); font-size: 13px; font-weight: 500;">
+                        @if (ShowPercentageAndNumber)
+                        {
+                            <span>@value</span>
+                        }
+                        <span style="margin-left: 4px;">(@percentage.ToString("F1")%)</span>
+                    </div>
+
+                </div>
+            }
+        </div>
     </div>
 
+    <!-- Total di bagian bawah -->
     <div class="mt-auto pt-3" style="width: 100%; border-top: 1px dashed var(--mud-palette-lines-default);">
         <MudText Style="color: var(--mud-palette-text-secondary); font-weight: 500; font-size: 12px;">
-            @TotalText: <span style="font-weight: 700; color: var(--mud-palette-text-primary);">@Data.Sum()</span>
+            @TotalText: <span style="font-weight: 700; color: var(--mud-palette-text-primary);">@Total</span>
         </MudText>
     </div>
 </MudPaper>
 
-<style>
-    /* 1. Mengecilkan ukuran teks legend */
-    .donut-chart-card .mud-chart-legend-item,
-    .donut-chart-card .mud-chart-legend-item text,
-    .donut-chart-card .mud-chart-legend-item span,
-    .donut-chart-card .mud-chart-legend-item p {
-        font-size: 11px !important;
-        line-height: 1.2 !important;
-    }
-
-        /* 2. Mengecilkan titik/simbol warna legend */
-        .donut-chart-card .mud-chart-legend-symbol,
-        .donut-chart-card .mud-chart-legend-item svg,
-        .donut-chart-card .mud-chart-legend-item circle,
-        .donut-chart-card .mud-chart-legend-item rect {
-            width: 10px !important;
-            height: 10px !important;
-        }
-
-    /* 3. Merapatkan jarak vertikal antar baris legend */
-    .donut-chart-card .mud-chart-legend-item {
-        margin-bottom: 4px !important;
-        gap: 6px !important;
-    }
-</style>
-
 @code {
-    // === DEFINISI PARAMETER REUSABLE ===
-    [Parameter]
-    public string Title { get; set; } = "Chart Title";
+    [Parameter] public string Title { get; set; } = "Chart Title";
+    [Parameter] public double[] Data { get; set; } = Array.Empty<double>();
+    [Parameter] public string[] Labels { get; set; } = Array.Empty<string>();
+    [Parameter] public string[] Colors { get; set; } = Array.Empty<string>();
+    [Parameter] public string TotalText { get; set; } = "Total";
+    [Parameter] public int CardHeight { get; set; } = 280;
+    [Parameter] public bool ShowPercentageAndNumber { get; set; } = false;
 
-    [Parameter]
-    public double[] Data { get; set; } = Array.Empty<double>();
+    private string _chartOptionJson = "{}";
+    
+    // Properti bantuan untuk menghitung total
+    private double Total => Data.Sum();
 
-    [Parameter]
-    public string[] Labels { get; set; } = Array.Empty<string>();
-
-    [Parameter]
-    public string[] Colors { get; set; } = Array.Empty<string>();
-
-    [Parameter]
-    public string TotalText { get; set; } = "Total";
-
-    [Parameter]
-    public int CardHeight { get; set; } = 280;
-
-    [Parameter]
-    public bool ShowPercentageAndNumber { get; set; } = false;
-
-    // ====================================
-    private ChartOptions _donutOptions = new ChartOptions();
+    // Default palette jika Colors tidak dikirim
+    private readonly string[] _defaultColors = { "#059669", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6" };
 
     protected override void OnParametersSet()
     {
-        if (Colors != null && Colors.Length > 0)
+        if (Data != null && Data.Length > 0)
         {
-            _donutOptions.ChartPalette = Colors;
+            var optionObj = GetChartOptions();
+            
+            _chartOptionJson = JsonSerializer.Serialize(optionObj, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
         }
     }
 
-    public string[] FormattedLabels
+    private string GetColor(int index)
     {
-        get
+        var chartColors = Colors != null && Colors.Length > 0 ? Colors : _defaultColors;
+        return chartColors[index % chartColors.Length];
+    }
+
+    private object GetChartOptions()
+    {
+        return new
         {
-            if (Data == null || Labels == null) return Array.Empty<string>();
-
-            var total = Data.Sum();
-            var formatted = new string[Data.Length];
-            
-            for (int i = 0; i < Data.Length; i++)
+            tooltip = new
             {
-                var labelName = i < Labels.Length ? Labels[i] : $"Item {i + 1}";
-
-                if (ShowPercentageAndNumber)
+                trigger = "item",
+                // Mengatur format tooltip menjadi: Nama: Nilai (Persentase%)
+                formatter = "{marker} {b}",
+                textStyle = new { fontFamily = "Inter, Roboto, sans-serif" }
+            },
+            // Matikan legend ECharts karena kita menggunakan Custom HTML Legend di Blazor
+            legend = new { show = false },
+            color = Colors != null && Colors.Length > 0 ? Colors : _defaultColors,
+            series = new[]
+            {
+                new
                 {
-                    double percentage = total > 0 ? (Data[i] / total) * 100 : 0;
-                    formatted[i] = $"{labelName} {Data[i]} ({percentage:F1}%)";
-                }
-                else
-                {
-                    double percentage = total > 0 ? (Data[i] / total) * 100 : 0;
-                    formatted[i] = $"{labelName} ({percentage:F1}%)";
+                    type = "pie",
+                    radius = new[] { "45%", "90%" }, // Ukuran cincin donut
+                    center = new[] { "50%", "50%" }, // Posisikan tepat di tengah kontainer kiri
+                    avoidLabelOverlap = false,
+                    label = new { show = false },
+                    emphasis = new { label = new { show = false } },
+                    labelLine = new { show = false },
+                    data = FormatDataForEcharts()
                 }
             }
-            
-            return formatted;
+        };
+    }
+
+    private object[] FormatDataForEcharts()
+    {
+        var chartData = new object[Data.Length];
+        var total = Data.Sum(); // Hitung total untuk persentase
+
+        for (int i = 0; i < Data.Length; i++)
+        {
+            var labelName = i < Labels.Length ? Labels[i] : $"Item {i + 1}";
+            var value = Data[i];
+        
+            // Hitung persentase manual di C#
+            var percentage = total > 0 ? (value / total) * 100 : 0;
+        
+            // Buat string dengan format F1 (1 angka di belakang koma)
+            var tooltipText = $"{labelName}: {value} ({percentage:F1}%)";
+
+            chartData[i] = new
+            {
+                value = value,
+                name = tooltipText // Kirim teks yang sudah jadi ke ECharts
+            };
         }
+        return chartData;
     }
 }

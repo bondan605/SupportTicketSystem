@@ -1,47 +1,20 @@
 ﻿@using MudBlazor
-@using MudBlazor.Charts
+@using System.Text.Json
+@using System.Text.Json.Serialization
 
 <MudPaper Outlined="true"
           Class="pa-4 rounded-lg d-flex flex-column"
           Style="@($"background-color: var(--mud-palette-surface); border-color: var(--mud-palette-lines-default); width: 100%; height: {CardHeight}px; box-sizing: border-box;")">
 
-    <MudStack Row="true"
-              Justify="Justify.SpaceBetween"
-              AlignItems="AlignItems.Center"
-              Class="mb-2">
+    <MudText Style="font-weight: 700; font-size: 16px; color: var(--mud-palette-text-primary); margin-bottom: 4px;">
+        @Title
+    </MudText>
 
-        <MudText Style="font-weight: 700; font-size: 16px; color: var(--mud-palette-text-primary);">
-            @Title
-        </MudText>
-
-        @if (ShowCustomLegend)
-        {
-            <MudStack Row="true" Spacing="2">
-                @foreach (var item in Series.Select((series, index) => new { series, index }))
-                {
-                    var color = item.index < Colors.Length ? Colors[item.index] : "#4CAF50";
-
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        <MudIcon Icon="@LegendIcon"
-                                 Style="@($"color:{color}; font-size:{LegendIconSize}px;")" />
-                        <MudText Style="font-size: 11px; color: var(--mud-palette-text-secondary); font-weight: 500;">
-                            @item.series.Name
-                        </MudText>
-                    </MudStack>
-                }
-            </MudStack>
-        }
-    </MudStack>
-
+    <!-- Kontainer ECharts -->
     <div style="flex-grow: 1; min-height: 0;">
-        <MudChart T="double"
-                  ChartType="@ChartType"
-                  ChartSeries="@Series"
-                  ChartLabels="@XAxisLabels"
-                  ChartOptions="@_chartOptions"
-                  Width="100%"
-                  Height="@($"{CardHeight - 70}px")" />
+        <EChartWrapper ChartOptionJson="@_chartOptionJson" Height="@(CardHeight - 50)" />
     </div>
+
 </MudPaper>
 
 @code {
@@ -53,34 +26,124 @@
     [Parameter] public bool ShowCustomLegend { get; set; } = true;
     [Parameter] public bool ShowMarkers { get; set; } = true;
     [Parameter] public int StrokeWidth { get; set; } = 3;
+    
+    // Gunakan LineDisplayType.Area untuk membuat Area Stacked Chart
     [Parameter] public LineDisplayType DisplayType { get; set; } = LineDisplayType.Line;
-    [Parameter] public ChartType ChartType { get; set; } = ChartType.Line;
-
+    
     [Parameter] public Typo TitleTypo { get; set; } = Typo.h6;
-    [Parameter] public string LegendIcon { get; set; } = Icons.Material.Filled.Circle;
     [Parameter] public int LegendIconSize { get; set; } = 10;
     [Parameter] public int CardHeight { get; set; } = 280;
 
-    private readonly LineChartOptions _chartOptions = new();
+    private string _chartOptionJson = "{}";
+    
+    // Menggunakan tipografi dan warna default Sopodel Theme
+    private readonly string _fontFamily = "Inter, Roboto, Helvetica, Arial, sans-serif";
+    private readonly string[] _defaultColors = { "#059669", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6" };
 
     protected override void OnParametersSet()
     {
-        _chartOptions.ShowLegend = false;
-        _chartOptions.ShowDataMarkers = ShowMarkers;
-        _chartOptions.LineStrokeWidth = StrokeWidth;
-
-        _chartOptions.ChartPalette = Colors;
-        _chartOptions.YAxisTicks = 2;
-
-        _chartOptions.SeriesDisplayOverrides = new Dictionary<IChartSeries, SeriesDisplayOverride>();
-
-        foreach (var series in Series)
+        if (Series != null && Series.Any())
         {
-            _chartOptions.SeriesDisplayOverrides.Add(series,
-                new SeriesDisplayOverride
-                {
-                    LineDisplayType = DisplayType
-                });
+            var optionObj = GetChartOptions();
+            
+            _chartOptionJson = JsonSerializer.Serialize(optionObj, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            });
         }
+    }
+
+    private object GetChartOptions()
+    {
+        var chartColors = Colors != null && Colors.Length > 0 ? Colors : _defaultColors;
+
+        // Membangun array series secara dinamis
+        var seriesList = new List<object>();
+        foreach (var s in Series)
+        {
+            // Konfigurasi dasar untuk Line Stacked
+            var seriesObj = new
+            {
+                name = s.Name,
+                type = "line",
+                stack = "Total", // Kunci untuk membuat grafik bertumpuk (stacked)
+                smooth = true,   // Garis melengkung (modern)
+                showSymbol = ShowMarkers,
+                lineStyle = new { width = StrokeWidth },
+                data = s.Data,
+                // Jika parameter meminta Area, tambahkan areaStyle shading
+                areaStyle = DisplayType == LineDisplayType.Area ? new { } : null
+            };
+            
+            seriesList.Add(seriesObj);
+        }
+
+        return new
+        {
+            tooltip = new
+            {
+                trigger = "axis",
+                textStyle = new { fontFamily = _fontFamily }
+            },
+            legend = new
+            {
+                show = ShowCustomLegend,
+                icon = "circle",
+                top = "0%",
+                right = "0%", // Posisi legend di kanan atas
+                itemWidth = LegendIconSize,
+                itemHeight = LegendIconSize,
+                textStyle = new
+                {
+                    fontFamily = _fontFamily,
+                    fontSize = 11,
+                    color = "var(--mud-palette-text-secondary)"
+                }
+            },
+            grid = new
+            {
+                left = "1%",
+                right = "3%",
+                bottom = "0%",
+                top = "15%",
+                containLabel = true
+            },
+            color = chartColors,
+            xAxis = new
+            {
+                type = "category",
+                boundaryGap = false, // Menempel di pinggir sumbu Y agar rapi
+                data = XAxisLabels,
+                axisLabel = new
+                {
+                    fontFamily = _fontFamily,
+                    color = "var(--mud-palette-text-secondary)"
+                },
+                axisLine = new
+                {
+                    lineStyle = new { color = "var(--mud-palette-lines-default)" }
+                }
+            },
+            yAxis = new
+            {
+                type = "value",
+                axisLabel = new
+                {
+                    fontFamily = _fontFamily,
+                    color = "var(--mud-palette-text-secondary)"
+                },
+                splitLine = new
+                {
+                    // Garis putus-putus pada background untuk kesan elegan
+                    lineStyle = new
+                    {
+                        color = "var(--mud-palette-lines-default)",
+                        type = "dashed"
+                    }
+                }
+            },
+            series = seriesList.ToArray()
+        };
     }
 }
