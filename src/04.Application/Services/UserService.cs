@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using SupportTicketSystem.Application.Interfaces.Repositories;
 using SupportTicketSystem.Domain.Entities;
 using SupportTicketSystem.Domain.Enums;
@@ -11,11 +12,16 @@ namespace SupportTicketSystem.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IValidator<CreateUserRequest> _createUserValidator;
+        private readonly IValidator<UpdateUserRequest> _updateUserValidator;
 
-        public UserService(IUnitOfWork unitOfWork, IMapper mapper)
+        public UserService(IUnitOfWork unitOfWork, IMapper mapper, IValidator<CreateUserRequest> createUserValidator,
+            IValidator<UpdateUserRequest> updateUserValidator)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _createUserValidator = createUserValidator;
+            _updateUserValidator = updateUserValidator;
         }
 
         //public async Task<IEnumerable<UserDto>> GetAllUserAsync()
@@ -67,6 +73,7 @@ namespace SupportTicketSystem.Application.Services
         }
         public async Task<UserResponseDto> CreateUserAsync(CreateUserRequest request)
         {
+            await _createUserValidator.ValidateAndThrowAsync(request);
             if (await _unitOfWork.Users.ExistsByEmailAsync(request.Email))
             {
                 throw new InvalidOperationException("Email sudah terdaftar.");
@@ -101,6 +108,7 @@ namespace SupportTicketSystem.Application.Services
 
         public async Task<UserResponseDto> UpdateUserAsync(Guid id, UpdateUserRequest request, string currentUserRole)
         {
+            await _updateUserValidator.ValidateAndThrowAsync(request);
             var user = await _unitOfWork.Users.GetByIdAsync(id);
             if (user == null)
             {
