@@ -1,4 +1,6 @@
 ﻿@using MudBlazor
+@using System.Text.Json
+@using System.Text.Json.Serialization
 
 <MudPaper Outlined="true"
           Class="pa-4 rounded-lg d-flex flex-column"
@@ -10,15 +12,9 @@
 
     <div class="d-flex flex-row align-center justify-center flex-grow-1 gap-4 mt-2">
 
+        <!-- Kontainer ECharts 100x100px -->
         <div style="width: 100px; height: 100px; flex-shrink: 0; position: relative;">
-            <MudChart T="double"
-                      ChartType="ChartType.Donut"
-                      ChartSeries="@([ChartData])"
-                      ChartLabels="@ChartLabels"
-                      ChartOptions="@_chartOptions"
-                      DisableLegend="true"
-                      Width="100px"
-                      Height="100px" />
+            <EChartWrapper ChartOptionJson="@_chartOptionJson" Height="100" />
         </div>
 
         <div class="d-flex flex-column justify-center">
@@ -32,10 +28,7 @@
             </MudText>
 
             @* <div class="d-flex align-center gap-1 mt-2">
-                <MudIcon Icon="@TrendIcon"
-                         Color="@TrendColor"
-                         Size="Size.Small" />
-                
+                <MudIcon Icon="@TrendIcon" Color="@TrendColor" Size="Size.Small" />
                 <MudText Style="font-size: 14px; font-weight: 700; color: #059669;">
                     @TrendValue
                 </MudText>
@@ -61,20 +54,50 @@
     // Parameter Penyelaras Tinggi Kartu
     [Parameter] public int CardHeight { get; set; } = 260;
 
-    private double[] ChartData => new[]
-    {
-        Value,
-        100 - Value
-    };
+    private string _chartOptionJson = "{}";
 
-    private readonly string[] ChartLabels = { "", "" };
-
-    private readonly ChartOptions _chartOptions = new()
+    protected override void OnParametersSet()
     {
-        ChartPalette = new[]
+        var optionObj = GetChartOptions();
+        
+        _chartOptionJson = JsonSerializer.Serialize(optionObj, new JsonSerializerOptions
         {
-            "#059669", // Emerald Green
-            "#E5E7EB"  // Abu-abu terang
-        }
-    };
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        });
+    }
+
+    private object GetChartOptions()
+    {
+        return new
+        {
+            series = new[]
+            {
+                new
+                {
+                    type = "pie",
+                    radius = new[] { "75%", "100%" }, // Membuat bentuk cincin (donut) yang tipis dan modern
+                    center = new[] { "50%", "50%" },
+                    silent = true, // Mematikan animasi hover dan tooltip karena ini hanya indikator visual
+                    label = new { show = false },
+                    labelLine = new { show = false },
+                    data = new[]
+                    {
+                        // Bagian nilai (Value) yang terisi dengan warna Emerald Green
+                        new
+                        {
+                            value = Value,
+                            itemStyle = new { color = "#059669" }
+                        },
+                        // Bagian sisa (Background track) dengan warna abu-abu
+                        new
+                        {
+                            value = 100 - Value,
+                            itemStyle = new { color = "#E5E7EB" }
+                        }
+                    }
+                }
+            }
+        };
+    }
 }
