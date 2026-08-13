@@ -547,16 +547,16 @@
     @* =========================
        TICKET TABLE
        ========================= *@
-    <MudTable T="TicketDto"
-              @ref="_table"
-              ServerData="ServerReloadAsync"
-              Loading="_isLoading"
-              Hover="true"
-              Outlined="true"
-              Elevation="0"
-              Dense="true"
-              RowsPerPage="10"
-              Style="min-width:1120px;">
+        <MudTable T="TicketDto"
+                  @ref="_table"
+                  ServerData="ServerReloadAsync"
+                  Loading="_isLoading"
+                  Hover="true"
+                  Outlined="true"
+                  Elevation="0"
+                  Dense="true"
+                  @bind-RowsPerPage="_rowsPerPage"
+                  Style="min-width:1120px;">
 
         <HeaderContent>
             @* <MudTh Style="width:44px;">

@@ -95,9 +95,8 @@ namespace SupportTicketSystem.Infrastructure.Repositories
                 query = query.Where(ticket =>
                     ticket.TicketNumber.Contains(keyword) ||
                     ticket.Title.Contains(keyword) ||
-                    ticket.CustomerName.Contains(keyword) ||
-                    ticket.CustomerEmail.Contains(keyword) ||
-                    ticket.Description.Contains(keyword));
+                    (ticket.CustomerName != null &&
+                     ticket.CustomerName.Contains(keyword)));
             }
 
             var totalCount = await query.CountAsync();
@@ -110,13 +109,10 @@ namespace SupportTicketSystem.Infrastructure.Repositories
 
                 orderedQuery = query
                     .OrderByDescending(ticket =>
+                        ticket.TicketNumber.StartsWith(keyword) ||
                         ticket.Title.StartsWith(keyword) ||
                         (ticket.CustomerName != null &&
                          ticket.CustomerName.StartsWith(keyword)))
-                    .ThenByDescending(ticket =>
-                        ticket.Title.Contains(keyword) ||
-                        (ticket.CustomerName != null &&
-                         ticket.CustomerName.Contains(keyword)))
                     .ThenByDescending(ticket =>
                         ticket.UpdatedAt ?? ticket.CreatedAt);
             }

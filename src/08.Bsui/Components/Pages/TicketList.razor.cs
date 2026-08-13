@@ -17,6 +17,9 @@ namespace SupportTicketSystem.Bsui.Components.Pages
 
         private MudTable<TicketDto>? _table;
 
+        private const int DefaultRowsPerPage = 10;
+        private int _rowsPerPage = DefaultRowsPerPage;
+
         private bool _isLoading;
         private bool _isManager;
 
@@ -248,6 +251,17 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             _selectedAgentId = null;
             _selectedPriority = null;
             _selectedCategory = null;
+
+            if (_table is null)
+            {
+                return;
+            }
+
+            if (_table.RowsPerPage != DefaultRowsPerPage)
+            {
+                _table.SetRowsPerPage(DefaultRowsPerPage);
+                return;
+            }
 
             await ReloadFirstPageAsync();
         }
