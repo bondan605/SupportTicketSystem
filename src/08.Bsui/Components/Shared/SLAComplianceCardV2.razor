@@ -1,0 +1,151 @@
+﻿@using System.Text.Json
+
+<MudCard Class="pa-4" Style=@($"height: 100%; min-height: {CardHeight}px;")>
+    <MudCardContent Class="d-flex flex-column" Style="height: 100%;">
+        <MudText Typo="Typo.subtitle2" Class="mud-text-secondary">@Title</MudText>
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Style="flex: 1 1 auto; min-height: 0; flex-wrap: wrap; row-gap: 12px;">
+            <div style="aspect-ratio: 1 / 1; height: @(_chartHeight)px; flex: 0 0 auto;">
+                @if (HasData)
+                {
+                    <EChartWrapper ChartOptionJson="@_optionJson" Height="@_chartHeight" />
+                }
+                else
+                {
+                    <div class="d-flex justify-center align-center" style="width: 100%; height: 100%;">
+                        <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Default" />
+                    </div>
+                }
+            </div>
+
+            <MudStack Spacing="2" Style="flex: 1 1 160px; min-width: 140px;">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #10B981; flex-shrink: 0;"></div>
+                    <MudText Typo="Typo.body2">Compliant @_positiveValue.ToString("0.0")%</MudText>
+                </MudStack>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <div style="width: 10px; height: 10px; border-radius: 50%; background-color: #EF4444; flex-shrink: 0;"></div>
+                    <MudText Typo="Typo.body2">Non-compliant @_negativeValue.ToString("0.0")%</MudText>
+                </MudStack>
+            </MudStack>
+        </MudStack>
+
+        <div class="d-flex justify-space-between align-center mt-1">
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@Subtitle</MudText>
+
+            @if (TrendValue.HasValue)
+            {
+                <MudText Typo="Typo.caption" Style="@TrendStyle">
+                    @(TrendValue.Value >= 0 ? "▲" : "▼") @Math.Abs(TrendValue.Value).ToString("0.0")%
+                </MudText>
+            }
+        </div>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public double Value { get; set; }
+
+    [Parameter]
+    public string Subtitle { get; set; } = string.Empty;
+
+    [Parameter]
+    public double? TrendValue { get; set; }
+
+    [Parameter]
+    public int CardHeight { get; set; } = 300;
+
+    /// <summary>
+    /// Whether real data has arrived yet. The chart is only mounted once this is
+    /// true, so its very first ECharts render always carries final data — this
+    /// keeps the entrance animation reliable regardless of when the async report
+    /// load resolves relative to the component's first paint.
+    /// </summary>
+    [Parameter]
+    public bool HasData { get; set; } = true;
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    private string _optionJson = "{}";
+    private int _chartHeight;
+    private double _positiveValue;
+    private double _negativeValue;
+
+    private string TrendStyle => TrendValue >= 0
+        ? "color: #2e7d32; font-weight: 500;"
+        : "color: #c62828; font-weight: 500;";
+
+    protected override void OnParametersSet()
+    {
+        _chartHeight = Math.Clamp(CardHeight - 160, 110, 150);
+        _positiveValue = Math.Round(100 - Value, 1);
+        _negativeValue = Math.Round(Value, 1);
+        _optionJson = BuildGaugeOption();
+    }
+
+    private string BuildGaugeOption()
+    {
+        var gaugeData = new object[]
+        {
+            new
+            {
+                value = _positiveValue,
+                name = "Compliant",
+                radius = "100%",
+                title = new { show = false },
+                detail = new { show = false },
+                itemStyle = new { color = "#10B981" }
+            },
+            new
+            {
+                value = _negativeValue,
+                name = "Non-compliant",
+                radius = "72%",
+                title = new { show = false },
+                detail = new { show = false },
+                itemStyle = new { color = "#EF4444" }
+            }
+        };
+
+        var option = new
+        {
+            animation = true,
+            animationDuration = 800,
+            animationEasing = "cubicOut",
+            animationDurationUpdate = 800,
+            animationEasingUpdate = "cubicOut",
+            series = new object[]
+            {
+                new
+                {
+                    type = "gauge",
+                    startAngle = 90,
+                    endAngle = -270,
+                    pointer = new { show = false },
+                    progress = new
+                    {
+                        show = true,
+                        overlap = false,
+                        roundCap = true,
+                        clip = false,
+                        itemStyle = new { borderWidth = 1, borderColor = "#464646" }
+                    },
+                    axisLine = new { lineStyle = new { width = 10 } },
+                    splitLine = new { show = false, distance = 0, length = 10 },
+                    axisTick = new { show = false },
+                    axisLabel = new { show = false, distance = 50 },
+                    data = gaugeData
+                }
+            }
+        };
+
+        return JsonSerializer.Serialize(option, JsonOptions);
+    }
+}

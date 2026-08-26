@@ -1,4 +1,6 @@
 ﻿@using System.Globalization
+@using System.Text.Json
+@using System.Text.Json.Serialization
 @using SupportTicketSystem.Bsui.Components.Models.Reports
 
 <MudPaper Elevation="0"
@@ -15,19 +17,10 @@
 
             <thead>
                 <tr style="background-color:#f8fafc;">
-                    <th style="@HeaderLeftStyle">
-                        Category
-                    </th>
-
-                    <th style="@HeaderCenterStyle">
-                        Total Tickets
-                    </th>
-
+                    <th style="@HeaderLeftStyle">Category</th>
+                    <th style="@HeaderCenterStyle">Total Tickets</th>
                     <th style="@HeaderBarStyle"></th>
-
-                    <th style="@HeaderRightStyle">
-                        % of Total
-                    </th>
+                    <th style="@HeaderRightStyle">% of Total</th>
                 </tr>
             </thead>
 
@@ -46,7 +39,10 @@
                         </td>
 
                         <td style="@BarCellStyle">
-                            <div style="@GetBarStyle(item.TotalTickets)"></div>
+                            <!-- Bagian ini diganti menggunakan ECharts -->
+                            <div style="width: 100%; height: 16px;">
+                                <EChartWrapper ChartOptionJson="@GetRowChartOptionJson(item.TotalTickets)" Height="16" />
+                            </div>
                         </td>
 
                         <td style="@BodyRightStyle">
@@ -58,19 +54,10 @@
 
             <tfoot>
                 <tr>
-                    <td style="@FooterLeftStyle">
-                        Total
-                    </td>
-
-                    <td style="@FooterCenterStyle">
-                        @FormatNumber(EffectiveTotal)
-                    </td>
-
+                    <td style="@FooterLeftStyle">Total</td>
+                    <td style="@FooterCenterStyle">@FormatNumber(EffectiveTotal)</td>
                     <td style="@FooterCenterStyle"></td>
-
-                    <td style="@FooterRightStyle">
-                        100%
-                    </td>
+                    <td style="@FooterRightStyle">100%</td>
                 </tr>
             </tfoot>
 
@@ -83,8 +70,7 @@
     public string Title { get; set; } = "Tickets by Category";
 
     [Parameter]
-    public IReadOnlyList<CategoryReportItem> Items { get; set; }
-    = Array.Empty<CategoryReportItem>();
+    public IReadOnlyList<CategoryReportItem> Items { get; set; } = Array.Empty<CategoryReportItem>();
 
     [Parameter]
     public int CardHeight { get; set; } = 280;
@@ -93,7 +79,7 @@
     public double TotalTickets { get; set; }
 
     [Parameter]
-    public string BarColor { get; set; } = "#2F73F6";
+    public string BarColor { get; set; } = "#2F73F6"; // Anda dapat menggantinya dengan "#059669" jika ingin menggunakan Emerald Green dari Sopodel Theme
 
     private double EffectiveTotal =>
         TotalTickets > 0
@@ -120,133 +106,98 @@
         "table-layout:fixed;";
 
     private const string HeaderLeftStyle =
-        "width:28%;" +
-        "padding:12px 8px;" +
-        "text-align:left;" +
-        "font-size:11px;" +
-        "font-weight:600;" +
-        "color:#64748b;" +
-        "border-bottom:1px solid #e2e8f0;";
+        "width:28%; padding:12px 8px; text-align:left; font-size:11px; font-weight:600; color:#64748b; border-bottom:1px solid #e2e8f0;";
 
     private const string HeaderCenterStyle =
-        "width:20%;" +
-        "padding:12px 8px;" +
-        "text-align:center;" +
-        "font-size:11px;" +
-        "font-weight:600;" +
-        "color:#64748b;" +
-        "border-bottom:1px solid #e2e8f0;";
+        "width:20%; padding:12px 8px; text-align:center; font-size:11px; font-weight:600; color:#64748b; border-bottom:1px solid #e2e8f0;";
 
     private const string HeaderBarStyle =
-        "width:34%;" +
-        "padding:12px 8px;" +
-        "border-bottom:1px solid #e2e8f0;";
+        "width:34%; padding:12px 8px; border-bottom:1px solid #e2e8f0;";
 
     private const string HeaderRightStyle =
-        "width:18%;" +
-        "padding:12px 8px;" +
-        "text-align:right;" +
-        "font-size:11px;" +
-        "font-weight:600;" +
-        "color:#64748b;" +
-        "border-bottom:1px solid #e2e8f0;";
+        "width:18%; padding:12px 8px; text-align:right; font-size:11px; font-weight:600; color:#64748b; border-bottom:1px solid #e2e8f0;";
 
     private const string BodyLeftStyle =
-        "padding:8px 8px;" +
-        "font-size:12px;" +
-        "font-weight:500;" +
-        "color:#334155;" +
-        "border-bottom:1px solid #f1f5f9;";
+        "padding:8px 8px; font-size:12px; font-weight:500; color:#334155; border-bottom:1px solid #f1f5f9;";
 
     private const string BodyCenterStyle =
-        "padding:8px 8px;" +
-        "text-align:center;" +
-        "font-size:12px;" +
-        "font-weight:600;" +
-        "color:#334155;" +
-        "border-bottom:1px solid #f1f5f9;";
+        "padding:8px 8px; text-align:center; font-size:12px; font-weight:600; color:#334155; border-bottom:1px solid #f1f5f9;";
 
     private const string BodyRightStyle =
-        "padding:8px 8px;" +
-        "text-align:right;" +
-        "font-size:12px;" +
-        "font-weight:600;" +
-        "color:#334155;" +
-        "border-bottom:1px solid #f1f5f9;";
+        "padding:8px 8px; text-align:right; font-size:12px; font-weight:600; color:#334155; border-bottom:1px solid #f1f5f9;";
 
     private const string BarCellStyle =
-        "width:34%;" +
-        "padding:8px 8px;" +
-        "border-bottom:1px solid #f1f5f9;";
+        "width:34%; padding:8px 8px; border-bottom:1px solid #f1f5f9;";
 
     private const string FooterLeftStyle =
-        "padding:10px 8px;" +
-        "font-size:12px;" +
-        "font-weight:700;" +
-        "color:#172033;" +
-        "border-top:1px solid #e2e8f0;";
+        "padding:10px 8px; font-size:12px; font-weight:700; color:#172033; border-top:1px solid #e2e8f0;";
 
     private const string FooterCenterStyle =
-        "padding:10px 8px;" +
-        "text-align:center;" +
-        "font-size:12px;" +
-        "font-weight:700;" +
-        "color:#172033;" +
-        "border-top:1px solid #e2e8f0;";
+        "padding:10px 8px; text-align:center; font-size:12px; font-weight:700; color:#172033; border-top:1px solid #e2e8f0;";
 
     private const string FooterRightStyle =
-        "padding:10px 8px;" +
-        "text-align:right;" +
-        "font-size:12px;" +
-        "font-weight:700;" +
-        "color:#172033;" +
-        "border-top:1px solid #e2e8f0;";
+        "padding:10px 8px; text-align:right; font-size:12px; font-weight:700; color:#172033; border-top:1px solid #e2e8f0;";
 
     private double GetPercentage(double value)
     {
-        if (EffectiveTotal <= 0)
-        {
-            return 0;
-        }
-
-        return Math.Clamp(
-            value / EffectiveTotal * 100,
-            0,
-            100);
-    }
-
-    private string GetBarStyle(int totalTickets)
-    {
-        if (MaximumCategoryTickets <= 0)
-        {
-            return "width:0%;height:16px;";
-        }
-
-        var percentage = Math.Clamp(
-            totalTickets * 100d / MaximumCategoryTickets,
-            0,
-            100);
-
-        return FormattableString.Invariant(
-            $"width:{percentage:0.##}%;height:16px;background-color:{BarColor};border-radius:1px;");
-    }
-
-    private static string FormatNumber(double value)
-    {
-        return value.ToString(
-            "N0",
-            CultureInfo.InvariantCulture);
-    }
-
-    private static string FormatPercentage(double value)
-    {
-        return value.ToString(
-            "0.0",
-            CultureInfo.InvariantCulture) + "%";
+        if (EffectiveTotal <= 0) return 0;
+        return Math.Clamp(value / EffectiveTotal * 100, 0, 100);
     }
 
     private int MaximumCategoryTickets =>
-    Items.Count == 0
-        ? 0
-        : Items.Max(item => item.TotalTickets);
+        Items.Count == 0 ? 0 : Items.Max(item => item.TotalTickets);
+
+    // Fungsi baru untuk menghasilkan konfigurasi ECharts per baris
+    private string GetRowChartOptionJson(double totalTickets)
+    {
+        double max = MaximumCategoryTickets <= 0 ? 1 : MaximumCategoryTickets;
+
+        var optionObj = new
+        {
+            tooltip = new { show = false }, // Nonaktifkan hover tooltip agar terasa seperti tabel biasa
+            grid = new
+            {
+                left = "0%",
+                right = "0%",
+                top = "0%",
+                bottom = "0%"
+            },
+            xAxis = new
+            {
+                type = "value",
+                show = false,
+                max = max // Mengunci nilai max agar proporsi lebar batang akurat untuk semua baris
+            },
+            yAxis = new
+            {
+                type = "category",
+                show = false,
+                data = new[] { "" }
+            },
+            series = new[]
+            {
+                new
+                {
+                    type = "bar",
+                    data = new[] { totalTickets },
+                    barWidth = 16, // Ketebalan batang dibuat statis 16px sesuai desain awal Anda
+                    itemStyle = new
+                    {
+                        color = BarColor,
+                        borderRadius = new[] { 0, 4, 4, 0 }
+                    }
+                }
+            }
+        };
+
+        return JsonSerializer.Serialize(optionObj, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+        });
+    }
+
+    private static string FormatNumber(double value) => value.ToString("N0", CultureInfo.InvariantCulture);
+
+    private static string FormatPercentage(double value) => value.ToString("0.0", CultureInfo.InvariantCulture) + "%";
 }
