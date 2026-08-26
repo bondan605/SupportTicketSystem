@@ -73,7 +73,14 @@ namespace SupportTicketSystem.Application.Services
         }
         public async Task<UserResponseDto> CreateUserAsync(CreateUserRequest request)
         {
-            await _createUserValidator.ValidateAndThrowAsync(request);
+            var validationResult = await _createUserValidator.ValidateAsync(request);
+
+            if (!validationResult.IsValid)
+            {
+                var errorMessage = validationResult.Errors.First().ErrorMessage;
+
+                throw new InvalidOperationException(errorMessage);
+            }
             if (await _unitOfWork.Users.ExistsByEmailAsync(request.Email))
             {
                 throw new InvalidOperationException("Email sudah terdaftar.");
@@ -108,7 +115,14 @@ namespace SupportTicketSystem.Application.Services
 
         public async Task<UserResponseDto> UpdateUserAsync(Guid id, UpdateUserRequest request, string currentUserRole)
         {
-            await _updateUserValidator.ValidateAndThrowAsync(request);
+            var validationResult = await _updateUserValidator.ValidateAsync(request);
+
+            if (!validationResult.IsValid)
+            {
+                var errorMessage = validationResult.Errors.First().ErrorMessage;
+
+                throw new InvalidOperationException(errorMessage);
+            }
             var user = await _unitOfWork.Users.GetByIdAsync(id);
             if (user == null)
             {

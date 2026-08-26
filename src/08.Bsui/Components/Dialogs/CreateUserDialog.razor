@@ -1,6 +1,7 @@
 ﻿@using SupportTicketSystem.Shared.DTOs.Users
 @using SupportTicketSystem.Domain.Enums
 @using SupportTicketSystem.Client.Features.Interfaces
+@using Blazored.FluentValidation
 @inject IUserClient UserClient
 @inject ISnackbar Snackbar
 
@@ -12,10 +13,11 @@
     </TitleContent>
     <DialogContent>
         <EditForm Model="@_createUserModel" OnValidSubmit="HandleCreateUser">
-            <DataAnnotationsValidator />
-            
+
+            <FluentValidationValidator />
+
             <MudGrid Spacing="3" Class="pa-2">
-                
+
                 <!-- Nama Lengkap -->
                 <MudItem xs="12">
                     <MudText Typo="Typo.body2" Class="mb-1" Style="font-weight: 600; color: var(--mud-palette-text-primary);">
@@ -149,6 +151,7 @@
 
             <div class="px-5 pb-4 pt-2 d-flex justify-end gap-2">
                 <MudButton OnClick="Cancel" Variant="Variant.Outlined" Class="px-4">Batal</MudButton>
+                <!-- Warna disesuaikan dengan tema Sopodel -->
                 <MudButton Color="Color.Info" ButtonType="ButtonType.Submit" Variant="Variant.Filled" Disabled="_isSubmitting" Class="px-4">
                     @if (_isSubmitting)
                     {

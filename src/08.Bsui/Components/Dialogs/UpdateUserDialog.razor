@@ -1,6 +1,7 @@
 ﻿@using SupportTicketSystem.Shared.DTOs.Users
 @using SupportTicketSystem.Domain.Enums
 @using SupportTicketSystem.Client.Features.Interfaces
+@using Blazored.FluentValidation
 @inject IUserClient UserClient
 @inject ISnackbar Snackbar
 
@@ -12,7 +13,7 @@
     </TitleContent>
     <DialogContent>
         <EditForm Model="@_updateUserModel" OnValidSubmit="HandleUpdateUser">
-            <DataAnnotationsValidator />
+            <FluentValidationValidator />
             
             <MudGrid Spacing="3" Class="pa-2">
                 
