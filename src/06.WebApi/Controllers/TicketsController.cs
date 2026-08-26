@@ -39,7 +39,7 @@ namespace SupportTicketSystem.WebApi.Controllers
             var userId = User.GetUserId();
             var role = User.GetRole();
 
-            var data = role == "Manager"
+            var data = role == "Manager" || role == "SuperAdmin"
                 ? await _ticketService.GetAllTicketsAsync(request)
                 : await _ticketService.GetTicketsForAgentAsync(userId, request);
 
@@ -74,7 +74,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="200">Returns the filtered tickets successfully.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpGet(ApiRoutes.Tickets.ReportSegment)]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "SuperAdmin,Manager")]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetReport([FromQuery] string? status, [FromQuery] Guid? assignedTo, [FromQuery] PagedRequest request)
@@ -93,7 +93,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         {
             // Managers see every ticket; any other role only sees tickets they created or are assigned to.
             var role = User.GetRole();
-            Guid? scopedToUserId = role == "Manager" ? null : User.GetUserId();
+            Guid? scopedToUserId = (role == "Manager" || role == "SuperAdmin") ? null : User.GetUserId();
 
             var result = await _ticketService.GetTicketListAsync(status, assignedTo, request, priority, category, search, scopedToUserId);
 
@@ -109,7 +109,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="400">If the request data is invalid.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpPost]
-        [Authorize(Roles = "Manager, SupportAgent")]
+        [Authorize(Roles = "SuperAdmin,Manager, SupportAgent")]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status201Created)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
@@ -130,7 +130,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="404">If the ticket is not found.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpPut("{id}")]
-        [Authorize(Roles = "SupportAgent, Manager")]
+        [Authorize(Roles = "SuperAdmin,Manager, SupportAgent")]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -151,7 +151,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="404">If the ticket is not found.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "SuperAdmin,Manager")]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
@@ -172,7 +172,7 @@ namespace SupportTicketSystem.WebApi.Controllers
         /// <response code="404">If the ticket or user is not found.</response>
         /// <response code="500">If an unexpected internal server error occurs.</response>
         [HttpPut(ApiRoutes.Tickets.AssignSegment)]
-        [Authorize(Roles = "Manager")]
+        [Authorize(Roles = "SuperAdmin,Manager")]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]

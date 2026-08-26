@@ -18,6 +18,11 @@ namespace SupportTicketSystem.Application.Mappings
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
                 .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role));
 
+            CreateMap<User, UserResponseDto>()
+                .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.IsActive))
+                .ForMember(dest => dest.TanggalDibuat, opt => opt.MapFrom(src => src.CreatedAt));
+
             CreateMap<User, LoginResponseDto>()
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))

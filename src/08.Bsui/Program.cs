@@ -11,6 +11,8 @@ using SupportTicketSystem.Client.Features.Interfaces;
 using SupportTicketSystem.Shared.DTOs.Auth;
 using SupportTicketSystem.Shared.Exceptions;
 using System.Security.Claims;
+using FluentValidation;
+using SupportTicketSystem.Application.Validators.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? throw new InvalidOperationException("API Base URL is not configured.");
@@ -21,6 +23,7 @@ builder.Services.AddDataProtection()
     .SetApplicationName("TicketSystemApp");
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
 builder.Services.AddScoped<ServerJwtAccessor>();
 builder.Services.AddScoped<Func<Task<string?>>>(sp => sp.GetRequiredService<ServerJwtAccessor>().GetTokenAsync);
 

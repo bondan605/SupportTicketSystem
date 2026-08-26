@@ -14,7 +14,7 @@ namespace SupportTicketSystem.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route(ApiRoutes.Report.Reports)]
-[Authorize(Roles = nameof(UserRole.Manager))]
+[Authorize(Roles = "SuperAdmin,Manager")]
 public class ReportController : ControllerBase
 {
     private readonly IReportService _reportService;
