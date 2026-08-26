@@ -75,7 +75,7 @@
                      Value="@_report.Overview.OpenCount.ToString("N0")"
                      Description="@GetPercentageText(_report.Overview.OpenCount)"
                          Icon="@Icons.Material.Filled.CheckCircleOutline"
-                         IconBackgroundColor="#00c853" />
+                     IconBackgroundColor="#FF0000" />
 
             <SummaryCard Title="In Progress"
                      Value="@_report.Overview.InProgressCount.ToString("N0")"
@@ -119,7 +119,7 @@
         </MudItem>
 
         <MudItem xs="12" lg="4">
-            <AssigneeBarChart Title="Tickets per Assignee (Top 6)"
+            <AssigneeBarChart Title="Tickets per Assignee (Top 6 + Unassigned)"
                               Items="@_assigneeChartData"
                               AxisMaximum="@AssigneeAxisMaximum"
                               AxisStep="@AssigneeAxisStep"
@@ -344,8 +344,6 @@
     private void ApplyAssigneeData(ReportSummaryDto report)
     {
         _assigneeChartData = report.TicketsPerAssignee
-            .OrderByDescending(item => item.Count)
-            .Take(6)
             .Select(item => new AssigneeChartItem(
                 item.AssigneeName,
                 item.Count))
@@ -551,7 +549,7 @@
             "Open" => "#3B82F6",
             "InProgress" => "#F59E0B",
             "Resolved" => "#10B981",
-            "Closed" => "#EF4444",
+            "Closed" => "#8B5CF6",
             _ => "#94A3B8"
         };
     }
