@@ -11,11 +11,15 @@
         Ticket Histories
     </MudNavLink>
 
-    @* <MudNavLink Href="@AppRoutes.Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person">
-        Users
-    </MudNavLink> *@
+    <AuthorizeView Roles="SuperAdmin">
+        <Authorized>
+            <MudNavLink Href="@AppRoutes.Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.Person">
+                Users
+            </MudNavLink>
+        </Authorized>
+    </AuthorizeView>
 
-    <AuthorizeView Roles="Manager">
+    <AuthorizeView Roles="SuperAdmin,Manager">
         <Authorized>
             <MudNavLink Href="@AppRoutes.Report" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Outlined.BarChart">
                 Report

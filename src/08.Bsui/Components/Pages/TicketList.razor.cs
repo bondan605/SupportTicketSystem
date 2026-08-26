@@ -17,6 +17,9 @@ namespace SupportTicketSystem.Bsui.Components.Pages
 
         private MudTable<TicketDto>? _table;
 
+        private const int DefaultRowsPerPage = 10;
+        private int _rowsPerPage = DefaultRowsPerPage;
+
         private bool _isLoading;
         private bool _isManager;
 
@@ -249,6 +252,17 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             _selectedPriority = null;
             _selectedCategory = null;
 
+            if (_table is null)
+            {
+                return;
+            }
+
+            if (_table.RowsPerPage != DefaultRowsPerPage)
+            {
+                _table.SetRowsPerPage(DefaultRowsPerPage);
+                return;
+            }
+
             await ReloadFirstPageAsync();
         }
 
@@ -310,8 +324,8 @@ namespace SupportTicketSystem.Bsui.Components.Pages
             switch (status)
             {
                 case TicketStatus.Open:
-                    backgroundColor = "#E8F2FF";
-                    textColor = "#1683FF";
+                    backgroundColor = "#FDEBEC";
+                    textColor = "#EF4444";
                     break;
 
                 case TicketStatus.InProgress:
