@@ -17,10 +17,18 @@ namespace SupportTicketSystem.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<PagedResult<TicketHistoryDto>> GetFilteredHistoriesAsync(Guid? ticketId, string? action, Guid? changedBy,string? search, DateTime? startDate,
-    DateTime? endDate, PagedRequest request, Guid? scopedToUserId = null)
+        public async Task<PagedResult<TicketHistoryDto>> GetFilteredHistoriesAsync(
+            Guid? ticketId,
+            string? action,
+            Guid? changedBy,
+            string? search,
+            DateTime? startDate,
+            DateTime? endDate,
+            PagedRequest request,
+            Guid? scopedToUserId = null)
         {
-            var pagedHistories = await _unitOfWork.TicketHistories.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request, scopedToUserId);
+            var pagedHistories = await _unitOfWork.TicketHistories.GetFilteredHistoriesAsync(
+                ticketId, action, changedBy, search, startDate, endDate, request, scopedToUserId);
 
             return new PagedResult<TicketHistoryDto>
             {
@@ -29,6 +37,20 @@ namespace SupportTicketSystem.Application.Services
                 PageSize = pagedHistories.PageSize,
                 TotalCount = pagedHistories.TotalCount
             };
+        }
+
+        public async Task<IEnumerable<TicketHistoryDto>> GetAllForExportAsync(
+            Guid? ticketId,
+            string? action,
+            Guid? changedBy,
+            string? search,
+            DateTime? startDate,
+            DateTime? endDate,
+            Guid? scopedToUserId = null)
+        {
+            var histories = await _unitOfWork.TicketHistories.GetAllForExportAsync(
+                ticketId, action, changedBy, search, startDate, endDate, scopedToUserId);
+            return _mapper.Map<IEnumerable<TicketHistoryDto>>(histories);
         }
     }
 }

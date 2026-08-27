@@ -18,7 +18,7 @@
             <MudDateRangePicker DateRange="_dateRange" DateRangeChanged="OnDateRangeChanged" Margin="Margin.Dense" Variant="Variant.Outlined" Style="@($"background-color:{Colors.Shades.White};")" PlaceholderStart="Start Date" PlaceholderEnd="End Date"  />
             
             <MudMenu Label="Export" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Outlined" Margin="Margin.Dense">
-                <MudMenuItem OnClick="DownloadCsv">Export to CSV</MudMenuItem>
+                <MudMenuItem OnClick="DownloadExcel">Export to Excel</MudMenuItem>
                 <MudMenuItem OnClick="DownloadPdf">Export to PDF</MudMenuItem>
             </MudMenu>
         </div>
@@ -471,19 +471,26 @@
         return $"HS-{year}-{sequenceNumber:D5}";
     }
 
-    private async Task DownloadCsv()
+    private async Task DownloadExcel()
     {
         DateTime? filterStart = _dateRange?.Start ?? _singleFilterDate;
         DateTime? filterEnd = _dateRange?.End ?? _singleFilterDate;
 
         try
         {
-            var (content, fileName) = await HistoryClient.ExportCsvAsync(null, selectedAction, selectedUserId, searchString, filterStart, filterEnd);
-            await JS.InvokeVoidAsync("fileDownload.saveAs", fileName, "text/csv", Convert.ToBase64String(content));
+            // 1. Ambil array byte dari Client
+            var content = await HistoryClient.ExportExcelAsync(null, selectedAction, selectedUserId, searchString, filterStart, filterEnd);
+
+            // 2. Buat nama file secara lokal di sisi klien
+            var fileName = $"TicketHistories_Export_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            // 3. Gunakan MIME type yang tepat untuk format Excel (xlsx)
+            await JS.InvokeVoidAsync("fileDownload.saveAs", fileName, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", Convert.ToBase64String(content));
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Gagal export CSV: {ex.Message}", MudBlazor.Severity.Error);
+            // 4. Perbaiki pesan error agar sesuai
+            Snackbar.Add($"Gagal export Excel: {ex.Message}", MudBlazor.Severity.Error);
         }
     }
 
@@ -494,7 +501,13 @@
 
         try
         {
-            var (content, fileName) = await HistoryClient.ExportPdfAsync(null, selectedAction, selectedUserId, searchString, filterStart, filterEnd);
+            // 1. Ambil array byte dari Client
+            var content = await HistoryClient.ExportPdfAsync(null, selectedAction, selectedUserId, searchString, filterStart, filterEnd);
+
+            // 2. Buat nama file secara lokal di sisi klien
+            var fileName = $"TicketHistories_Export_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+
+            // 3. MIME type untuk PDF
             await JS.InvokeVoidAsync("fileDownload.saveAs", fileName, "application/pdf", Convert.ToBase64String(content));
         }
         catch (Exception ex)
