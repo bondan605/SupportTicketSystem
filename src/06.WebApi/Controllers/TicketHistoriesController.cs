@@ -10,7 +10,7 @@ using SupportTicketSystem.Shared.DTOs;
 using SupportTicketSystem.Shared.DTOs.Tickets;
 using SupportTicketSystem.Shared.Extensions;
 using SupportTicketSystem.Shared.Models;
-using System.Text;
+using ClosedXML.Excel;
 
 namespace SupportTicketSystem.WebApi.Controllers
 {
@@ -72,8 +72,8 @@ namespace SupportTicketSystem.WebApi.Controllers
             return Ok(ApiResponse<PagedResult<TicketHistoryDto>>.SuccessResponse(result, "Ticket histories retrieved successfully."));
         }
 
-        [HttpGet("export-csv")]
-        public async Task<IActionResult> ExportCsv(
+        [HttpGet("export-excel")]
+        public async Task<IActionResult> ExportExcel(
         [FromQuery] Guid? ticketId,
         [FromQuery] string? action,
         [FromQuery] Guid? changedBy,
@@ -81,36 +81,58 @@ namespace SupportTicketSystem.WebApi.Controllers
         [FromQuery] DateTime? startDate,
         [FromQuery] DateTime? endDate)
         {
-            var request = new PagedRequest { PageNumber = 1, PageSize = int.MaxValue };
-            var result = await _historyService.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request, GetScopedToUserId());
-            var histories = result.Items ?? new List<TicketHistoryDto>();
+            var histories = await _historyService.GetAllForExportAsync(
+                ticketId, action, changedBy, search, startDate, endDate, GetScopedToUserId()) ?? new List<TicketHistoryDto>();
+
             var agentNames = await GetAgentNameLookupAsync();
 
-            var csvBuilder = new StringBuilder();
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Ticket Histories");
 
-            csvBuilder.AppendLine("History ID,Ticket Number,Action,Detail Perubahan,Changed By,Timestamp");
+            var headerRow = worksheet.Row(1);
+            headerRow.Style.Font.Bold = true;
+            headerRow.Style.Fill.BackgroundColor = XLColor.FromHtml("#303F9F");
+            headerRow.Style.Font.FontColor = XLColor.White;
 
+            worksheet.Cell(1, 1).Value = "History ID";
+            worksheet.Cell(1, 2).Value = "Ticket Number";
+            worksheet.Cell(1, 3).Value = "Action";
+            worksheet.Cell(1, 4).Value = "Detail Perubahan";
+            worksheet.Cell(1, 5).Value = "Changed By";
+            worksheet.Cell(1, 6).Value = "Timestamp";
+
+            int row = 2;
             int counter = 1;
+
             foreach (var item in histories)
             {
                 string historyNumber = $"HS-{item.Timestamp.Year}-{counter:D5}";
 
                 var detail = item.Action == TicketHistoryAction.TicketCreated
-                    ? (item.Note ?? "Ticket created")
+                    ? ($"Ticket created by {item.ChangedByName}" ?? "Ticket created")
                     : (!string.IsNullOrEmpty(item.OldValue)
                         ? $"Dari {ResolveHistoryValue(item.Action, item.OldValue, agentNames)} ke {ResolveHistoryValue(item.Action, item.NewValue, agentNames)}"
                         : (item.Note ?? "-"));
 
-                detail = detail.Replace("\"", "\"\"");
+                worksheet.Cell(row, 1).Value = historyNumber;
+                worksheet.Cell(row, 2).Value = item.TicketNumber ?? "-";
+                worksheet.Cell(row, 3).Value = item.Action.ToString();
+                worksheet.Cell(row, 4).Value = detail;
+                worksheet.Cell(row, 5).Value = item.ChangedByName ?? "System User";
+                worksheet.Cell(row, 6).Value = item.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
 
-                csvBuilder.AppendLine($"\"{historyNumber}\",\"{item.TicketNumber}\",\"{item.Action}\",\"{detail}\",\"{item.ChangedByName ?? "System User"}\",\"{item.Timestamp.ToLocalTime():yyyy-MM-dd HH:mm}\"");
+                row++;
                 counter++;
             }
 
-            var fileBytes = new UTF8Encoding(true).GetBytes(csvBuilder.ToString());
-            var fileName = $"TicketHistories_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+            worksheet.Columns().AdjustToContents();
 
-            return File(fileBytes, "text/csv", fileName);
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            var content = stream.ToArray();
+            var fileName = $"TicketHistories_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+
+            return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
 
         [HttpGet("export-pdf")]
@@ -122,9 +144,9 @@ namespace SupportTicketSystem.WebApi.Controllers
             [FromQuery] DateTime? startDate,
             [FromQuery] DateTime? endDate)
         {
-            var request = new PagedRequest { PageNumber = 1, PageSize = int.MaxValue };
-            var result = await _historyService.GetFilteredHistoriesAsync(ticketId, action, changedBy, search, startDate, endDate, request, GetScopedToUserId());
-            var histories = result.Items ?? new List<TicketHistoryDto>();
+            var histories = await _historyService.GetAllForExportAsync(
+                ticketId, action, changedBy, search, startDate, endDate, GetScopedToUserId()) ?? new List<TicketHistoryDto>();
+
             var agentNames = await GetAgentNameLookupAsync();
 
             var pdfBytes = Document.Create(container =>
@@ -137,9 +159,7 @@ namespace SupportTicketSystem.WebApi.Controllers
                     page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Arial"));
 
                     page.Header().Element(ComposeHeader);
-
-                    page.Content().Element(container => ComposeContent(container, histories, agentNames));
-
+                    page.Content().Element(c => ComposeContent(c, histories, agentNames));
                     page.Footer()
                         .AlignCenter()
                         .Text(text =>
@@ -172,17 +192,15 @@ namespace SupportTicketSystem.WebApi.Controllers
         {
             container.PaddingVertical(10).Table(table =>
             {
-                // Definisi Kolom Tabel
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.RelativeColumn(2); // Ticket Number
-                    columns.RelativeColumn(2); // Action
-                    columns.RelativeColumn(4); // Detail Perubahan
-                    columns.RelativeColumn(2); // Changed By
-                    columns.RelativeColumn(2); // Timestamp
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(4);
+                    columns.RelativeColumn(2);
+                    columns.RelativeColumn(2);
                 });
 
-                // Header Tabel
                 table.Header(header =>
                 {
                     header.Cell().Background("#303F9F").Padding(6).Text("Ticket Number").FontColor(Colors.White).Bold();
@@ -192,7 +210,6 @@ namespace SupportTicketSystem.WebApi.Controllers
                     header.Cell().Background("#303F9F").Padding(6).Text("Timestamp").FontColor(Colors.White).Bold();
                 });
 
-                // Baris Data Tabel
                 bool alternate = false;
                 foreach (var h in histories)
                 {
