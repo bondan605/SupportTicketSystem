@@ -1,58 +1,32 @@
-﻿@using SupportTicketSystem.Bsui.Components.Models.Reports
+﻿@using MudBlazor
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@using SupportTicketSystem.Bsui.Components.Models.Reports
 
 <MudPaper Elevation="0"
-          Class="pa-4"
-          Style="@CardStyle">
+          Outlined="true"
+          Class="pa-4 rounded-lg d-flex flex-column"
+          Style="@($"background-color: var(--mud-palette-surface); border-color: var(--mud-palette-lines-default); width: 100%; height: {CardHeight}px; box-sizing: border-box;")">
 
     <MudStack Row="true"
               AlignItems="AlignItems.Center"
               Justify="Justify.SpaceBetween"
-              Class="mb-5">
+              Class="mb-2">
 
-        <MudText Style="@TitleStyle">
+        <MudText Style="font-weight: 700; font-size: 16px; color: var(--mud-palette-text-primary);">
             @Title
         </MudText>
 
-        @* <MudIconButton Icon="@Icons.Material.Filled.MoreVert"
+        <MudIconButton Icon="@Icons.Material.Filled.MoreVert"
                        Size="Size.Small"
-                       Style="color:#64748b;" /> *@
+                       Style="color: var(--mud-palette-text-secondary);" />
     </MudStack>
 
-    <MudStack Spacing="2">
-        @foreach (var item in Items)
-        {
-            <div style="@RowStyle">
-
-                <MudText Style="@LabelStyle">
-                    @item.AssigneeName
-                </MudText>
-
-                <div style="height:16px;width:100%;">
-                    <div style="@GetBarStyle(item.TotalTickets)"></div>
-                </div>
-
-                <MudText Style="@ValueStyle">
-                    @item.TotalTickets
-                </MudText>
-
-            </div>
-        }
-    </MudStack>
-
-    <div style="@AxisRowStyle">
-        <div></div>
-
-        <div style="display:flex; justify-content:space-between; width:100%;">
-            @foreach (var tick in GetAxisTicks())
-            {
-                <MudText Style="@AxisTextStyle">
-                    @tick
-                </MudText>
-            }
-        </div>
-
-        <div></div>
+    <!-- Kontainer ECharts -->
+    <div style="flex-grow: 1; min-height: 0;">
+        <EChartWrapper ChartOptionJson="@_chartOptionJson" Height="@(CardHeight - 60)" />
     </div>
+
 </MudPaper>
 
 @code {
@@ -60,11 +34,10 @@
     public string Title { get; set; } = string.Empty;
 
     [Parameter]
-    public IReadOnlyList<AssigneeChartItem> Items { get; set; }
-        = Array.Empty<AssigneeChartItem>();
+    public IReadOnlyList<AssigneeChartItem> Items { get; set; } = Array.Empty<AssigneeChartItem>();
 
     [Parameter]
-    public int CardHeight { get; set; } = 260;
+    public int CardHeight { get; set; } = 300;
 
     [Parameter]
     public int AxisMaximum { get; set; } = 300;
@@ -72,81 +45,99 @@
     [Parameter]
     public int AxisStep { get; set; } = 50;
 
+    // Tetap menggunakan warna biru sesuai gambar, jika ingin pakai warna tema bisa diganti var(--mud-palette-primary)
     [Parameter]
     public string BarColor { get; set; } = "#2F73F6";
 
-    private string CardStyle =>
-        $"width:100%;" +
-        $"height:{CardHeight}px;" +
-        "box-sizing:border-box;" +
-        "border:1px solid #e2e8f0;" +
-        "border-radius:10px;" +
-        "background:#ffffff;" +
-        "box-shadow:none;";
+    private string _chartOptionJson = "{}";
 
-    private const string TitleStyle =
-        "font-size:16px;" +
-        "font-weight:700;" +
-        "color:#172033;";
+    // Mengambil Font Family bawaan Sopodel Theme
+    private readonly string _fontFamily = "Inter, Roboto, Helvetica, Arial, sans-serif";
 
-    private const string RowStyle =
-        "display:grid;" +
-        "grid-template-columns:150px minmax(0, 1fr) 50px;" +
-        "align-items:center;" +
-        "column-gap:12px;";
-
-    private const string LabelStyle =
-        "font-size:12px;" +
-        "font-weight:500;" +
-        "color:#334155;" +
-        "white-space:nowrap;" +
-        "overflow:hidden;" +
-        "text-overflow:ellipsis;";
-
-    private const string ValueStyle =
-        "font-size:12px;" +
-        "font-weight:700;" +
-        "text-align:right;" +
-        "color:#172033;";
-
-    private const string AxisRowStyle =
-        "display:grid;" +
-        "grid-template-columns:150px minmax(0, 1fr) 50px;" +
-        "align-items:center;" +
-        "column-gap:12px;" +
-        "margin-top:14px;";
-
-    private const string AxisTextStyle =
-        "font-size:11px;" +
-        "color:#64748b;";
-
-    private string GetBarStyle(double value)
+    protected override void OnParametersSet()
     {
-        if (AxisMaximum <= 0)
+        if (Items != null)
         {
-            return "width:0%;height:16px;";
+            var optionObj = GetChartOptions();
+            
+            _chartOptionJson = JsonSerializer.Serialize(optionObj, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            });
         }
-
-        var percentage = Math.Clamp(
-            value / AxisMaximum * 100,
-            0,
-            100);
-
-        return FormattableString.Invariant(
-            $"width:{percentage:0.##}%;height:16px;background-color:{BarColor};border-radius:1px;");
     }
 
-    private IEnumerable<int> GetAxisTicks()
+    private object GetChartOptions()
     {
-        if (AxisStep <= 0 || AxisMaximum <= 0)
+        return new
         {
-            yield return 0;
-            yield break;
-        }
-
-        for (var value = 0; value <= AxisMaximum; value += AxisStep)
-        {
-            yield return value;
-        }
+            tooltip = new
+            {
+                trigger = "axis",
+                axisPointer = new { type = "shadow" },
+                textStyle = new { fontFamily = _fontFamily }
+            },
+            grid = new
+            {
+                left = "2%",
+                right = "8%", // Memberi ruang ekstra di kanan untuk label nilai angka (misal: 245)
+                bottom = "0%",
+                top = "5%",
+                containLabel = true
+            },
+            xAxis = new
+            {
+                type = "value",
+                max = AxisMaximum,
+                interval = AxisStep,
+                axisLabel = new
+                {
+                    fontFamily = _fontFamily,
+                    color = "var(--mud-palette-text-secondary)"
+                },
+                splitLine = new { show = false }, // Menghilangkan garis vertikal di background sesuai gambar
+                axisLine = new { show = false },
+                axisTick = new { show = false }
+            },
+            yAxis = new
+            {
+                type = "category",
+                inverse = true, // Membalik urutan agar item pertama tampil paling atas
+                data = Items.Select(x => x.AssigneeName).ToArray(),
+                axisLabel = new
+                {
+                    fontFamily = _fontFamily,
+                    color = "var(--mud-palette-text-primary)",
+                    fontWeight = 500
+                },
+                axisLine = new { show = false },
+                axisTick = new { show = false }
+            },
+            series = new[]
+            {
+                new
+                {
+                    name = "Total Tickets",
+                    type = "bar",
+                    barWidth = 16, // Lebar/ketebalan bar disamakan dengan desain aslinya
+                    itemStyle = new
+                    {
+                        color = BarColor,
+                        borderRadius = new[] { 0, 4, 4, 0 } // Melengkungkan sudut kanan bar agar terlihat modern
+                    },
+                    label = new
+                    {
+                        show = true,
+                        position = "right", // Angka diletakkan di sebelah kanan bar
+                        distance = 10,
+                        color = "var(--mud-palette-text-primary)",
+                        fontFamily = _fontFamily,
+                        fontWeight = 700 // Angka ditebalkan
+                    },
+                    data = Items.Select(x => x.TotalTickets).ToArray()
+                }
+            }
+        };
     }
 }

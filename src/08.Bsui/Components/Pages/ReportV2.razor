@@ -1,0 +1,223 @@
+﻿@page "/report-v2"
+
+@using SupportTicketSystem.Bsui.Components.Shared
+@using SupportTicketSystem.Client.Features.Interfaces
+@using SupportTicketSystem.Shared.DTOs.Reports.Responses
+
+@inject IReportClient ReportClient
+@inject ISnackbar Snackbar
+
+<PageTitle>Report V2 (ECharts Test)</PageTitle>
+
+@* Header *@
+<MudStack Row="true"
+          Justify="Justify.SpaceBetween"
+          AlignItems="AlignItems.Center"
+          Class="pa-4 pl-6 pr-6">
+
+    <MudStack Spacing="0">
+        <MudText Typo="Typo.h5"
+                 Class="font-weight-bold"
+                 Style="color:#1e293b;">
+            <b>Report V2</b>
+        </MudText>
+
+        <MudText Typo="Typo.body2"
+                 Style="color:#64748b;">
+            Isolated test page for ECharts-based components (SLA card, donut chart, line chart)
+        </MudText>
+    </MudStack>
+
+    <ProfileMenu />
+</MudStack>
+
+<MudDivider />
+
+<MudContainer MaxWidth="MaxWidth.False" Class="px-3 pt-3 pb-2">
+    <MudGrid Spacing="3">
+        <MudItem xs="12" sm="6" lg="4">
+            <SLAComplianceCardV2 Title="SLA Compliance"
+                               Value="@SlaCompliance"
+                               Subtitle="Kepatuhan SLA"
+                               TrendValue="@SlaTrendValue"
+                               HasData="@_isLoaded"
+                               CardHeight="300" />
+        </MudItem>
+
+        <MudItem xs="12" sm="6" lg="4">
+            <DonutChartV2 Title="Tickets per Status"
+                         Data="@_statusData"
+                         Labels="@_statusLabels"
+                         Colors="@_statusColors"
+                         TotalText="Total Tiket"
+                         ShowPercentageAndNumber="true"
+                         HasData="@_isLoaded"
+                         CardHeight="300" />
+        </MudItem>
+
+        <MudItem xs="12" sm="12" lg="4">
+            <LineChartV2 Title="Ticket Trends"
+                         Series="@_ticketTrendSeries"
+                         XAxisLabels="@_months"
+                         Colors="@_trendColors"
+                         HasData="@_isLoaded"
+                         CardHeight="300" />
+        </MudItem>
+
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private DateTime? _startDate = DateTime.Today.AddDays(-30);
+    private DateTime? _endDate = DateTime.Today;
+
+    private double SlaCompliance;
+
+    private double? SlaTrendValue;
+
+    private double[] _statusData = Array.Empty<double>();
+    private string[] _statusLabels = Array.Empty<string>();
+    private string[] _statusColors = Array.Empty<string>();
+
+    private string[] _months = Array.Empty<string>();
+
+    private readonly string[] _trendColors =
+    {
+        "#3B82F6",
+        "#10B981"
+    };
+
+    private List<ChartSeries<double>> _ticketTrendSeries = new();
+
+    private bool _isLoaded;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReportAsync();
+    }
+
+    private async Task LoadReportAsync()
+    {
+        try
+        {
+            var response =
+                await ReportClient.GetReportSummaryAsync(
+                    _startDate,
+                    _endDate);
+
+            if (!response.Success || response.Data is null)
+            {
+                Snackbar.Add(
+                    response.Message ?? "Data report gagal diambil.",
+                    MudBlazor.Severity.Error);
+
+                return;
+            }
+
+            ApplySlaCompliance(response.Data);
+            ApplyStatusData(response.Data);
+            ApplyTicketTrendData(response.Data);
+
+            _isLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(
+                $"Gagal mengambil data report: {ex.Message}",
+                MudBlazor.Severity.Error);
+        }
+    }
+
+    private void ApplySlaCompliance(ReportSummaryDto report)
+    {
+        SlaCompliance =
+            report.SlaCompliance.CompliancePercentage;
+
+        SlaTrendValue =
+            report.SlaCompliance.ChangePercent;
+    }
+
+    private void ApplyStatusData(ReportSummaryDto report)
+    {
+        var statusItems = report.TicketsPerStatus
+            .OrderBy(item => GetStatusOrder(item.Status))
+            .ToList();
+
+        _statusData = statusItems
+            .Select(item => (double)item.Count)
+            .ToArray();
+
+        _statusLabels = statusItems
+            .Select(item => GetStatusText(item.Status))
+            .ToArray();
+
+        _statusColors = statusItems
+            .Select(item => GetStatusColor(item.Status))
+            .ToArray();
+    }
+
+    private void ApplyTicketTrendData(ReportSummaryDto report)
+    {
+        var trendItems = report.TicketsTrend
+            .OrderBy(item => item.Date)
+            .ToList();
+
+        _months = trendItems
+            .Select((item, index) =>
+                index % 5 == 0
+                    ? item.Date.ToString("dd MMM")
+                    : string.Empty)
+            .ToArray();
+
+        _ticketTrendSeries = new List<ChartSeries<double>>
+        {
+            new()
+            {
+                Name = "Created",
+                Data = trendItems
+                    .Select(item => (double)item.CreatedCount)
+                    .ToArray()
+            },
+            new()
+            {
+                Name = "Closed",
+                Data = trendItems
+                    .Select(item => (double)item.ClosedCount)
+                    .ToArray()
+            }
+        };
+    }
+
+    private static int GetStatusOrder(string status)
+    {
+        return status switch
+        {
+            "Open" => 1,
+            "InProgress" => 2,
+            "Resolved" => 3,
+            "Closed" => 4,
+            _ => 99
+        };
+    }
+
+    private static string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "InProgress" => "In Progress",
+            _ => status
+        };
+    }
+
+    private static string GetStatusColor(string status)
+    {
+        return status switch
+        {
+            "Open" => "#3B82F6",
+            "InProgress" => "#F59E0B",
+            "Resolved" => "#10B981",
+            "Closed" => "#64748B",
+            _ => "#94A3B8"
+        };
+    }
+}

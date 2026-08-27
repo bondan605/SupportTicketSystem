@@ -12,6 +12,7 @@
         public const string TicketHistories = "/ticket-histories";
         public const string Users = "/user";
         public const string Report = "/report";
+        public const string ReportV2 = "/report-v2";
         public const string Profile = "/profile";
         public const string Settings = "/settings";
     }

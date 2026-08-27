@@ -14,7 +14,6 @@
     <div style="flex-grow: 1; min-height: 0;">
         <EChartWrapper ChartOptionJson="@_chartOptionJson" Height="@(CardHeight - 50)" />
     </div>
-
 </MudPaper>
 
 @code {
@@ -22,21 +21,19 @@
     [Parameter] public List<ChartSeries<double>> Series { get; set; } = new();
     [Parameter] public string[] XAxisLabels { get; set; } = Array.Empty<string>();
     [Parameter] public string[] Colors { get; set; } = Array.Empty<string>();
-    
+
     [Parameter] public bool ShowCustomLegend { get; set; } = true;
     [Parameter] public bool ShowMarkers { get; set; } = true;
     [Parameter] public int StrokeWidth { get; set; } = 3;
-    
-    // Gunakan LineDisplayType.Area untuk membuat Area Stacked Chart
-    [Parameter] public LineDisplayType DisplayType { get; set; } = LineDisplayType.Line;
-    
+
+    [Parameter] public LineDisplayType DisplayType { get; set; } = LineDisplayType.Area;
+
     [Parameter] public Typo TitleTypo { get; set; } = Typo.h6;
     [Parameter] public int LegendIconSize { get; set; } = 10;
     [Parameter] public int CardHeight { get; set; } = 280;
 
     private string _chartOptionJson = "{}";
-    
-    // Menggunakan tipografi dan warna default Sopodel Theme
+
     private readonly string _fontFamily = "Inter, Roboto, Helvetica, Arial, sans-serif";
     private readonly string[] _defaultColors = { "#059669", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6" };
 
@@ -45,7 +42,7 @@
         if (Series != null && Series.Any())
         {
             var optionObj = GetChartOptions();
-            
+
             _chartOptionJson = JsonSerializer.Serialize(optionObj, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -58,24 +55,20 @@
     {
         var chartColors = Colors != null && Colors.Length > 0 ? Colors : _defaultColors;
 
-        // Membangun array series secara dinamis
         var seriesList = new List<object>();
         foreach (var s in Series)
         {
-            // Konfigurasi dasar untuk Line Stacked
             var seriesObj = new
             {
                 name = s.Name,
                 type = "line",
-                stack = "Total", // Kunci untuk membuat grafik bertumpuk (stacked)
-                smooth = true,   // Garis melengkung (modern)
+                stack = "Total",
+                smooth = true,   
                 showSymbol = ShowMarkers,
                 lineStyle = new { width = StrokeWidth },
                 data = s.Data,
-                // Jika parameter meminta Area, tambahkan areaStyle shading
-                areaStyle = DisplayType == LineDisplayType.Area ? new { } : null
             };
-            
+
             seriesList.Add(seriesObj);
         }
 
@@ -84,14 +77,16 @@
             tooltip = new
             {
                 trigger = "axis",
-                textStyle = new { fontFamily = _fontFamily }
+                axisPointer = new { type = "none" },
+                textStyle = new { fontFamily = _fontFamily },
+                formatter = "{b} <br/>{a}: <b>{c}%</b>"
             },
             legend = new
             {
                 show = ShowCustomLegend,
                 icon = "circle",
                 top = "0%",
-                right = "0%", // Posisi legend di kanan atas
+                right = "0%",
                 itemWidth = LegendIconSize,
                 itemHeight = LegendIconSize,
                 textStyle = new
@@ -104,7 +99,7 @@
             grid = new
             {
                 left = "1%",
-                right = "3%",
+                right = "8%", // 3. Ruang kanan diperlebar agar tanggal terakhir tidak terpotong
                 bottom = "0%",
                 top = "15%",
                 containLabel = true
@@ -113,12 +108,13 @@
             xAxis = new
             {
                 type = "category",
-                boundaryGap = false, // Menempel di pinggir sumbu Y agar rapi
+                boundaryGap = false,
                 data = XAxisLabels,
                 axisLabel = new
                 {
                     fontFamily = _fontFamily,
-                    color = "var(--mud-palette-text-secondary)"
+                    color = "var(--mud-palette-text-secondary)",
+                    interval = 4,
                 },
                 axisLine = new
                 {
@@ -128,14 +124,15 @@
             yAxis = new
             {
                 type = "value",
+                max = 100, // 4a. Mengunci batas maksimal Y-Axis di angka 100
                 axisLabel = new
                 {
+                    formatter = "{value} %", // 4b. Menambahkan simbol %
                     fontFamily = _fontFamily,
                     color = "var(--mud-palette-text-secondary)"
                 },
                 splitLine = new
                 {
-                    // Garis putus-putus pada background untuk kesan elegan
                     lineStyle = new
                     {
                         color = "var(--mud-palette-lines-default)",
